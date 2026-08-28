@@ -1,0 +1,5 @@
+time,source,rep_number,feedback,note
+14:04:36,../raw_videos/squat3.mp4,,,session_start
+14:04:40,../raw_videos/squat3.mp4,1,Good depth!,rep_completed
+14:04:47,../raw_videos/squat3.mp4,2,Good depth!,rep_completed
+14:04:49,../raw_videos/squat3.mp4,2,,session_end

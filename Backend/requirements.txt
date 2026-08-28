@@ -1,0 +1,20 @@
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.9.2
+pydantic-settings==2.5.2
+joblib==1.4.2
+scikit-learn==1.5.2
+numpy==1.26.4
+slowapi==0.1.9
+sqlmodel==0.0.22
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+bcrypt==4.0.1
+
+# Only needed because exercises_config.py imports mediapipe/cv2 to
+# reference landmark + rotation constants, even though this backend
+# never processes video. See the note at the top of
+# app/exercises_config.py - worth trimming once you're optimizing
+# container size.
+mediapipe==0.10.14
+opencv-python-headless==4.10.0.84

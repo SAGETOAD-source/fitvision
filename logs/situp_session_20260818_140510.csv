@@ -1,0 +1,6 @@
+time,source,rep_number,feedback,note
+14:05:10,../raw_videos/situp.mp4,,,session_start
+14:05:15,../raw_videos/situp.mp4,1,,rep_completed
+14:05:23,../raw_videos/situp.mp4,2,,rep_completed
+14:05:28,../raw_videos/situp.mp4,3,,rep_completed
+14:05:34,../raw_videos/situp.mp4,3,,session_end

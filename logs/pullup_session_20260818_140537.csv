@@ -1,0 +1,6 @@
+time,source,rep_number,feedback,note
+14:05:37,../raw_videos/pullup.mp4,,,session_start
+14:05:41,../raw_videos/pullup.mp4,1,,rep_completed
+14:05:45,../raw_videos/pullup.mp4,2,,rep_completed
+14:05:49,../raw_videos/pullup.mp4,3,,rep_completed
+14:05:57,../raw_videos/pullup.mp4,3,,session_end

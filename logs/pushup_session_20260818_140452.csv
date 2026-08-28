@@ -1,0 +1,4 @@
+time,source,rep_number,feedback,note
+14:04:52,../raw_videos/pushup.mp4,,,session_start
+14:05:06,../raw_videos/pushup.mp4,1,Go lower next time,rep_completed
+14:05:07,../raw_videos/pushup.mp4,1,,session_end

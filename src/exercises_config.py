@@ -130,4 +130,47 @@ EXERCISES = {
         "visibility_threshold": 0.5,
         "rotate_frame": None,
     },
+
+    "latpulldown": {
+        "display_name": "Lat Pulldown",
+        "model_path": "../models/rf_latpulldown_model.pkl",
+        "training_data_path": "../data/latpulldown_training_dataset.csv",
+
+        # Naming mirrors pull-up: arms extended overhead = "down",
+        # pulled down to chest = "up". Classifier trained on elbow
+        # angles ONLY (left_elbow_angle, right_elbow_angle) - see
+        # train_latpulldown_model.py.
+        "signals": {
+            "left":  {"points": (PL.LEFT_SHOULDER, PL.LEFT_ELBOW, PL.LEFT_WRIST),
+                       "feature_name": "left_elbow_angle"},
+            "right": {"points": (PL.RIGHT_SHOULDER, PL.RIGHT_ELBOW, PL.RIGHT_WRIST),
+                       "feature_name": "right_elbow_angle"},
+        },
+
+        # Torso lean - tracked by RepCounter for the leaning-back
+        # ceiling check (see FORM_WARNINGS in live_predict.py /
+        # rep_counter.py), NOT fed to the classifier. "lean_avg" needs
+        # no knee landmark, unlike sit-up's torso angle - important
+        # here since knees are often out of frame on a seated cable
+        # machine.
+        "extra_signals": {
+            "torso": {
+                "points": (PL.LEFT_SHOULDER, PL.LEFT_HIP, PL.RIGHT_SHOULDER, PL.RIGHT_HIP),
+                "type": "lean_avg",
+            },
+        },
+
+        "down_state": "latpulldown_down",
+        "up_states": {"latpulldown_up"},
+
+        # A confirmed down->up->down cycle already implies elbow angle
+        # crossed both 84.9 and 147.2 (see
+        # prepare_latpulldown_training_data.py), so this is a light
+        # backstop, not the primary filter.
+        "min_valid_range": 60,
+        "good_depth_threshold": None,
+
+        "visibility_threshold": 0.5,
+        "rotate_frame": None,
+    },
 }

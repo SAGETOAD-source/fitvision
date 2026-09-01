@@ -4,12 +4,12 @@ rep_counter.py
 The debounced state machine that turns a sequence of raw model
 predictions into a validated rep count. This is a direct port of the
 RepCounter class from src/live_predict.py - same debounce window,
-same direction-of-count logic, same range-validity checks. Behavior
-must stay identical to the local CLI version; if you change
-thresholds here, change them there too (or better: finish the
-TODO in exercises_config.py to move COUNT_ON_STATE and
-EXTRA_RANGE_CHECKS into that single config file so there's only one
-place to edit).
+same direction-of-count logic, same range-validity checks, same
+form-warning ceiling checks. Behavior must stay identical to the
+local CLI version; if you change thresholds here, change them there
+too (or better: finish the TODO in exercises_config.py to move
+COUNT_ON_STATE, EXTRA_RANGE_CHECKS, and FORM_WARNINGS into that
+single config file so there's only one place to edit).
 """
 
 from typing import Dict, Optional, Tuple
@@ -17,23 +17,38 @@ from typing import Dict, Optional, Tuple
 STABLE_FRAMES_REQUIRED = 4
 
 # Which transition completes a rep - see src/live_predict.py for the
-# full explanation of why squat/pushup and situp/pullup/jumpingjack
-# differ here.
+# full explanation of why squat/pushup and situp/pullup/jumpingjack/
+# latpulldown differ here.
 COUNT_ON_STATE = {
     "squat": "up",
     "pushup": "up",
     "situp": "down",
     "pullup": "down",
     "jumpingjack": "down",
+    "latpulldown": "down",
 }
 
-# Extra per-signal range checks beyond exercises_config's single
+# Extra per-signal MINIMUM range checks beyond exercises_config's single
 # min_valid_range. Only jumpingjack needs this today (arm range,
 # on top of the configured leg-spread range check).
 EXTRA_RANGE_CHECKS = {
     "jumpingjack": {
         "left_arm": 90,
         "right_arm": 90,
+    },
+}
+
+# Ceiling checks: a tracked signal must NEVER exceed this value during
+# a rep, opposite of EXTRA_RANGE_CHECKS. Only lat pulldown's torso
+# lean uses this today - catches leaning back to cheat the pull.
+# Does NOT invalidate the rep (a real pull did happen) - attaches a
+# warning via feedback instead. NOTE: for this to fire on the
+# backend, the client (frontend) must include a "torso" key in the
+# /predict signals payload for latpulldown sessions - it's not a
+# classifier feature so it won't appear there automatically.
+FORM_WARNINGS = {
+    "latpulldown": {
+        "torso": {"ceiling": 18.0, "message": "Avoid leaning back"},
     },
 }
 
@@ -62,6 +77,7 @@ class RepCounter:
         self.good_depth_threshold = config.get("good_depth_threshold")
         self.count_on = COUNT_ON_STATE[exercise_name]
         self.extra_checks = EXTRA_RANGE_CHECKS.get(exercise_name, {})
+        self.form_warnings = FORM_WARNINGS.get(exercise_name, {})
         self.primary_signal = PRIMARY_SIGNAL_OVERRIDE.get(
             exercise_name, next(iter(config["signals"].keys()))
         )
@@ -100,6 +116,18 @@ class RepCounter:
                 return False
         return True
 
+    def _check_form_warnings(self) -> Optional[str]:
+        """
+        Checks tracked signals against FORM_WARNINGS ceilings. Returns
+        a warning message if any ceiling was exceeded during the rep,
+        else None. Does NOT affect whether the rep counts.
+        """
+        for signal_name, check in self.form_warnings.items():
+            value = self.max_seen.get(signal_name)
+            if value is not None and value > check["ceiling"]:
+                return check["message"]
+        return None
+
     def update(self, raw_prediction: str, signals: Dict[str, float]) -> Tuple[bool, Optional[str]]:
         if raw_prediction == self.pending_state:
             self.pending_count += 1
@@ -128,6 +156,8 @@ class RepCounter:
                     if self.good_depth_threshold is not None:
                         min_primary = self.min_seen.get(self.primary_signal, 999)
                         feedback = "Good depth!" if min_primary < self.good_depth_threshold else "Go lower next time"
+                    else:
+                        feedback = self._check_form_warnings()
                 self.in_cycle = False
                 self._reset_rep_tracking()
         else:  # count_on == "down"
@@ -139,6 +169,7 @@ class RepCounter:
                 if self._rep_is_valid():
                     self.rep_count += 1
                     rep_completed = True
+                    feedback = self._check_form_warnings()
                 self.in_cycle = False
                 self._reset_rep_tracking()
 

@@ -21,6 +21,15 @@ up_states, min_valid_range, signals.keys(), model_path, and
 good_depth_threshold. Kept as one shared file (rather than a slimmer
 backend-only version) so there's a single source of truth; worth
 trimming down once you're optimizing container image size.
+
+NOTE (latpulldown's extra_signals): the backend doesn't compute
+signals from video, it receives them as JSON from the client. The
+"extra_signals" key below (torso lean) is not read by
+prediction_service.py's feature-building step (which only reads
+"signals"), but rep_counter.py's FORM_WARNINGS check does look for a
+"torso" key in the incoming signals payload. For that check to fire
+server-side, the future frontend needs to include "torso" alongside
+the elbow angles when it POSTs to /predict for a latpulldown session.
 """
 
 import mediapipe as mp
@@ -142,6 +151,42 @@ EXERCISES = {
         "up_states": {"jack_out"},
 
         "min_valid_range": 30,   # applied to the leg_spread signal
+        "good_depth_threshold": None,
+
+        "visibility_threshold": 0.5,
+        "rotate_frame": None,
+    },
+
+    "latpulldown": {
+        "display_name": "Lat Pulldown",
+        "model_path": "../models/rf_latpulldown_model.pkl",
+        "training_data_path": "../data/latpulldown_training_dataset.csv",
+
+        # Naming mirrors pull-up: arms extended overhead = "down",
+        # pulled down to chest = "up". Classifier trained on elbow
+        # angles ONLY (left_elbow_angle, right_elbow_angle).
+        "signals": {
+            "left":  {"points": (PL.LEFT_SHOULDER, PL.LEFT_ELBOW, PL.LEFT_WRIST),
+                       "feature_name": "left_elbow_angle"},
+            "right": {"points": (PL.RIGHT_SHOULDER, PL.RIGHT_ELBOW, PL.RIGHT_WRIST),
+                       "feature_name": "right_elbow_angle"},
+        },
+
+        # Torso lean - tracked by rep_counter.py's FORM_WARNINGS
+        # ceiling check, NOT fed to the classifier. See the module
+        # docstring above for the note on the frontend needing to
+        # send "torso" in the /predict payload for this to fire here.
+        "extra_signals": {
+            "torso": {
+                "points": (PL.LEFT_SHOULDER, PL.LEFT_HIP, PL.RIGHT_SHOULDER, PL.RIGHT_HIP),
+                "type": "lean_avg",
+            },
+        },
+
+        "down_state": "latpulldown_down",
+        "up_states": {"latpulldown_up"},
+
+        "min_valid_range": 60,
         "good_depth_threshold": None,
 
         "visibility_threshold": 0.5,

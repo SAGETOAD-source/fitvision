@@ -9,6 +9,7 @@ Run with:
     python live_predict.py situp
     python live_predict.py pullup
     python live_predict.py jumpingjack
+    python live_predict.py latpulldown
 
 Optionally pass a video path as a second argument, e.g.:
 
@@ -47,7 +48,7 @@ DISPLAY_SIZE = (480, 854)
 STABLE_FRAMES_REQUIRED = 4
 
 # --------------------------------------------------------------------
-# Two things every exercise needs that exercises_config.py does not
+# Things every exercise needs that exercises_config.py does not
 # currently store. Kept here (not in the config) so this file is a
 # self-contained drop-in - move these into exercises_config.py later
 # if you want a single source of truth.
@@ -57,17 +58,18 @@ STABLE_FRAMES_REQUIRED = 4
 #   "up"   -> rep counts the moment confirmed_state enters up_states
 #             (squat, pushup: you start up, go down, rep completes on return to up)
 #   "down" -> rep counts the moment confirmed_state enters down_state
-#             (situp, pullup, jumpingjack: you start down/in, go up/out,
-#              rep completes on return to down/in)
+#             (situp, pullup, jumpingjack, latpulldown: you start down/in,
+#              go up/out, rep completes on return to down/in)
 COUNT_ON_STATE = {
     "squat": "up",
     "pushup": "up",
     "situp": "down",
     "pullup": "down",
     "jumpingjack": "down",
+    "latpulldown": "down",
 }
 
-# Extra per-signal range checks beyond exercises_config's single
+# Extra per-signal MINIMUM range checks beyond exercises_config's single
 # "min_valid_range". Currently only jumpingjack needs this, because it
 # has two independent signals (arm + leg) that must BOTH swing through
 # a real range before a rep is trusted.
@@ -80,6 +82,20 @@ EXTRA_RANGE_CHECKS = {
     },
 }
 
+# Ceiling checks: a tracked signal must NEVER exceed this value during
+# a rep, opposite of EXTRA_RANGE_CHECKS (which requires a minimum
+# swing). Currently only lat pulldown's torso lean uses this - catches
+# leaning back to cheat the pull. Deliberately does NOT invalidate the
+# rep (a real pull did happen) - it attaches a warning via feedback
+# instead, same spirit as squat's "Go lower next time".
+#   key: exercise name
+#   value: dict of {signal_name: {"ceiling": float, "message": str}}
+FORM_WARNINGS = {
+    "latpulldown": {
+        "torso": {"ceiling": 18.0, "message": "Avoid leaning back"},
+    },
+}
+
 
 class RepCounter:
     """
@@ -87,12 +103,17 @@ class RepCounter:
 
     - Debounces raw model predictions: a state only becomes "confirmed"
       after STABLE_FRAMES_REQUIRED consecutive identical predictions.
-    - Tracks the min/max of every signal across the current rep attempt.
+    - Tracks the min/max of every signal across the current rep attempt
+      (including "extra_signals" from exercises_config.py, which are
+      never fed to the classifier - see pose_utils.extract_signals).
     - Only counts a rep if the exercise's primary signal swings through
       at least min_valid_range, AND any EXTRA_RANGE_CHECKS also pass.
+    - FORM_WARNINGS checks a tracked signal against a ceiling on rep
+      completion and attaches a feedback message if exceeded - this
+      does NOT block the rep from counting, unlike the range checks.
     - Direction (count on reaching "up" vs "down") comes from
-      COUNT_ON_STATE, since squat/pushup and situp/pullup/jumpingjack
-      complete a rep at opposite ends of their cycle.
+      COUNT_ON_STATE, since squat/pushup and situp/pullup/jumpingjack/
+      latpulldown complete a rep at opposite ends of their cycle.
     """
 
     def __init__(self, exercise_name, config):
@@ -104,6 +125,7 @@ class RepCounter:
         self.good_depth_threshold = config.get("good_depth_threshold")
         self.count_on = COUNT_ON_STATE[exercise_name]
         self.extra_checks = EXTRA_RANGE_CHECKS.get(exercise_name, {})
+        self.form_warnings = FORM_WARNINGS.get(exercise_name, {})
 
         # Use the first defined signal as the "primary" one for depth
         # feedback / min_valid_range (e.g. left_knee_angle for squat,
@@ -144,6 +166,19 @@ class RepCounter:
                 return False
         return True
 
+    def _check_form_warnings(self):
+        """
+        Checks tracked signals (including extra_signals like lat
+        pulldown's torso lean) against FORM_WARNINGS ceilings. Returns
+        a warning message if any ceiling was exceeded during the rep,
+        else None. Does NOT affect whether the rep counts.
+        """
+        for signal_name, check in self.form_warnings.items():
+            value = self.max_seen.get(signal_name)
+            if value is not None and value > check["ceiling"]:
+                return check["message"]
+        return None
+
     def update(self, raw_prediction, signals):
         """
         raw_prediction: the model's predicted label for this frame
@@ -179,6 +214,8 @@ class RepCounter:
                     if self.good_depth_threshold is not None:
                         min_primary = self.min_seen.get(self.primary_signal, 999)
                         feedback = "Good depth!" if min_primary < self.good_depth_threshold else "Go lower next time"
+                    else:
+                        feedback = self._check_form_warnings()
                 self.in_cycle = False
                 self._reset_rep_tracking()
 
@@ -191,6 +228,7 @@ class RepCounter:
                 if self._rep_is_valid():
                     self.rep_count += 1
                     rep_completed = True
+                    feedback = self._check_form_warnings()
                 self.in_cycle = False
                 self._reset_rep_tracking()
 
@@ -203,7 +241,9 @@ def build_feature_vector(signals, config):
     matches how each training CSV was built. exercises_config.py's
     "signals" dict preserves insertion order (Python 3.7+), which
     matches the order features were engineered in for every exercise
-    here (left/right, or left_arm/right_arm/leg_spread for jumpingjack).
+    here. Only "signals" keys are used - "extra_signals" (e.g. lat
+    pulldown's torso lean) are deliberately excluded, since the
+    trained model was never fed them.
     """
     return [signals[name] for name in config["signals"].keys()]
 

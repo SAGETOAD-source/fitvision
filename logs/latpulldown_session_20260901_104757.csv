@@ -1,0 +1,5 @@
+time,source,rep_number,feedback,note
+10:47:57,../raw_videos/lat_pulldown.mp4,,,session_start
+10:47:58,../raw_videos/lat_pulldown.mp4,1,,rep_completed
+10:48:02,../raw_videos/lat_pulldown.mp4,2,,rep_completed
+10:48:26,../raw_videos/lat_pulldown.mp4,2,,session_end

@@ -96,6 +96,50 @@ def client(stub_registry):
     app.dependency_overrides[get_session] = get_test_session
 
     with TestClient(app) as test_client:
+        # Expose the engine so tests can query rows directly (e.g. to
+        # verify WorkoutSession persistence after /session/end).
+        test_client.test_engine = test_engine
         yield test_client
 
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def auth_headers(client):
+    """
+    Signs up a fresh user and returns a Bearer token header dict,
+    reusable by any test that hits an authenticated endpoint.
+
+    Usage::
+
+        def test_foo(client, auth_headers):
+            resp = client.post("/session/start", json={...}, headers=auth_headers)
+    """
+    client.post("/auth/signup", json={"email": "test@example.com", "password": "password123"})
+    resp = client.post("/auth/login", json={"email": "test@example.com", "password": "password123"})
+    token = resp.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def auth_client(client):
+    client.post("/auth/signup", json={"email": "test@example.com", "password": "password123"})
+    resp = client.post("/auth/login", json={"email": "test@example.com", "password": "password123"})
+    token = resp.json()["access_token"]
+    client.headers.update({"Authorization": f"Bearer {token}"})
+    return client
+
+
+@pytest.fixture
+def auth_client_2(client):
+    client.post("/auth/signup", json={"email": "test2@example.com", "password": "password123"})
+    resp = client.post("/auth/login", json={"email": "test2@example.com", "password": "password123"})
+    token = resp.json()["access_token"]
+    
+    from app.main import app
+    from fastapi.testclient import TestClient
+    
+    new_client = TestClient(app)
+    new_client.headers.update({"Authorization": f"Bearer {token}"})
+    return new_client
+

@@ -103,6 +103,10 @@ def create_app() -> FastAPI:
     # --- CORS ---
     from fastapi.middleware.cors import CORSMiddleware
 
+    # TODO (PRE-DEPLOYMENT): Setting allow_origins=["*"] (or a wide list) along with
+    # allow_credentials=True is a significant security risk (and blocked by some browsers/specs).
+    # Once the frontend is hosted, change cors_origin_list to exactly match the real frontend 
+    # origin(s) and avoid wildcards.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origin_list,

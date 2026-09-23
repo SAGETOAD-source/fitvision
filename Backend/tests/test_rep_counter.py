@@ -18,6 +18,8 @@ SQUAT_CONFIG = {
     "min_valid_range": 40,
     "good_depth_threshold": 100,
     "signals": {"left_knee_angle": None, "right_knee_angle": None},
+    "count_on": "up",
+    "primary_signal": "left_knee_angle",
 }
 
 SITUP_CONFIG = {
@@ -26,6 +28,8 @@ SITUP_CONFIG = {
     "min_valid_range": 40,
     "good_depth_threshold": None,
     "signals": {"left_torso_angle": None, "right_torso_angle": None},
+    "count_on": "down",
+    "primary_signal": "left_torso_angle",
 }
 
 JUMPINGJACK_CONFIG = {
@@ -34,6 +38,12 @@ JUMPINGJACK_CONFIG = {
     "min_valid_range": 30,
     "good_depth_threshold": None,
     "signals": {"left_arm": None, "right_arm": None, "leg_spread": None},
+    "count_on": "down",
+    "primary_signal": "leg_spread",
+    "extra_range_checks": {
+        "left_arm": 90,
+        "right_arm": 90,
+    },
 }
 
 

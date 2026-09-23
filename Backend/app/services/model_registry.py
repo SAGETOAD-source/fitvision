@@ -14,9 +14,9 @@ memory for the life of the process. Centralizing this means:
 
 import os
 from typing import Dict, List, Optional
-
 import joblib
 
+from app.config import get_settings
 from app.exercises_config import EXERCISES
 from app.logging_config import get_logger
 
@@ -31,9 +31,14 @@ class ModelRegistry:
     def load_all(self) -> None:
         self._models.clear()
         self._missing.clear()
+        
+        models_dir = get_settings().models_dir
 
         for name, config in EXERCISES.items():
             path = config["model_path"]
+            if models_dir:
+                path = os.path.join(models_dir, os.path.basename(path))
+
             if os.path.exists(path):
                 try:
                     self._models[name] = joblib.load(path)

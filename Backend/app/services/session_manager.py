@@ -29,7 +29,8 @@ TECHSTACK.md / WORKFLOW.md Phase 3.
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from datetime import datetime, timezone
+from typing import Dict, Optional, Tuple
 
 from app.exercises_config import EXERCISES
 from app.logging_config import get_logger
@@ -42,6 +43,7 @@ logger = get_logger("fitvision.sessions")
 class _SessionEntry:
     counter: RepCounter
     last_seen: float = field(default_factory=time.monotonic)
+    started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class SessionManager:
@@ -50,28 +52,32 @@ class SessionManager:
         self._sessions: Dict[str, _SessionEntry] = {}
         self._lock = threading.Lock()
 
-    def start(self, session_id: str, exercise: str) -> RepCounter:
+    def start(self, session_id: str, exercise: str, owner_id: str) -> RepCounter:
         config = EXERCISES[exercise]  # caller validates exercise exists first
         counter = RepCounter(exercise, config)
+        key = f"{owner_id}:{session_id}"
         with self._lock:
-            self._sessions[session_id] = _SessionEntry(counter=counter)
-        logger.info(f"Session started: {session_id} ({exercise})")
+            # If the user restarts the same session, this overwrites it - safely isolated to them.
+            self._sessions[key] = _SessionEntry(counter=counter)
+        logger.info(f"Session started: {session_id} ({exercise}) for user {owner_id}")
         return counter
 
-    def get(self, session_id: str) -> Optional[RepCounter]:
+    def get(self, session_id: str, owner_id: str) -> Optional[RepCounter]:
+        key = f"{owner_id}:{session_id}"
         with self._lock:
-            entry = self._sessions.get(session_id)
+            entry = self._sessions.get(key)
             if entry is None:
                 return None
             entry.last_seen = time.monotonic()
             return entry.counter
 
-    def end(self, session_id: str) -> Optional[RepCounter]:
+    def end(self, session_id: str, owner_id: str) -> Optional[Tuple[RepCounter, datetime]]:
+        key = f"{owner_id}:{session_id}"
         with self._lock:
-            entry = self._sessions.pop(session_id, None)
+            entry = self._sessions.pop(key, None)
         if entry:
-            logger.info(f"Session ended: {session_id} (final rep_count={entry.counter.rep_count})")
-        return entry.counter if entry else None
+            logger.info(f"Session ended: {session_id} for user {owner_id} (final rep_count={entry.counter.rep_count})")
+        return (entry.counter, entry.started_at) if entry else None
 
     def active_count(self) -> int:
         with self._lock:

@@ -1,11 +1,9 @@
 """
 models.py
 
-Database tables. Kept minimal for this phase (auth foundation only),
-but UserProfile exists now - even mostly empty - so the onboarding
-flow (body goal, focus areas) has a home to write into later without
-a schema migration fire drill. Routine/WorkoutSession tables come in
-the next phase once onboarding UI exists.
+Database tables. Auth foundation (User, UserProfile) plus workout
+history persistence (WorkoutSession). WorkoutSession is written on
+/session/end so the app accumulates per-user rep history from day one.
 """
 
 from datetime import datetime, timezone
@@ -36,3 +34,21 @@ class UserProfile(SQLModel, table=True):
     focus_area: Optional[str] = Field(default=None)  # e.g. "legs", "upper_body", None = balanced
     onboarding_completed: bool = Field(default=False)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class WorkoutSession(SQLModel, table=True):
+    """
+    One row per completed workout session. Written by
+    prediction_service.end_session() immediately after the
+    RepCounter is popped from in-memory state, so nothing is lost
+    even if the client never calls /session/end explicitly (the TTL
+    sweep handles those via a separate housekeeping path).
+    """
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    session_id: str = Field(index=True)
+    exercise: str
+    rep_count: int
+    started_at: datetime
+    ended_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

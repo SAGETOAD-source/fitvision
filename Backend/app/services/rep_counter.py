@@ -16,54 +16,7 @@ from typing import Dict, Optional, Tuple
 
 STABLE_FRAMES_REQUIRED = 4
 
-# Which transition completes a rep - see src/live_predict.py for the
-# full explanation of why squat/pushup and situp/pullup/jumpingjack/
-# latpulldown differ here.
-COUNT_ON_STATE = {
-    "squat": "up",
-    "pushup": "up",
-    "situp": "down",
-    "pullup": "down",
-    "jumpingjack": "down",
-    "latpulldown": "down",
-}
 
-# Extra per-signal MINIMUM range checks beyond exercises_config's single
-# min_valid_range. Only jumpingjack needs this today (arm range,
-# on top of the configured leg-spread range check).
-EXTRA_RANGE_CHECKS = {
-    "jumpingjack": {
-        "left_arm": 90,
-        "right_arm": 90,
-    },
-}
-
-# Ceiling checks: a tracked signal must NEVER exceed this value during
-# a rep, opposite of EXTRA_RANGE_CHECKS. Only lat pulldown's torso
-# lean uses this today - catches leaning back to cheat the pull.
-# Does NOT invalidate the rep (a real pull did happen) - attaches a
-# warning via feedback instead. NOTE: for this to fire on the
-# backend, the client (frontend) must include a "torso" key in the
-# /predict signals payload for latpulldown sessions - it's not a
-# classifier feature so it won't appear there automatically.
-FORM_WARNINGS = {
-    "latpulldown": {
-        "torso": {"ceiling": 18.0, "message": "Avoid leaning back"},
-    },
-}
-
-# Which signal min_valid_range applies to. Defaults to the first key
-# in config["signals"] (matches every exercise except jumpingjack).
-# jumpingjack's config comment says min_valid_range=30 is meant for
-# leg_spread specifically - but leg_spread is the THIRD key in that
-# exercise's signals dict, not the first, so the default "first key"
-# rule silently applied the 30-degree check to left_arm instead and
-# left leg_spread with no range check at all. Caught by
-# tests/test_rep_counter.py - a jumping jack with full arm swing but
-# barely-moving legs would have still counted as a valid rep.
-PRIMARY_SIGNAL_OVERRIDE = {
-    "jumpingjack": "leg_spread",
-}
 
 
 class RepCounter:
@@ -75,12 +28,10 @@ class RepCounter:
         self.up_states = config["up_states"]
         self.min_valid_range = config["min_valid_range"]
         self.good_depth_threshold = config.get("good_depth_threshold")
-        self.count_on = COUNT_ON_STATE[exercise_name]
-        self.extra_checks = EXTRA_RANGE_CHECKS.get(exercise_name, {})
-        self.form_warnings = FORM_WARNINGS.get(exercise_name, {})
-        self.primary_signal = PRIMARY_SIGNAL_OVERRIDE.get(
-            exercise_name, next(iter(config["signals"].keys()))
-        )
+        self.count_on = config["count_on"]
+        self.extra_checks = config.get("extra_range_checks", {})
+        self.form_warnings = config.get("form_warnings", {})
+        self.primary_signal = config["primary_signal"]
 
         self.rep_count = 0
         self.in_cycle = False

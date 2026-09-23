@@ -10,8 +10,12 @@ add a second transport (e.g. a WebSocket endpoint for lower-latency
 streaming - a natural upgrade once this is working over plain HTTP).
 """
 
+from datetime import datetime, timezone
 from typing import Dict
 
+from sqlmodel import Session
+
+from app.db.models import WorkoutSession
 from app.exceptions import (
     MissingSignalError,
     ModelNotLoadedError,
@@ -38,17 +42,35 @@ def start_session(
     model_registry: ModelRegistry,
     exercise: str,
     session_id: str,
+    owner_id: str,
 ) -> RepCounter:
     validate_exercise(exercise)
     if not model_registry.is_loaded(exercise):
         raise ModelNotLoadedError(f"Model for '{exercise}' is not currently loaded on this server")
-    return session_manager.start(session_id, exercise)
+    return session_manager.start(session_id, exercise, owner_id)
 
 
-def end_session(session_manager: SessionManager, session_id: str) -> RepCounter:
-    counter = session_manager.end(session_id)
-    if counter is None:
+def end_session(
+    session_manager: SessionManager,
+    session_id: str,
+    owner_id: str,
+    db: Session,
+    user_id: int,
+) -> RepCounter:
+    result = session_manager.end(session_id, owner_id)
+    if result is None:
         raise SessionNotFoundError(f"No active session '{session_id}'")
+    counter, started_at = result
+    workout = WorkoutSession(
+        user_id=user_id,
+        session_id=session_id,
+        exercise=counter.exercise_name,
+        rep_count=counter.rep_count,
+        started_at=started_at,
+        ended_at=datetime.now(timezone.utc),
+    )
+    db.add(workout)
+    db.commit()
     return counter
 
 
@@ -57,6 +79,7 @@ def run_prediction(
     model_registry: ModelRegistry,
     exercise: str,
     session_id: str,
+    owner_id: str,
     signals: Dict[str, float],
 ):
     config = validate_exercise(exercise)
@@ -65,7 +88,7 @@ def run_prediction(
     if model is None:
         raise ModelNotLoadedError(f"Model for '{exercise}' is not currently loaded on this server")
 
-    counter = session_manager.get(session_id)
+    counter = session_manager.get(session_id, owner_id)
     if counter is None:
         raise SessionNotFoundError(f"No active session '{session_id}'. Call /session/start first.")
 

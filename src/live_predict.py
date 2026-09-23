@@ -47,54 +47,7 @@ pose = mp_pose.Pose(
 DISPLAY_SIZE = (480, 854)
 STABLE_FRAMES_REQUIRED = 4
 
-# --------------------------------------------------------------------
-# Things every exercise needs that exercises_config.py does not
-# currently store. Kept here (not in the config) so this file is a
-# self-contained drop-in - move these into exercises_config.py later
-# if you want a single source of truth.
-# --------------------------------------------------------------------
 
-# Which transition completes a rep.
-#   "up"   -> rep counts the moment confirmed_state enters up_states
-#             (squat, pushup: you start up, go down, rep completes on return to up)
-#   "down" -> rep counts the moment confirmed_state enters down_state
-#             (situp, pullup, jumpingjack, latpulldown: you start down/in,
-#              go up/out, rep completes on return to down/in)
-COUNT_ON_STATE = {
-    "squat": "up",
-    "pushup": "up",
-    "situp": "down",
-    "pullup": "down",
-    "jumpingjack": "down",
-    "latpulldown": "down",
-}
-
-# Extra per-signal MINIMUM range checks beyond exercises_config's single
-# "min_valid_range". Currently only jumpingjack needs this, because it
-# has two independent signals (arm + leg) that must BOTH swing through
-# a real range before a rep is trusted.
-#   key: exercise name
-#   value: dict of {signal_name: minimum_range_required}
-EXTRA_RANGE_CHECKS = {
-    "jumpingjack": {
-        "left_arm": 90,
-        "right_arm": 90,
-    },
-}
-
-# Ceiling checks: a tracked signal must NEVER exceed this value during
-# a rep, opposite of EXTRA_RANGE_CHECKS (which requires a minimum
-# swing). Currently only lat pulldown's torso lean uses this - catches
-# leaning back to cheat the pull. Deliberately does NOT invalidate the
-# rep (a real pull did happen) - it attaches a warning via feedback
-# instead, same spirit as squat's "Go lower next time".
-#   key: exercise name
-#   value: dict of {signal_name: {"ceiling": float, "message": str}}
-FORM_WARNINGS = {
-    "latpulldown": {
-        "torso": {"ceiling": 18.0, "message": "Avoid leaning back"},
-    },
-}
 
 
 class RepCounter:
@@ -123,14 +76,12 @@ class RepCounter:
         self.up_states = config["up_states"]
         self.min_valid_range = config["min_valid_range"]
         self.good_depth_threshold = config.get("good_depth_threshold")
-        self.count_on = COUNT_ON_STATE[exercise_name]
-        self.extra_checks = EXTRA_RANGE_CHECKS.get(exercise_name, {})
-        self.form_warnings = FORM_WARNINGS.get(exercise_name, {})
+        self.count_on = config["count_on"]
+        self.extra_checks = config.get("extra_range_checks", {})
+        self.form_warnings = config.get("form_warnings", {})
 
-        # Use the first defined signal as the "primary" one for depth
-        # feedback / min_valid_range (e.g. left_knee_angle for squat,
-        # leg_spread for jumpingjack).
-        self.primary_signal = next(iter(config["signals"].keys()))
+        # Use the configured primary signal for depth feedback / min_valid_range
+        self.primary_signal = config["primary_signal"]
 
         self.rep_count = 0
         self.in_cycle = False  # True once we've left the "count_on" state

@@ -37,6 +37,9 @@ EXERCISES = {
 
         "visibility_threshold": 0.3,
         "rotate_frame": None,
+
+        "count_on": "up",
+        "primary_signal": "left",
     },
 
     "pushup": {
@@ -59,6 +62,9 @@ EXERCISES = {
 
         "visibility_threshold": 0.5,
         "rotate_frame": cv2.ROTATE_90_CLOCKWISE,
+
+        "count_on": "up",
+        "primary_signal": "left",
     },
 
     "situp": {
@@ -81,6 +87,9 @@ EXERCISES = {
 
         "visibility_threshold": 0.5,
         "rotate_frame": None,
+
+        "count_on": "down",
+        "primary_signal": "left",
     },
 
     "pullup": {
@@ -103,6 +112,9 @@ EXERCISES = {
 
         "visibility_threshold": 0.5,
         "rotate_frame": None,
+
+        "count_on": "down",
+        "primary_signal": "left",
     },
 
     "jumpingjack": {
@@ -129,6 +141,13 @@ EXERCISES = {
 
         "visibility_threshold": 0.5,
         "rotate_frame": None,
+
+        "count_on": "down",
+        "primary_signal": "leg_spread",
+        "extra_range_checks": {
+            "left_arm": 90,
+            "right_arm": 90,
+        },
     },
 
     "latpulldown": {
@@ -172,5 +191,11 @@ EXERCISES = {
 
         "visibility_threshold": 0.5,
         "rotate_frame": None,
+
+        "count_on": "down",
+        "primary_signal": "left",
+        "form_warnings": {
+            "torso": {"ceiling": 18.0, "message": "Avoid leaning back"},
+        },
     },
 }

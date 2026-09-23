@@ -15,6 +15,8 @@ from app.models.schemas import PredictRequest, PredictResponse
 from app.rate_limit import limiter
 from app.services import prediction_service
 from app.services.model_registry import ModelRegistry
+from app.auth.dependencies import get_current_user
+from app.db.models import User
 from app.services.session_manager import SessionManager
 
 router = APIRouter(tags=["predict"])
@@ -29,9 +31,10 @@ def predict(
     body: PredictRequest,
     registry: ModelRegistry = Depends(get_model_registry),
     sessions: SessionManager = Depends(get_sessions),
+    current_user: User = Depends(get_current_user),
 ):
     counter, rep_completed, feedback = prediction_service.run_prediction(
-        sessions, registry, body.exercise, body.session_id, body.signals
+        sessions, registry, body.exercise, body.session_id, str(current_user.id), body.signals
     )
     return PredictResponse(
         state=counter.confirmed_state,

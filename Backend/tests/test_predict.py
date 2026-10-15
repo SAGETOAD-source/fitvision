@@ -86,3 +86,17 @@ def test_predict_isolated_per_session(auth_client, auth_client_2):
     
     assert resp.status_code == 404
     assert resp.json()["error"] == "SessionNotFoundError"
+
+
+def test_predict_requires_token(client):
+    """Calling /predict without a valid token must return 401."""
+    resp = client.post(
+        "/predict",
+        json={
+            "exercise": "squat",
+            "session_id": "s1",
+            "signals": {"left": 90, "right": 90},
+        },
+    )
+    assert resp.status_code == 401
+    assert resp.json()["error"] == "InvalidCredentialsError"

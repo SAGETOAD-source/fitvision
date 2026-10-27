@@ -3,9 +3,9 @@
 > Every AI agent: read this first. Update it at the end of every session (see AGENTS.md section 9).
 > Progress percentages are rough estimates, not measurements. Update honestly.
 
-**Last updated:** 2026-10-27 | **Session #:** 1 (since this file was created; earlier sessions were not tracked)
-**Updated by:** Claude (review + docs session)
-**Repo:** https://github.com/SAGETOAD-source/fitvision (branch `main`, last push before this session: 2026-10-16)
+**Last updated:** 2026-10-27 | **Session #:** 2
+**Updated by:** Antigravity (Claude Opus 4.6) — fix/sklearn-version branch
+**Repo:** https://github.com/SAGETOAD-source/fitvision (branch `fix/sklearn-version`)
 **Owner:** Krishnendu | **Dev environment:** Windows, Antigravity IDE
 
 ---
@@ -56,7 +56,7 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 - Count on "up": squat, pushup. Count on "down": situp, pullup, jumpingjack, latpulldown.
 - `STABLE_FRAMES_REQUIRED = 4` in both RepCounter copies.
 - Latpulldown extra signal `torso` (lean) is NOT a classifier feature; it drives the "Avoid leaning back" warning (ceiling 18.0).
-- Models trained with scikit-learn 1.9.0.
+- Models trained with scikit-learn 1.9.0. Backend requirements now match (1.9.0).
 
 ---
 
@@ -84,10 +84,12 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 - [x] JWT auth (signup/login/me), per-user session isolation
 - [x] `WorkoutSession` saved on /session/end
 - [x] Thread-safe TTL session manager
-- [x] Dockerfile, .env.example, pytest suite (36 test functions by grep count; README says 31 — outdated)
+- [x] Dockerfile, .env.example, pytest suite (50 test functions: 36 original + 14 real-model tests)
 - [x] Project docs: README, BACKEND_README
-- [x] Review of auth/backend/DB readiness (this session)
-- [x] AGENTS.md + PROJECT_STATE.md created (this session)
+- [x] Review of auth/backend/DB readiness (session 1)
+- [x] AGENTS.md + PROJECT_STATE.md created (session 1)
+- [x] Fix sklearn version mismatch: bumped Backend/requirements.txt from 1.5.2 → 1.9.0 (session 2)
+- [x] Added `test_real_models.py`: loads all 6 models, checks type, runs dummy predict, asserts no version warnings (session 2)
 
 ## 5. In progress
 
@@ -95,7 +97,7 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 
 ## 6. Next (recommended order)
 
-1. [ ] Fix sklearn version mismatch (backend pins 1.5.2, models are 1.9.0); add a test that loads the real models
+1. [x] ~~Fix sklearn version mismatch~~ — DONE (session 2)
 2. [ ] Dockerfile: run 1 worker (sessions are in-memory per process)
 3. [ ] DECIDE: where the model + rep counter run (browser vs server) — see Open decisions
 4. [ ] Make exercise config pure data (no mediapipe/cv2 imports) and expose it via API for the frontend
@@ -117,7 +119,7 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 
 | # | Severity | Issue |
 |---|---|---|
-| 1 | High | scikit-learn mismatch: models 1.9.0 vs `Backend/requirements.txt` 1.5.2 (numpy 1.26 vs 2.4 too). May break model loading in Docker. |
+| 1 | ~~High~~ Fixed | ~~scikit-learn mismatch~~ Fixed in session 2. `Backend/requirements.txt` now pins 1.9.0. numpy 1.26.4 is compatible with sklearn 1.9.0. |
 | 2 | High | Dockerfile uses `--workers 2` but sessions are in-memory per worker -> random 404 "session not found". Rate limiter is per-worker too. |
 | 3 | High | Per-frame HTTP to /predict (~30 fps) vs rate limit 120/min; debounce needs 4 frames. Design mismatch. |
 | 4 | High | `/exercises` only returns display_name; frontend needs landmark indices, signal order, thresholds. Config uses mediapipe enums (not JSON). |
@@ -180,6 +182,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 | # | Date | Tool / model | What was done | Files changed |
 |---|---|---|---|---|
 | 1 | 2026-10-27 | Claude (Sonnet 5.5) | Read-only review of repo (auth, backend, DB, Neon advice); created AGENTS.md and PROJECT_STATE.md | none in repo yet (the two new files are to be added by the user) |
+| 2 | 2026-10-27 | Antigravity (Claude Opus 4.6) | Bumped scikit-learn 1.5.2→1.9.0 in Backend/requirements.txt; created Backend/tests/test_real_models.py (14 new tests); all 50 tests pass, 0 version warnings | Backend/requirements.txt, Backend/tests/test_real_models.py, PROJECT_STATE.md |
 
 ---
 
@@ -189,7 +192,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 You are continuing work on FitVision (repo: SAGETOAD-source/fitvision).
 1. Read AGENTS.md and PROJECT_STATE.md in the repo root before anything else.
 2. Follow AGENTS.md strictly: send a Change Plan (files to modify/create, nothing else touched) and wait for approval before editing.
-3. Current state: ML pipeline done for 6 exercises; FastAPI backend with JWT auth + sessions works; frontend/deploy not started; DB is SQLite only.
-4. Next recommended task: <fill in from section 6, e.g. "fix sklearn version mismatch and add a real-model load test">.
+3. Current state: ML pipeline done for 6 exercises; FastAPI backend with JWT auth + sessions works; sklearn version fixed (1.9.0); 50 tests pass; frontend/deploy not started; DB is SQLite only.
+4. Next recommended task: "Dockerfile: run 1 worker (sessions are in-memory per process)" (item 2 in section 6).
 5. At the end, update PROJECT_STATE.md fully and show me the complete file.
 ```

@@ -3,9 +3,9 @@
 > Every AI agent: read this first. Update it at the end of every session (see AGENTS.md section 9).
 > Progress percentages are rough estimates, not measurements. Update honestly.
 
-**Last updated:** 2026-10-27 | **Session #:** 2
-**Updated by:** Antigravity (Claude Opus 4.6) — fix/sklearn-version branch
-**Repo:** https://github.com/SAGETOAD-source/fitvision (branch `fix/sklearn-version`)
+**Last updated:** 2026-10-29 | **Session #:** 3
+**Updated by:** Antigravity (Gemini 3.8 Flash) — fix/real-model-tests branch
+**Repo:** https://github.com/SAGETOAD-source/fitvision (branch `fix/real-model-tests`)
 **Owner:** Krishnendu | **Dev environment:** Windows, Antigravity IDE
 
 ---
@@ -65,7 +65,7 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 | Area | Est. done | Notes |
 |---|---|---|
 | ML pipeline (6 exercises) | ~85% | Trained and running locally. Validation gaps (see Known issues). |
-| Backend core (auth, sessions, predict) | ~70% | Works with 36 test functions; missing endpoints below. |
+| Backend core (auth, sessions, predict) | ~75% | Works with 62 test cases (36 backend API/unit + 26 real-model integration tests); missing endpoints below. |
 | Backend production hardening | ~25% | Secrets, rate limits on auth, logging, workers, CORS pending. |
 | Database | ~30% | SQLite only. No migrations, no Postgres driver. |
 | Auth | ~65% | Core works; hardening + token strategy pending. |
@@ -84,12 +84,13 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 - [x] JWT auth (signup/login/me), per-user session isolation
 - [x] `WorkoutSession` saved on /session/end
 - [x] Thread-safe TTL session manager
-- [x] Dockerfile, .env.example, pytest suite (50 test functions: 36 original + 14 real-model tests)
+- [x] Dockerfile, .env.example, pytest suite (62 test functions: 36 backend + 26 real-model tests)
 - [x] Project docs: README, BACKEND_README
 - [x] Review of auth/backend/DB readiness (session 1)
 - [x] AGENTS.md + PROJECT_STATE.md created (session 1)
 - [x] Fix sklearn version mismatch: bumped Backend/requirements.txt from 1.5.2 → 1.9.0 (session 2)
 - [x] Added `test_real_models.py`: loads all 6 models, checks type, runs dummy predict, asserts no version warnings (session 2)
+- [x] Repaired `test_real_models.py` (session 3): replaced vacuous version warning check (`str(type(w.category))` never matched) with real `issubclass(w.category, InconsistentVersionWarning)` check; resolved `models_dir` via `Path(__file__).resolve().parents[2] / "models"` and patched settings cleanly via scoped MonkeyPatch; added hard-fail on missing individual .pkl files; parametrized model contract assertions over all 6 exercises (feature count, feature names order, classes subset containing down_state and up_states, valid predicted state label); loaded models once via module-scoped fixture. Verified failure (612 warnings) under sklearn 1.5.2 and clean pass under pinned 1.9.0.
 
 ## 5. In progress
 
@@ -97,7 +98,7 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 
 ## 6. Next (recommended order)
 
-1. [x] ~~Fix sklearn version mismatch~~ — DONE (session 2)
+1. [x] ~~Fix sklearn version mismatch and real-model tests~~ — DONE (sessions 2 & 3)
 2. [ ] Dockerfile: run 1 worker (sessions are in-memory per process)
 3. [ ] DECIDE: where the model + rep counter run (browser vs server) — see Open decisions
 4. [ ] Make exercise config pure data (no mediapipe/cv2 imports) and expose it via API for the frontend
@@ -119,7 +120,7 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 
 | # | Severity | Issue |
 |---|---|---|
-| 1 | ~~High~~ Fixed | ~~scikit-learn mismatch~~ Fixed in session 2. `Backend/requirements.txt` now pins 1.9.0. numpy 1.26.4 is compatible with sklearn 1.9.0. |
+| 1 | Resolved | scikit-learn pinned to 1.9.0. Repaired test_real_models.py in session 3 now rigorously verifies absence of InconsistentVersionWarning (verified failing with 612 warnings on sklearn 1.5.2). numpy 1.26.4 compatibility verified. |
 | 2 | High | Dockerfile uses `--workers 2` but sessions are in-memory per worker -> random 404 "session not found". Rate limiter is per-worker too. |
 | 3 | High | Per-frame HTTP to /predict (~30 fps) vs rate limit 120/min; debounce needs 4 frames. Design mismatch. |
 | 4 | High | `/exercises` only returns display_name; frontend needs landmark indices, signal order, thresholds. Config uses mediapipe enums (not JSON). |
@@ -138,6 +139,7 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 | 17 | Low | README outdated: `uvicorn main:app` should be `app.main:app`; says 31 tests; lists 5 exercises, not 6; `.gitignore` has `logs/` but log CSVs are tracked. |
 | 18 | ML | latpulldown trained/tested on only 2 videos (same ones) -> accuracy not reliable. Session logs show 0 reps for jumping jack and 1 for push-up; verify vs the real videos. "Avoid leaning back" fired on 5 of 7 early reps (ceiling 18 may be too strict). |
 | 19 | ML | Models trained on Python MediaPipe 0.10.14; MediaPipe.js may give slightly different angles. |
+| 20 | Low | UserWarning on prediction: "X does not have valid feature names, but RandomForestClassifier was fitted with feature names". Backend calls model.predict with a plain 2D feature list without column names; decision on pandas/DataFrame named columns vs warning filtering deferred. |
 
 ---
 
@@ -183,6 +185,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 |---|---|---|---|---|
 | 1 | 2026-10-27 | Claude (Sonnet 5.5) | Read-only review of repo (auth, backend, DB, Neon advice); created AGENTS.md and PROJECT_STATE.md | none in repo yet (the two new files are to be added by the user) |
 | 2 | 2026-10-27 | Antigravity (Claude Opus 4.6) | Bumped scikit-learn 1.5.2→1.9.0 in Backend/requirements.txt; created Backend/tests/test_real_models.py (14 new tests); all 50 tests pass, 0 version warnings | Backend/requirements.txt, Backend/tests/test_real_models.py, PROJECT_STATE.md |
+| 3 | 2026-10-29 | Antigravity (Gemini 3.8 Flash) | Repaired Backend/tests/test_real_models.py (fixed vacuous version warning check, resolved models_dir from test file location, scoped get_settings patch, contract assertions for feature order and classes, valid-state predict check, module-scoped fixture). Verified failure under scikit-learn 1.5.2 and passing suite (62 tests) under 1.9.0. | Backend/tests/test_real_models.py, PROJECT_STATE.md, AGENTS.md |
 
 ---
 
@@ -192,7 +195,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 You are continuing work on FitVision (repo: SAGETOAD-source/fitvision).
 1. Read AGENTS.md and PROJECT_STATE.md in the repo root before anything else.
 2. Follow AGENTS.md strictly: send a Change Plan (files to modify/create, nothing else touched) and wait for approval before editing.
-3. Current state: ML pipeline done for 6 exercises; FastAPI backend with JWT auth + sessions works; sklearn version fixed (1.9.0); 50 tests pass; frontend/deploy not started; DB is SQLite only.
+3. Current state: ML pipeline done for 6 exercises; FastAPI backend with JWT auth + sessions works; sklearn version fixed (1.9.0) and real-model test suite repaired (62 tests pass: 36 backend + 26 real-model assertions); frontend/deploy not started; DB is SQLite only.
 4. Next recommended task: "Dockerfile: run 1 worker (sessions are in-memory per process)" (item 2 in section 6).
 5. At the end, update PROJECT_STATE.md fully and show me the complete file.
 ```

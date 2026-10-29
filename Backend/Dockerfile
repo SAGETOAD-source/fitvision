@@ -44,4 +44,7 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Must stay 1 worker: sessions are held in-memory per process (SessionManager)
+# and the /predict rate limiter is per-process. Scaling to multiple workers
+# requires migrating session state and rate limiting to a shared store (Redis / DB).
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

@@ -8,7 +8,7 @@ in services/, HTTP shape lives in routers/ and models/.
 
 Run with:
     uvicorn app.main:app --reload          (dev)
-    uvicorn app.main:app --workers 4        (prod, behind a process manager)
+    uvicorn app.main:app --workers 1        (prod, must stay 1 until sessions live in Redis/DB)
 """
 
 import asyncio

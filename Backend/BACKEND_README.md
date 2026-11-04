@@ -78,13 +78,44 @@ To protect a new route, add `current_user: User = Depends(get_current_user)` as 
 
 ## Database
 
-SQLite by default (`fitvision.db`, created automatically on first run - zero setup). Swap to Postgres for production by changing one env var:
+SQLite by default (`fitvision.db`, created automatically on first run - zero setup). Swap to PostgreSQL (Neon) for staging and production by changing one env var:
 ```
-DATABASE_URL=postgresql://user:password@host:5432/fitvision
+DATABASE_URL=postgresql://neondb_owner:YOUR_PASSWORD@ep-sample-pooler.region.aws.neon.tech/neondb?sslmode=require
 ```
-No code changes needed either way - SQLModel/SQLAlchemy handle both identically.
 
-Tables (`User`, `UserProfile`) are auto-created on startup. This is fine while the schema is still settling; once you're in production and need to change columns without losing data, switch to Alembic migrations - `app/db/database.py`'s `engine` is what an Alembic `env.py` would import.
+### Using Postgres / Neon
+
+FitVision supports Neon PostgreSQL out-of-the-box:
+
+1. **Driver dialect normalization**: SQLModel/SQLAlchemy 2.0 uses the `postgresql+psycopg://` driver scheme for `psycopg` (v3). In `app/db/database.py`, incoming `postgresql://` and `postgres://` URLs are automatically normalized in one place.
+2. **Neon idle compute suspension**: Neon serverless branches suspend idle compute after ~5 minutes. To prevent broken socket errors (`SSL SYSCALL error: EOF detected` / connection closed), the database engine is configured with:
+   - `pool_pre_ping=True`: Verifies connection health with a lightweight ping before returning it from the pool, silently refreshing dead connections.
+   - `pool_recycle=300`: Recycles pooled connections every 5 minutes.
+   - Modest pool sizing (`pool_size=5`, `max_overflow=10`, `pool_timeout=30.0`).
+3. **Startup DDL vs Migrations**:
+   - For SQLite: `SQLModel.metadata.create_all(engine)` still runs automatically on startup for seamless local development and tests.
+   - For PostgreSQL: Tables are **never** auto-created on startup. Schema is managed strictly via Alembic migrations to avoid deploy-time DDL races across workers and schema drift.
+4. **Running migrations (Alembic)**:
+   ```bash
+   # From Backend/
+   # Run all pending migrations against DATABASE_URL:
+   alembic upgrade head
+
+   # Roll back last migration:
+   alembic downgrade -1
+
+   # Revert to clean slate:
+   alembic downgrade base
+
+   # Run migrations against TEST_DATABASE_URL:
+   ALEMBIC_USE_TEST_DB=1 alembic upgrade head
+   ```
+5. **Postgres Smoke Test**:
+   When `TEST_DATABASE_URL` is set, run the end-to-end integration smoke test (runs Alembic migrations, signup, login, session start/end, checks persisted row, and cleans up):
+   ```bash
+   pytest -v tests/test_postgres_smoke.py
+   ```
+   (If `TEST_DATABASE_URL` is unset, this test is cleanly skipped without failing).
 
 `UserProfile` already exists (mostly empty) so the onboarding flow (body goal, focus area) has somewhere to write once that UI is built - no migration fire drill needed when that day comes.
 

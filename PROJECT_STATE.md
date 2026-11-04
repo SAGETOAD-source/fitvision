@@ -3,8 +3,8 @@
 > Every AI agent: read this first. Update it at the end of every session (see AGENTS.md section 9).
 > Progress percentages are rough estimates, not measurements. Update honestly.
 
-**Last updated:** 2026-10-29 | **Session #:** 4
-**Updated by:** Antigravity (Gemini 3.8 Flash) — fix/docker-single-worker branch
+**Last updated:** 2026-11-04 | **Session #:** 5
+**Updated by:** Antigravity (Gemini 3.8 Flash) — feat/postgres-neon branch
 **Repo:** https://github.com/SAGETOAD-source/fitvision (branch `main`)
 **Owner:** Krishnendu | **Dev environment:** Windows, Antigravity IDE
 
@@ -33,12 +33,12 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
   - `routers/`: health, auth, exercises, sessions, predict (HTTP only, no business logic)
   - `services/`: prediction_service, rep_counter, model_registry, session_manager
   - `auth/`: bcrypt hashing + JWT (python-jose), `get_current_user` dependency
-  - `db/`: SQLModel; tables `User`, `UserProfile`, `WorkoutSession`; SQLite dev, Postgres planned
+  - `db/`: SQLModel; tables `User`, `UserProfile`, `WorkoutSession`; dual SQLite (dev/test) & Neon Postgres support via Alembic migrations
   - `models/schemas.py`: all request/response models
   - cross-cutting: config (pydantic-settings), middleware (request ID), exceptions (uniform error JSON), rate_limit (slowapi), logging
 - **Sessions:** in-memory per process (thread-safe, TTL sweep). Keyed by `user_id:session_id`.
 - **Frontend:** NOT STARTED (planned Next.js + MediaPipe.js).
-- **Deployment:** NOT STARTED (planned Railway / Render / Fly.io; DB planned: Neon Postgres). Dockerfile exists.
+- **Deployment:** NOT STARTED (planned Railway / Render / Fly.io; DB: Neon Postgres). Dockerfile exists.
 
 ### API endpoints (current)
 | Method | Path | Auth | Purpose |
@@ -56,7 +56,9 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 - Count on "up": squat, pushup. Count on "down": situp, pullup, jumpingjack, latpulldown.
 - `STABLE_FRAMES_REQUIRED = 4` in both RepCounter copies.
 - Latpulldown extra signal `torso` (lean) is NOT a classifier feature; it drives the "Avoid leaning back" warning (ceiling 18.0).
-- Models trained with scikit-learn 1.9.0. Backend requirements now match (1.9.0).
+- Models trained with scikit-learn 1.9.0. Backend requirements match (1.9.0).
+- Incoming `postgresql://` and `postgres://` URLs are normalized to `postgresql+psycopg://` in `database.py`.
+- Postgres schema is managed strictly via Alembic (`alembic upgrade head`); startup DDL is gated to SQLite only.
 
 ---
 
@@ -65,13 +67,13 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 | Area | Est. done | Notes |
 |---|---|---|
 | ML pipeline (6 exercises) | ~85% | Trained and running locally. Validation gaps (see Known issues). |
-| Backend core (auth, sessions, predict) | ~75% | Works with 62 test cases (36 backend API/unit + 26 real-model integration tests); missing endpoints below. |
-| Backend production hardening | ~30% | Workers aligned to in-memory sessions (1 worker). Secrets, rate limits on auth, logging, CORS pending. |
-| Database | ~30% | SQLite only. No migrations, no Postgres driver. |
+| Backend core (auth, sessions, predict) | ~80% | Works with 62 test cases (36 backend API/unit + 26 real-model integration tests) + 1 Postgres smoke test; missing endpoints below. |
+| Backend production hardening | ~35% | Workers aligned to in-memory sessions (1 worker). Secrets masked in DB startup log; rate limits on auth & CORS pending. |
+| Database | ~70% | Dual SQLite & Neon PostgreSQL supported; psycopg[binary]==3.3.7, Alembic migrations, pool pre-ping/recycle for Neon idle suspend, test_postgres_smoke.py. Timezone-aware datetimes and schema evolution pending. |
 | Auth | ~65% | Core works; hardening + token strategy pending. |
 | Frontend | 0% | Not started. |
-| Deployment / CI | ~10% | Dockerfile updated for single worker; model loading/build context strategy pending. |
-| **Overall** | **~38-42%** | Rough guess. |
+| Deployment / CI | ~15% | Dockerfile updated for single worker; Neon Postgres connected; Dockerfile Alembic packaging pending. |
+| **Overall** | **~45%** | Rough guess. |
 
 ---
 
@@ -92,28 +94,30 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 - [x] Added `test_real_models.py`: loads all 6 models, checks type, runs dummy predict, asserts no version warnings (session 2)
 - [x] Repaired `test_real_models.py` (session 3): replaced vacuous version warning check (`str(type(w.category))` never matched) with real `issubclass(w.category, InconsistentVersionWarning)` check; resolved `models_dir` via `Path(__file__).resolve().parents[2] / "models"` and patched settings cleanly via scoped MonkeyPatch; added hard-fail on missing individual .pkl files; parametrized model contract assertions over all 6 exercises (feature count, feature names order, classes subset containing down_state and up_states, valid predicted state label); loaded models once via module-scoped fixture. Verified failure (612 warnings) under sklearn 1.5.2 and clean pass under pinned 1.9.0.
 - [x] Dockerfile single worker fix (session 4): changed uvicorn `--workers` from 2 to 1 with an explanatory comment warning against multi-worker scaling until sessions/rate limits move to a shared store; updated `Backend/app/main.py` docstring guidance from `--workers 4` to `--workers 1`; verified locally that 2 workers causes ~50% spurious 404 session errors and 1 worker yields 0 errors.
+- [x] Neon PostgreSQL & Alembic migration support (session 5): added `psycopg[binary]==3.3.7` and `alembic==1.20.1` to `Backend/requirements.txt`; implemented URL normalization (`postgresql://` -> `postgresql+psycopg://`) and Neon connection pool settings (`pool_pre_ping=True`, `pool_recycle=300`) in `Backend/app/db/database.py`; gated startup table auto-creation to SQLite only; masked database credentials in startup logs in `Backend/app/main.py`; created `Backend/alembic.ini`, `alembic/env.py`, `script.py.mako`, and initial migration `0001_initial_schema.py` (verified reversible on Neon TEST DB: upgrade -> downgrade -> upgrade); verified 6-minute idle connection revival with 0 errors; created `Backend/tests/test_postgres_smoke.py` (passes with TEST_DATABASE_URL, cleanly skipped otherwise); verified live app against real Neon `DATABASE_URL` (GET /health/ready, user signup, login, user cleanup).
 
 ## 5. In progress
 
-- [ ] Nothing actively being built. Waiting for the user's decisions on the open decisions below.
+- [ ] Nothing actively being built. Waiting for user guidance on the next priority task.
 
 ## 6. Next (recommended order)
 
 1. [x] ~~Fix sklearn version mismatch and real-model tests~~ — DONE (sessions 2 & 3)
 2. [x] ~~Dockerfile: run 1 worker (sessions are in-memory per process)~~ — DONE (session 4)
-3. [ ] DECIDE: where the model + rep counter run (browser vs server) — see Open decisions
-4. [ ] Make exercise config pure data (no mediapipe/cv2 imports) and expose it via API for the frontend
-5. [ ] Auth hardening: prod secret check, rate limit on login/signup, email validation + lowercase, handle duplicate-signup race, replace/upgrade python-jose, token strategy (short access + refresh)
-6. [ ] DB: add `psycopg`, Alembic, engine pool settings (`pool_pre_ping`), timezone-aware datetimes, richer `WorkoutSession`, indexes
-7. [ ] New endpoints: workout history, stats, profile/onboarding (UserProfile), routines
-8. [ ] Save sessions that time out (TTL sweep currently deletes them without saving)
-9. [ ] Provision Postgres (Neon) and set `DATABASE_URL` via env
-10. [ ] CORS: lock to real frontend origin
-11. [ ] Browser-vs-Python MediaPipe angle parity check
-12. [ ] Ground-truth rep-count regression test per raw video
-13. [ ] Rename `Backend/` -> `backend/` (case issue on Linux) — only with explicit approval
-14. [ ] Frontend (Next.js + MediaPipe.js) with TypeScript client generated from OpenAPI
-15. [ ] Deploy + CI
+3. [x] ~~DB: add psycopg, Alembic, engine pool settings (pool_pre_ping), smoke tests~~ — DONE (session 5)
+4. [ ] DECIDE: where the model + rep counter run (browser vs server) — see Open decisions
+5. [ ] Make exercise config pure data (no mediapipe/cv2 imports) and expose it via API for the frontend
+6. [ ] Auth hardening: prod secret check, rate limit on login/signup, email validation + lowercase, handle duplicate-signup race, replace/upgrade python-jose, token strategy (short access + refresh)
+7. [ ] Dockerfile: package Alembic files (`alembic.ini`, `alembic/`) into runtime container image
+8. [ ] DB schema evolution: timezone-aware datetimes (`sa.DateTime(timezone=True)` / `timestamptz`), indexes, richer `WorkoutSession`
+9. [ ] New endpoints: workout history, stats, profile/onboarding (UserProfile), routines
+10. [ ] Save sessions that time out (TTL sweep currently deletes them without saving)
+11. [ ] CORS: lock to real frontend origin
+12. [ ] Browser-vs-Python MediaPipe angle parity check
+13. [ ] Ground-truth rep-count regression test per raw video
+14. [ ] Rename `Backend/` -> `backend/` (case issue on Linux) — only with explicit approval
+15. [ ] Frontend (Next.js + MediaPipe.js) with TypeScript client generated from OpenAPI
+16. [ ] Deploy + CI
 
 ---
 
@@ -131,7 +135,7 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 | 8 | Med | Default JWT secret is the dev value; no startup guard for production. |
 | 9 | Med | `python-jose` 3.3.0 has known CVEs. |
 | 10 | Med | Email not validated or lowercased; duplicate-signup race returns 500. |
-| 11 | Med | No Postgres driver in `Backend/requirements.txt`; no Alembic; datetimes naive. |
+| 11 | Resolved | Added psycopg[binary]==3.3.7, Alembic migrations with reversible initial schema, and connection pooling settings (pool_pre_ping=True, pool_recycle=300) for Neon idle compute suspension. Timezone awareness (naive timestamps) deferred to schema evolution task. |
 | 12 | Med | CORS `*` with credentials (TODO already in main.py). |
 | 13 | Low | Logging formatter requires `request_id` but filter is per-logger, not on the handler; 500 responses probably show request_id "-". |
 | 14 | Low | `RATE_LIMIT_DEFAULT` defined but unused. |
@@ -143,6 +147,9 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 | 20 | Low | UserWarning on prediction: "X does not have valid feature names, but RandomForestClassifier was fitted with feature names". Backend calls model.predict with a plain 2D feature list without column names; decision on pandas/DataFrame named columns vs warning filtering deferred. |
 | 21 | High | Docker image contains no models: lines `COPY models/ ../models/` are commented out in `Backend/Dockerfile` and build context is `Backend/` while `models/` is at repo root. Decision needed: build from repo root with `-f Backend/Dockerfile` (moving `.dockerignore`), mount `models/` as a volume, or download at container startup. |
 | 22 | Low | Squat model classes in `models/rf_squat_model.pkl` are `squat_down` and `squat_up` only; config in `exercises_config.py` lists "standing" as an extra up state that the model never predicts (standing is currently handled as an accepted state in RepCounter rather than an output of the binary classifier). |
+| 23 | Med | Docker image does not package Alembic: Backend/Dockerfile copies only app/, omitting alembic.ini and alembic/ directory. Migration execution inside container requires adding COPY alembic/ and alembic.ini in Dockerfile. |
+| 24 | Low | PostgreSQL datetime columns created as 'timestamp without time zone': SQLModel models specify datetime.now(timezone.utc) in python default factories, but sa.DateTime defaults to timezone=False, storing naive timestamps in Postgres. Explicit sa.DateTime(timezone=True) / timestamptz needed in future migration. |
+| 25 | Low | Case-sensitive email comparison on Postgres: SQLite '=' comparisons depend on collation, but PostgreSQL '=' is case-sensitive by default. A user who registers as John@example.com cannot log in as john@example.com on Postgres until email lowercasing/citext is implemented. |
 
 ---
 
@@ -152,7 +159,9 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 - Auth = own email+password JWT (not third-party).
 - Video never leaves the browser.
 - One config file drives all exercises; adding an exercise = add a config entry + model.
-- DB planned: Postgres via Neon (frontend must NOT talk to DB directly; all through FastAPI).
+- DB: PostgreSQL via Neon (frontend must NOT talk to DB directly; all through FastAPI).
+- Tables on Postgres are not auto-created on startup (managed via Alembic); SQLite keeps auto-create for local dev / test suite.
+- Engine uses psycopg 3 (psycopg[binary]) with transparent URL normalization (`postgresql://` -> `postgresql+psycopg://`) and pool_pre_ping=True / pool_recycle=300 for Neon idle compute suspension.
 - Dev in Antigravity; AI agents follow `AGENTS.md`.
 
 ### Open (user must decide)
@@ -165,14 +174,19 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 
 ## 9. How to run / test
 
-```
+```bash
 # Backend (from Backend/)
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements-dev.txt
 copy .env.example .env
 uvicorn app.main:app --reload       # docs at http://localhost:8000/docs
-pytest
+pytest                              # runs SQLite regression suite (62 tests)
+pytest tests/test_postgres_smoke.py # runs Postgres smoke test (requires TEST_DATABASE_URL)
+
+# Alembic migrations (from Backend/)
+alembic upgrade head                # applies migrations to DATABASE_URL
+alembic downgrade base              # reverts all migrations
 
 # ML live demo (from src/)
 python live_predict.py squat
@@ -190,6 +204,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 | 2 | 2026-10-27 | Antigravity (Claude Opus 4.6) | Bumped scikit-learn 1.5.2→1.9.0 in Backend/requirements.txt; created Backend/tests/test_real_models.py (14 new tests); all 50 tests pass, 0 version warnings | Backend/requirements.txt, Backend/tests/test_real_models.py, PROJECT_STATE.md |
 | 3 | 2026-10-29 | Antigravity (Gemini 3.8 Flash) | Repaired Backend/tests/test_real_models.py (fixed vacuous version warning check, resolved models_dir from test file location, scoped get_settings patch, contract assertions for feature order and classes, valid-state predict check, module-scoped fixture). Verified failure under scikit-learn 1.5.2 and passing suite (62 tests) under 1.9.0. | Backend/tests/test_real_models.py, PROJECT_STATE.md |
 | 4 | 2026-10-29 | Antigravity (Gemini 3.8 Flash) | Set uvicorn workers to 1 in Backend/Dockerfile with explanatory comment; updated Backend/app/main.py docstring guidance; reproduced and verified fix for multi-worker 404 session bug locally; verified /health/ready 503 behavior on missing models; 62 tests pass. | Backend/Dockerfile, Backend/app/main.py, PROJECT_STATE.md |
+| 5 | 2026-11-04 | Antigravity (Gemini 3.8 Flash) | Added PostgreSQL (Neon) support, psycopg[binary]==3.3.7, Alembic migrations (reversible initial schema), pool pre-ping/recycle for Neon 5-min idle suspension, masked DB URL logging, Backend/tests/test_postgres_smoke.py, verified live Neon test and real DB | Backend/requirements.txt, Backend/app/db/database.py, Backend/app/main.py, Backend/alembic.ini, Backend/alembic/*, Backend/tests/test_postgres_smoke.py, Backend/.env.example, Backend/BACKEND_README.md, PROJECT_STATE.md |
 
 ---
 
@@ -199,7 +214,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 You are continuing work on FitVision (repo: SAGETOAD-source/fitvision).
 1. Read AGENTS.md and PROJECT_STATE.md in the repo root before anything else.
 2. Follow AGENTS.md strictly: send a Change Plan (files to modify/create, nothing else touched) and wait for approval before editing.
-3. Current state: ML pipeline done for 6 exercises; FastAPI backend with JWT auth + sessions works; sklearn version fixed (1.9.0) and real-model test suite repaired (62 tests pass); Dockerfile configured for 1 worker matching in-memory session design; frontend/deploy not started; DB is SQLite only.
-4. Next recommended task: "DECIDE: where the model + rep counter run (browser vs server)" (item 3 in section 6) or "Make exercise config pure data (no mediapipe/cv2 imports) and expose it via API for the frontend" (item 4 in section 6).
+3. Current state: ML pipeline done for 6 exercises; FastAPI backend with JWT auth + sessions works; sklearn version fixed (1.9.0) and real-model test suite passes (62 tests); Dockerfile configured for 1 worker matching in-memory session design; PostgreSQL (Neon) support fully operational with Alembic migrations, connection resilience (pool_pre_ping=True, pool_recycle=300), and automated smoke tests; frontend/deploy not started.
+4. Next recommended task: "DECIDE: where the model + rep counter run (browser vs server)" (item 4 in section 6) or "Make exercise config pure data (no mediapipe/cv2 imports) and expose it via API for the frontend" (item 5 in section 6), or "Auth hardening" (item 6 in section 6).
 5. At the end, update PROJECT_STATE.md fully and show me the complete file.
 ```

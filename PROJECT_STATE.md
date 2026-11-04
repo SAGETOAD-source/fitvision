@@ -3,8 +3,8 @@
 > Every AI agent: read this first. Update it at the end of every session (see AGENTS.md section 9).
 > Progress percentages are rough estimates, not measurements. Update honestly.
 
-**Last updated:** 2026-11-04 | **Session #:** 6
-**Updated by:** Antigravity (Gemini 3.8 Flash) — feat/database-correctness branch
+**Last updated:** 2026-11-04 | **Session #:** 7
+**Updated by:** Antigravity (Gemini 3.8 Flash) — docs/roadmap-and-known-issues branch
 **Repo:** https://github.com/SAGETOAD-source/fitvision (branch `main`)
 **Owner:** Krishnendu | **Dev environment:** Windows, Antigravity IDE
 
@@ -105,21 +105,23 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 
 ## 6. Next (recommended order)
 
+### Done
 1. [x] ~~Fix sklearn version mismatch and real-model tests~~ — DONE (sessions 2 & 3)
 2. [x] ~~Dockerfile: run 1 worker (sessions are in-memory per process)~~ — DONE (session 4)
 3. [x] ~~DB: add psycopg, Alembic, engine pool settings (pool_pre_ping), smoke tests~~ — DONE (session 5)
 4. [x] ~~DB correctness: TIMESTAMPTZ datetimes, email lowercasing/validation, Dockerfile alembic packaging~~ — DONE (session 6)
-5. [ ] DECIDE: where the model + rep counter run (browser vs server) — see Open decisions
-6. [ ] Make exercise config pure data (no mediapipe/cv2 imports) and expose it via API for the frontend
-7. [ ] Auth hardening: prod secret check, rate limit on login/signup, replace/upgrade python-jose, token strategy (short access + refresh)
-8. [ ] New endpoints: workout history, stats, profile/onboarding (UserProfile), routines
-9. [ ] Save sessions that time out (TTL sweep currently deletes them without saving)
-10. [ ] CORS: lock to real frontend origin
-11. [ ] Browser-vs-Python MediaPipe angle parity check
-12. [ ] Ground-truth rep-count regression test per raw video
-13. [ ] Rename `Backend/` -> `backend/` (case issue on Linux) — only with explicit approval
-14. [ ] Frontend (Next.js + MediaPipe.js) with TypeScript client generated from OpenAPI
-15. [ ] Deploy + CI
+
+### Roadmap
+1. [ ] Database correctness (in progress, branch feat/database-correctness)
+2. [ ] Contract and session fixes: items 1, 5, 10, 11, 12
+3. [ ] Auth hardening: items 7, 8, 9, 14, plus token strategy, CORS and a login/signup rate limit, and replacing python-jose
+4. [ ] Deployment readiness: items 2, 3, 4, 13, 15
+5. [ ] Exercise config as pure data + API (needs the browser-vs-server decision first)
+6. [ ] Profile, onboarding, history, stats, routines endpoints (item 6)
+7. [ ] Frontend foundation, then the live workout
+
+### Before launch
+- [ ] Rotate the Neon `neondb_owner` password and create a limited app DB role.
 
 ---
 
@@ -152,6 +154,25 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 | 23 | Resolved | Dockerfile copies `alembic/` and `alembic.ini` into runtime image (resolved in session 6). |
 | 24 | Resolved | All datetime columns converted to TIMESTAMPTZ (`timestamp with time zone`) via migration 0002 with explicit `USING <col> AT TIME ZONE 'UTC'` on upgrade and downgrade (resolved in session 6). |
 | 25 | Resolved | Case-sensitive email comparison on Postgres eliminated through Pydantic email validation and normalization on both signup and login (resolved in session 6). |
+| 26 (Review #1) | High | /predict uses the exercise from the request body, not the session's exercise. A squat session can get exercise "pushup" and produce garbage. Store the exercise in the session and ignore the body. (found in review, not yet verified by running) |
+| 27 (Review #2) | High | The rate limiter keys on client IP. Behind a proxy (Render/Railway) all users share one limit. Needs proxy headers or a per-user key. (found in review, not yet verified by running) |
+| 28 (Review #3) | High | The Dockerfile build context is Backend/, but models live in ../models, which Docker can't COPY. A deployed container would have no models and /health/ready would return 503. (found in review, not yet verified by running) |
+| 29 (Review #4) | High | /health/ready doesn't check the database. (found in review, not yet verified by running) |
+| 30 (Review #5) | High | The session TTL sweep deletes timed-out sessions without saving the workout (the models.py docstring says otherwise). (found in review, not yet verified by running) |
+| 31 (Review #6) | High | No history, stats, profile, onboarding or routine endpoints. The UserProfile table is unused. (found in review, not yet verified by running) |
+| 32 (Review #7) | Med | Duplicate signup race: two simultaneous signups hit the unique constraint and return 500 instead of 409. (found in review, not yet verified by running) |
+| 33 (Review #8) | Med | Signup allows 128-char passwords, but bcrypt only uses the first 72 bytes. (found in review, not yet verified by running) |
+| 34 (Review #9) | Med | Login timing leak: an unknown email returns faster than a wrong password. (found in review, not yet verified by running) |
+| 35 (Review #10) | Med | No range checks on signals: NaN, inf and absurd angles are accepted. (found in review, not yet verified by running) |
+| 36 (Review #11) | Med | POST /session/end takes session_id as a query parameter instead of the body. (found in review, not yet verified by running) |
+| 37 (Review #12) | Med | No API version prefix (/v1). (found in review, not yet verified by running) |
+| 38 (Review #13) | Med | /docs and /health are public in production. (found in review, not yet verified by running) |
+| 39 (Review #14) | Med | No guard against the default JWT secret when ENVIRONMENT=production. (found in review, not yet verified by running) |
+| 40 (Review #15) | Low | The logging formatter needs request_id, so third-party log records without it can fail. Crash responses probably show request_id "-" (unverified). (found in review, not yet verified by running) |
+| 41 (Review #16) | Low | 19 log CSVs are still tracked in git even though logs/ is in .gitignore. (found in review, not yet verified by running) |
+| 42 (Review #17) | Low | There is no CI. (found in review, not yet verified by running) |
+| 43 (Review #18) | Low | python-jose is stale and passlib is unmaintained. (found in review, not yet verified by running) |
+| 44 (Review #19) | Low | README is outdated: uvicorn path should be app.main:app, it lists 5 exercises instead of 6, and the test count is wrong. (found in review, not yet verified by running) |
 
 ---
 
@@ -169,7 +190,7 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 - Dev in Antigravity; AI agents follow `AGENTS.md`.
 
 ### Open (user must decide)
-1. Where does the model + RepCounter run: **browser** (recommended, fits privacy) or **server** over WebSocket?
+1. Where does the model + RepCounter run: **browser** (recommended, fits privacy) or **server** over WebSocket? (This decides the per-frame rate-limit problem).
 2. Token strategy: short access token + httpOnly refresh cookie, or keep a long bearer token?
 3. Keep Random Forest, or replace with simple thresholds + hysteresis (easier to port to the browser)?
 4. Add biceps curl as a 7th exercise now or later?
@@ -210,6 +231,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 | 4 | 2026-10-29 | Antigravity (Gemini 3.8 Flash) | Set uvicorn workers to 1 in Backend/Dockerfile with explanatory comment; updated Backend/app/main.py docstring guidance; reproduced and verified fix for multi-worker 404 session bug locally; verified /health/ready 503 behavior on missing models; 62 tests pass. | Backend/Dockerfile, Backend/app/main.py, PROJECT_STATE.md |
 | 5 | 2026-11-04 | Antigravity (Gemini 3.8 Flash) | Added PostgreSQL (Neon) support, psycopg[binary]==3.3.7, Alembic migrations (reversible initial schema), pool pre-ping/recycle for Neon 5-min idle suspension, masked DB URL logging, Backend/tests/test_postgres_smoke.py, verified live Neon test and real DB | Backend/requirements.txt, Backend/app/db/database.py, Backend/app/main.py, Backend/alembic.ini, Backend/alembic/*, Backend/tests/test_postgres_smoke.py, Backend/.env.example, Backend/BACKEND_README.md, PROJECT_STATE.md |
 | 6 | 2026-11-04 | Antigravity (Gemini 3.8 Flash) | Database correctness: TIMESTAMPTZ datetimes (migration 0002 with explicit UTC USING clauses), email lowercasing & validation, Dockerfile Alembic packaging, added 3 auth unit tests and 2 Postgres smoke assertions (68 tests pass) | Backend/app/db/models.py, Backend/alembic/versions/0002_timezone_aware_datetimes.py, Backend/app/models/schemas.py, Backend/Dockerfile, Backend/tests/test_auth.py, Backend/tests/test_postgres_smoke.py, PROJECT_STATE.md |
+| 7 | 2026-11-04 | Antigravity (Gemini 3.8 Flash) | Added 19 code review findings (items 1–19) to Known issues, restructured Next list into 7-phase roadmap, added Before launch section (Neon password rotation/app role), and refined browser-vs-server open decision | PROJECT_STATE.md |
 
 ---
 
@@ -219,7 +241,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 You are continuing work on FitVision (repo: SAGETOAD-source/fitvision).
 1. Read AGENTS.md and PROJECT_STATE.md in the repo root before anything else.
 2. Follow AGENTS.md strictly: send a Change Plan (files to modify/create, nothing else touched) and wait for approval before editing.
-3. Current state: ML pipeline done for 6 exercises; FastAPI backend with JWT auth + sessions works; sklearn version fixed (1.9.0); full test suite passes (68 tests: 39 unit/API + 26 real-model + 3 Postgres smoke); Dockerfile configured for 1 worker and packages Alembic; PostgreSQL (Neon) support fully operational with TIMESTAMPTZ datetimes, connection resilience (pool_pre_ping=True, pool_recycle=300), email validation + lowercasing, and automated smoke tests; frontend/deploy not started. Note: Migration 0002 is verified on TEST_DATABASE_URL and ready to be applied to DATABASE_URL whenever decided.
-4. Next recommended task: "DECIDE: where the model + rep counter run (browser vs server)" (item 5 in section 6) or "Make exercise config pure data (no mediapipe/cv2 imports) and expose it via API for the frontend" (item 6 in section 6), or "Auth hardening: prod secret check, rate limit on login/signup, token strategy" (item 7 in section 6).
+3. Current state: ML pipeline done for 6 exercises; FastAPI backend with JWT auth + sessions works; sklearn version fixed (1.9.0); full test suite passes (68 tests: 39 unit/API + 26 real-model + 3 Postgres smoke); Dockerfile configured for 1 worker and packages Alembic; PostgreSQL (Neon) support fully operational with TIMESTAMPTZ datetimes, connection resilience (pool_pre_ping=True, pool_recycle=300), email validation + lowercasing, and automated smoke tests; frontend/deploy not started. Note: Migration 0002 is verified on TEST_DATABASE_URL and ready to be applied to DATABASE_URL whenever decided. Known issues updated with 19 code review findings (items 1–19) and Next tasks reprioritized into 7-phase roadmap.
+4. Next recommended task: "Contract and session fixes: items 1, 5, 10, 11, 12" (item 2 in section 6 roadmap).
 5. At the end, update PROJECT_STATE.md fully and show me the complete file.
 ```

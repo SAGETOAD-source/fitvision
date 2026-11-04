@@ -7,9 +7,26 @@ from the route handlers (routers/) and from business logic
 its own, and easy to reuse in tests.
 """
 
+import re
 from typing import Dict, Optional
 
 from pydantic import BaseModel, Field, field_validator
+
+# RFC 5322 compliant practical email pattern requiring valid local-part and domain with TLD
+EMAIL_REGEX = re.compile(
+    r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$"
+)
+
+
+def validate_and_normalize_email(v: str) -> str:
+    if not isinstance(v, str):
+        raise ValueError("Email must be a string")
+    normalized = v.strip().lower()
+    if not normalized or len(normalized) > 254:
+        raise ValueError("Invalid email length")
+    if not EMAIL_REGEX.match(normalized):
+        raise ValueError("Invalid email format")
+    return normalized
 
 
 class ExerciseInfo(BaseModel):
@@ -71,10 +88,20 @@ class SignupRequest(BaseModel):
     email: str
     password: str = Field(..., min_length=8, max_length=128)
 
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        return validate_and_normalize_email(v)
+
 
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        return validate_and_normalize_email(v)
 
 
 class TokenResponse(BaseModel):

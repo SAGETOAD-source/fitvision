@@ -9,6 +9,7 @@ history persistence (WorkoutSession). WorkoutSession is written on
 from datetime import datetime, timezone
 from typing import Optional
 
+import sqlalchemy as sa
 from sqlmodel import Field, SQLModel
 
 
@@ -16,7 +17,10 @@ class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     email: str = Field(unique=True, index=True)
     hashed_password: str
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_type=sa.DateTime(timezone=True),
+    )
     is_active: bool = Field(default=True)
 
 
@@ -33,7 +37,10 @@ class UserProfile(SQLModel, table=True):
     body_goal: Optional[str] = Field(default=None)  # "slim" | "muscular" | "bulk"
     focus_area: Optional[str] = Field(default=None)  # e.g. "legs", "upper_body", None = balanced
     onboarding_completed: bool = Field(default=False)
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_type=sa.DateTime(timezone=True),
+    )
 
 
 class WorkoutSession(SQLModel, table=True):
@@ -50,5 +57,8 @@ class WorkoutSession(SQLModel, table=True):
     session_id: str = Field(index=True)
     exercise: str
     rep_count: int
-    started_at: datetime
-    ended_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    started_at: datetime = Field(sa_type=sa.DateTime(timezone=True))
+    ended_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_type=sa.DateTime(timezone=True),
+    )

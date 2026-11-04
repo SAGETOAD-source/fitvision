@@ -30,6 +30,8 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 COPY app/ ./app/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
 # Trained models are expected to live at ../models relative to this
 # working directory, matching exercises_config.py's model_path
 # entries - mount or COPY them in depending on your deploy target.

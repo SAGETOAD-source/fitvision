@@ -57,3 +57,51 @@ def test_me_rejects_garbage_token(client):
     resp = client.get("/auth/me", headers={"Authorization": "Bearer not-a-real-token"})
     assert resp.status_code == 401
     assert resp.json()["error"] == "InvalidCredentialsError"
+
+
+def test_signup_invalid_email_format_rejected(client):
+    invalid_emails = [
+        "not-an-email",
+        "user@",
+        "@example.com",
+        "user@domain",
+        "user name@domain.com",
+        "user@.com",
+    ]
+    for email in invalid_emails:
+        resp = client.post("/auth/signup", json={"email": email, "password": "correcthorse123"})
+        assert resp.status_code == 422, f"Expected 422 for email: {email}"
+
+
+def test_login_invalid_email_format_rejected(client):
+    resp = client.post("/auth/login", json={"email": "invalid-email-format", "password": "correcthorse123"})
+    assert resp.status_code == 422
+
+
+def test_signup_and_login_case_insensitive_normalized(client):
+    signup_resp = client.post(
+        "/auth/signup",
+        json={"email": "  MixedCase.User@Example.COM  ", "password": "correcthorse123"}
+    )
+    assert signup_resp.status_code == 200
+
+    # Duplicate registration with different case is rejected
+    dup_resp = client.post(
+        "/auth/signup",
+        json={"email": "mixedcase.user@example.com", "password": "differentpassword"}
+    )
+    assert dup_resp.status_code == 409
+    assert dup_resp.json()["error"] == "EmailAlreadyRegisteredError"
+
+    # Login with all uppercase email works
+    login_resp = client.post(
+        "/auth/login",
+        json={"email": "MIXEDCASE.USER@EXAMPLE.COM", "password": "correcthorse123"}
+    )
+    assert login_resp.status_code == 200
+    token = login_resp.json()["access_token"]
+
+    # Verify /auth/me returns the normalized lowercase email
+    me_resp = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert me_resp.status_code == 200
+    assert me_resp.json()["email"] == "mixedcase.user@example.com"

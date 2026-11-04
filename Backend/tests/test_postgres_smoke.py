@@ -13,6 +13,8 @@ Verifies:
 5. Starting and ending a session (/session/start, /session/end) persists a
    WorkoutSession row in PostgreSQL.
 6. All test data created during the run is cleaned up.
+7. Datetime columns in Postgres are TIMESTAMPTZ (timestamp with time zone).
+8. Mixed-case emails are normalized and work seamlessly on PostgreSQL.
 """
 
 import os
@@ -21,6 +23,7 @@ import uuid
 import pytest
 from dotenv import dotenv_values
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 from sqlmodel import Session, select
 
 from app.db.database import create_db_engine, get_session
@@ -175,4 +178,75 @@ def test_postgres_end_to_end_smoke(pg_engine):
 
             session.commit()
 
+        app.dependency_overrides.clear()
+
+
+def test_postgres_timezone_aware_columns(pg_engine):
+    """Verify that all datetime columns in Postgres are TIMESTAMPTZ."""
+    with pg_engine.connect() as conn:
+        query = text("""
+            SELECT table_name, column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+              AND column_name IN ('created_at', 'updated_at', 'started_at', 'ended_at')
+            ORDER BY table_name, column_name;
+        """)
+        rows = conn.execute(query).mappings().all()
+        column_types = {f"{r['table_name']}.{r['column_name']}": r['data_type'] for r in rows}
+
+        expected_columns = [
+            "user.created_at",
+            "userprofile.updated_at",
+            "workoutsession.started_at",
+            "workoutsession.ended_at",
+        ]
+        for col in expected_columns:
+            assert col in column_types, f"Column {col} not found in PostgreSQL schema"
+            assert column_types[col] == "timestamp with time zone", (
+                f"Expected {col} to be 'timestamp with time zone', got '{column_types[col]}'"
+            )
+
+
+def test_postgres_email_case_insensitivity_and_normalization(pg_engine):
+    """Verify that mixed-case emails are normalized and match correctly on PostgreSQL."""
+    unique_suffix = uuid.uuid4().hex[:8]
+    mixed_email = f"PG_MixedCase_{unique_suffix}@FitVision.Test"
+    expected_normalized = mixed_email.strip().lower()
+    test_password = "SmokeTestPassword123!"
+
+    def get_test_pg_session():
+        with Session(pg_engine) as session:
+            yield session
+
+    app.dependency_overrides[get_session] = get_test_pg_session
+
+    user_id = None
+    try:
+        with TestClient(app) as client:
+            signup_resp = client.post(
+                "/auth/signup",
+                json={"email": mixed_email, "password": test_password},
+            )
+            assert signup_resp.status_code == 200
+
+            # Log in using lowercase
+            login_resp = client.post(
+                "/auth/login",
+                json={"email": expected_normalized, "password": test_password},
+            )
+            assert login_resp.status_code == 200
+            token = login_resp.json()["access_token"]
+
+            me_resp = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+            assert me_resp.status_code == 200
+            assert me_resp.json()["email"] == expected_normalized
+            user_id = me_resp.json()["id"]
+
+    finally:
+        with Session(pg_engine) as session:
+            if user_id:
+                user_to_del = session.exec(select(User).where(User.id == user_id)).first()
+                if user_to_del:
+                    session.delete(user_to_del)
+                session.commit()
         app.dependency_overrides.clear()

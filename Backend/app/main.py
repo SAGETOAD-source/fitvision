@@ -19,7 +19,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.config import get_settings
-from app.db.database import init_db
+from app.db.database import engine, init_db
 from app.exceptions import register_exception_handlers
 from app.logging_config import configure_logging, get_logger
 from app.middleware import RequestContextMiddleware
@@ -55,11 +55,11 @@ async def lifespan(app: FastAPI):
 
     logger.info(f"Starting {settings.app_name} in '{settings.environment}' mode")
 
-    # Create DB tables if they don't exist yet. Fine for this phase;
-    # switch to Alembic migrations once the schema needs to evolve
-    # without losing existing data.
+    # Create DB tables if they don't exist yet (SQLite only).
+    # For Postgres, migrations are applied via Alembic ('alembic upgrade head').
     init_db()
-    logger.info(f"Database ready at {settings.database_url}")
+    masked_url = engine.url.render_as_string(hide_password=True)
+    logger.info(f"Database ready at {masked_url}")
 
     # Load all trained models into memory once, up front. If any are
     # missing, we log it and keep running - /predict for that specific

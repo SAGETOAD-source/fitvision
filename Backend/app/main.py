@@ -24,7 +24,7 @@ from app.exceptions import register_exception_handlers
 from app.logging_config import configure_logging, get_logger
 from app.middleware import RequestContextMiddleware
 from app.rate_limit import limiter
-from app.routers import auth, exercises, health, predict, sessions
+from app.routers import auth, exercises, health, predict, profile, routines, sessions, stats, workouts
 from app.services.model_registry import model_registry
 from app.services.session_manager import init_session_manager
 
@@ -127,6 +127,10 @@ def create_app() -> FastAPI:
     app.include_router(exercises.router, prefix="/v1")         # /v1/exercises
     app.include_router(sessions.router,  prefix="/v1")         # /v1/session/...
     app.include_router(predict.router,   prefix="/v1")         # /v1/predict
+    app.include_router(profile.router,   prefix="/v1")         # /v1/profile
+    app.include_router(routines.router,  prefix="/v1")         # /v1/routines
+    app.include_router(workouts.router,  prefix="/v1")         # /v1/workouts
+    app.include_router(stats.router,     prefix="/v1")         # /v1/stats
 
     return app
 

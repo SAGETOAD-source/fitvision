@@ -56,9 +56,15 @@ All application routes use the `/v1` prefix, except health checks:
 | `POST` | `/v1/auth/signup` | No | Register new user (email validated and normalized to lowercase) |
 | `POST` | `/v1/auth/login` | No | Authenticate and obtain JWT access token |
 | `GET` | `/v1/auth/me` | Yes | Get profile of currently authenticated user |
+| `GET` | `/v1/profile` | Yes | Get onboarding profile (`body_goal`, `focus_area`, `onboarding_completed`) |
+| `PUT` | `/v1/profile` | Yes | Upsert onboarding profile (`slim`/`muscular`/`bulk`, `legs`/`upper_body`/`core`) |
+| `GET` | `/v1/routines` | No | Rules-based routine recommendation by `goal` and optional `focus` |
 | `POST` | `/v1/session/start` | Yes | Start a rep-counting session for an exercise |
 | `POST` | `/v1/predict` | Yes | Send joint angles -> get state prediction, rep count, and feedback |
 | `POST` | `/v1/session/end` | Yes | End session via JSON body `{"session_id": "..."}` and save workout summary |
+| `POST` | `/v1/workouts` | Yes | Manually record completed workout with server-side UUID session ID |
+| `GET` | `/v1/workouts` | Yes | Query paginated workout history (newest first, limit/offset) |
+| `GET` | `/v1/stats` | Yes | Personal training stats (totals, reps per exercise, UTC streak, 7-day breakdown) |
 
 ---
 
@@ -153,7 +159,7 @@ uvicorn app.main:app --reload
 
 ## 🧪 Testing
 
-- **Automated tests:** 76 passing — unit tests for rep-counting logic, real-model integration tests, schema/route validation, plus auth and Postgres smoke tests against an isolated SQLite DB or real Neon Postgres
+- **Automated tests:** 105 passing — unit tests for rep-counting logic, real-model integration tests, schema/route validation, profile & routine rules, workout history & stats calculations, plus auth and Postgres smoke tests against an isolated SQLite DB or real Neon Postgres
 - **Manual validation:** end-to-end tested via PowerShell (session start → live prediction with debounced state transitions → correct rep counting with depth feedback → session end)
 
 ---

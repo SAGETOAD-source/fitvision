@@ -9,6 +9,7 @@ its own, and easy to reuse in tests.
 
 import math
 import re
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, field_validator
@@ -162,3 +163,110 @@ class UserPublic(BaseModel):
     id: int
     email: str
     created_at: str
+
+
+# --- Profile ---
+
+class ProfileResponse(BaseModel):
+    body_goal: Optional[str] = None
+    focus_area: Optional[str] = None
+    onboarding_completed: bool = False
+
+
+class UpdateProfileRequest(BaseModel):
+    body_goal: str
+    focus_area: Optional[str] = None
+
+    @field_validator("body_goal")
+    @classmethod
+    def validate_body_goal(cls, v: str) -> str:
+        allowed = {"slim", "muscular", "bulk"}
+        if v not in allowed:
+            raise ValueError(f"body_goal must be one of {sorted(allowed)}")
+        return v
+
+    @field_validator("focus_area")
+    @classmethod
+    def validate_focus_area(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            allowed = {"legs", "upper_body", "core"}
+            if v not in allowed:
+                raise ValueError(f"focus_area must be one of {sorted(allowed)} or null")
+        return v
+
+
+# --- Routines ---
+
+class RoutineExercise(BaseModel):
+    exercise: str
+    sets: int
+    reps: int
+
+
+class RoutineResponse(BaseModel):
+    goal: str
+    focus: Optional[str] = None
+    exercises: List[RoutineExercise]
+
+
+# --- Workouts (History) ---
+
+class CreateWorkoutRequest(BaseModel):
+    exercise: str
+    rep_count: int = Field(..., ge=0, le=1000)
+    started_at: datetime
+    ended_at: datetime
+
+    @field_validator("exercise")
+    @classmethod
+    def validate_exercise_exists(cls, v: str) -> str:
+        from app.exercises_config import EXERCISES
+        if v not in EXERCISES:
+            raise ValueError(
+                f"Unknown exercise '{v}'. Available: {', '.join(sorted(EXERCISES.keys()))}"
+            )
+        return v
+
+    @field_validator("ended_at")
+    @classmethod
+    def validate_dates_order(cls, v: datetime, info) -> datetime:
+        started_at = info.data.get("started_at")
+        if started_at is not None:
+            if v < started_at:
+                raise ValueError("ended_at must be greater than or equal to started_at")
+            duration_seconds = (v - started_at).total_seconds()
+            if duration_seconds > 3 * 3600:
+                raise ValueError("Workout duration cannot exceed 3 hours")
+        return v
+
+
+class WorkoutResponse(BaseModel):
+    id: int
+    session_id: str
+    exercise: str
+    rep_count: int
+    started_at: datetime
+    ended_at: datetime
+
+
+class WorkoutListResponse(BaseModel):
+    workouts: List[WorkoutResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+# --- Stats ---
+
+class DailyReps(BaseModel):
+    date: str  # YYYY-MM-DD (UTC)
+    reps: int
+
+
+class StatsResponse(BaseModel):
+    total_workouts: int
+    total_reps: int
+    reps_per_exercise: Dict[str, int]
+    current_streak_days: int
+    reps_last_7_days: List[DailyReps]
+

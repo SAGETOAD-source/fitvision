@@ -9,6 +9,7 @@ format - and stack traces never leak to the client, only to logs.
 """
 
 from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.logging_config import get_logger
@@ -44,11 +45,35 @@ class MissingSignalError(FitVisionError):
     status_code = status.HTTP_400_BAD_REQUEST
 
 
+class ExerciseMismatchError(FitVisionError):
+    status_code = status.HTTP_400_BAD_REQUEST
+
+
 class EmailAlreadyRegisteredError(FitVisionError):
     status_code = status.HTTP_409_CONFLICT
 
 
 def register_exception_handlers(app: FastAPI) -> None:
+    @app.exception_handler(RequestValidationError)
+    async def handle_request_validation_error(request: Request, exc: RequestValidationError):
+        request_id = get_current_request_id()
+        # Extract location and message only; explicitly omit 'input' and 'ctx'
+        # which can carry NaN/inf values that break json.dumps().
+        error_messages = [
+            f"{' -> '.join(str(loc) for loc in err.get('loc', []))}: {err.get('msg', '')}"
+            for err in exc.errors()
+        ]
+        detail_str = "; ".join(error_messages) or "Request validation failed"
+        logger.warning(f"RequestValidationError: {detail_str}", extra={"request_id": request_id})
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content=ErrorResponse(
+                error="RequestValidationError",
+                detail=detail_str,
+                request_id=request_id,
+            ).model_dump(),
+        )
+
     @app.exception_handler(FitVisionError)
     async def handle_fitvision_error(request: Request, exc: FitVisionError):
         request_id = get_current_request_id()

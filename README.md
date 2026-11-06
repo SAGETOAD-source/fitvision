@@ -11,7 +11,7 @@ FitVision uses computer vision and machine learning to count your exercise reps 
 - 🎯 **Onboarding** — choose a body goal (Slim / Muscular / Bulk) and get a predefined, customizable workout routine
 - 📹 **Live rep counting** — real-time pose detection counts reps as you perform them
 - 💬 **Form feedback** — instant cues like *"Good depth!"* or *"Go lower next time"*
-- 🏃 **5 supported exercises** — Squat, Push-up, Sit-up, Pull-up, Jumping Jack
+- 🏃 **6 supported exercises** — Squat, Push-up, Sit-up, Pull-up, Jumping Jack, Lat Pulldown
 - 🔒 **Privacy-first design** — video is analyzed client-side and never uploaded to a server
 
 ---
@@ -39,11 +39,26 @@ FitVision is built in three layers:
 | Layer | Status | Details |
 |---|---|---|
 | **ML Pipeline** | ✅ Complete | MediaPipe + Random Forest, trained on Kaggle data, unified config-driven live prediction |
-| **Backend API** | ✅ Complete | FastAPI, JWT auth, session management, SQLModel ORM, Dockerized |
+| **Backend API** | 🟡 In Progress | FastAPI, JWT auth, session management, SQLModel ORM, Alembic migrations, Dockerized |
 | **Frontend** | 🔜 Planned | React/Next.js + MediaPipe.js (client-side pose estimation) |
 | **Cloud Deployment** | 🔜 Planned | Railway / Render / Fly.io |
 
 > **Important design decision:** video never leaves the browser. Pose estimation runs client-side via MediaPipe.js; only landmark/angle data is sent to the backend for validation and session tracking.
+
+### API Endpoints
+
+All application routes use the `/v1` prefix, except health checks:
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/health`, `/health/ready` | No | Liveness and readiness health checks |
+| `GET` | `/v1/exercises` | No | Full exercise config (signals, landmarks as strings, thresholds, states) |
+| `POST` | `/v1/auth/signup` | No | Register new user (email validated and normalized to lowercase) |
+| `POST` | `/v1/auth/login` | No | Authenticate and obtain JWT access token |
+| `GET` | `/v1/auth/me` | Yes | Get profile of currently authenticated user |
+| `POST` | `/v1/session/start` | Yes | Start a rep-counting session for an exercise |
+| `POST` | `/v1/predict` | Yes | Send joint angles -> get state prediction, rep count, and feedback |
+| `POST` | `/v1/session/end` | Yes | End session via JSON body `{"session_id": "..."}` and save workout summary |
 
 ---
 
@@ -56,7 +71,8 @@ FitVision is built in three layers:
 
 **Backend**
 - FastAPI (layered: routers / services / schemas)
-- SQLModel ORM — SQLite locally, Postgres in production
+- SQLModel ORM — SQLite locally, Neon Postgres in production
+- Alembic database migrations
 - JWT auth with bcrypt password hashing
 - Rate limiting (`slowapi`), structured request-ID logging
 - Thread-safe TTL-based session management
@@ -79,7 +95,7 @@ fitvision/
 │   └── train_*.py              # Per-exercise model training scripts
 ├── data/                       # Prepared training datasets (CSV)
 ├── models/                     # Trained .pkl Random Forest models
-├── backend/                    # FastAPI backend (routers/services/schemas)
+├── Backend/                    # FastAPI backend (routers/services/schemas/alembic)
 ├── logs/                       # Session CSV logs (auto-generated)
 ├── raw_videos/                 # Source videos for testing/training
 ├── ARCHITECTURE.md             # System design + diagrams
@@ -117,35 +133,42 @@ pip install -r requirements.txt
 cd src
 python live_predict.py squat
 python live_predict.py pushup ../raw_videos/pushup.mp4
+python live_predict.py latpulldown
 ```
 
-Supported exercises: `squat`, `pushup`, `situp`, `pullup`, `jumpingjack`
+Supported exercises: `squat`, `pushup`, `situp`, `pullup`, `jumpingjack`, `latpulldown`
 
 If no video path is given, it defaults to your webcam.
 
 ### Run the backend
 
 ```bash
-cd backend
-uvicorn main:app --reload
+cd Backend
+copy .env.example .env       # set DATABASE_URL for Postgres, or leave default for SQLite
+alembic upgrade head         # apply migrations
+uvicorn app.main:app --reload
 ```
 
 ---
 
 ## 🧪 Testing
 
-- **Automated tests:** 31 passing — unit tests for rep-counting logic, plus auth tests against an isolated in-memory SQLite DB
+- **Automated tests:** 76 passing — unit tests for rep-counting logic, real-model integration tests, schema/route validation, plus auth and Postgres smoke tests against an isolated SQLite DB or real Neon Postgres
 - **Manual validation:** end-to-end tested via PowerShell (session start → live prediction with debounced state transitions → correct rep counting with depth feedback → session end)
 
 ---
 
 ## 🔑 Key Engineering Notes
 
-- **Rep-count direction differs by exercise** — squat/push-up count on reaching *"up"*; sit-up/pull-up/jumping-jack count on reaching *"down"*. This is centralized in `exercises_config.py` rather than hardcoded per script.
+- **Rep-count direction differs by exercise** — squat/push-up count on reaching *"up"*; sit-up/pull-up/jumping-jack/lat-pulldown count on reaching *"down"*. This is centralized in `exercises_config.py` rather than hardcoded per script.
 - **Jumping jack needs dual-signal validation** — both arm range *and* leg range must swing far enough before a rep counts, preventing false positives from partial movement.
-- **Self-occlusion during push-up down-phase** is a known limitation of monocular 2D pose estimation — not a bug, a physical constraint of single-camera tracking.
 - **Debouncing (N=4 stable frames)** and **minimum valid range checks** prevent noise near threshold boundaries from being counted as real reps.
 - **Model version pinning matters** — MediaPipe `1.0.0` broke functionality that worked fine on `0.10.14`.
+
+### ⚠️ Known Limitations
+
+- **Lat Pulldown dataset size:** The Lat Pulldown model was trained and tested on only 2 sample videos; accuracy in diverse conditions may be limited until trained on a broader dataset.
+- **Push-up self-occlusion:** Monocular 2D pose estimation experiences landmark self-occlusion during the bottom of the push-up motion, which is a physical constraint of single-camera tracking.
 
 ---
 

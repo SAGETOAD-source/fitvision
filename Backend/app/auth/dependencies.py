@@ -45,7 +45,7 @@ class OAuth2PasswordBearerWithFitVisionError(OAuth2PasswordBearer):
             raise InvalidCredentialsError(exc.detail or "Not authenticated") from exc
 
 
-oauth2_scheme = OAuth2PasswordBearerWithFitVisionError(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearerWithFitVisionError(tokenUrl="/v1/auth/login")
 
 
 class InvalidCredentialsError(FitVisionError):

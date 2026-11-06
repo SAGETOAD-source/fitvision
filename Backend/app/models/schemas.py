@@ -7,8 +7,9 @@ from the route handlers (routers/) and from business logic
 its own, and easy to reuse in tests.
 """
 
+import math
 import re
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -29,13 +30,44 @@ def validate_and_normalize_email(v: str) -> str:
     return normalized
 
 
-class ExerciseInfo(BaseModel):
+# --- Exercise config response shapes ---
+
+class SignalInfo(BaseModel):
+    points: List[str]       # landmark name strings, e.g. ["LEFT_HIP", "LEFT_KNEE", "LEFT_ANKLE"]
+    feature_name: str       # must match training CSV column name
+
+
+class ExtraSignalInfo(BaseModel):
+    points: List[str]
+    type: str
+
+
+class ExerciseConfig(BaseModel):
     display_name: str
+    signals: Dict[str, SignalInfo]              # ordered dict; insertion order = feature order
+    extra_signals: Dict[str, ExtraSignalInfo]   # e.g. {"torso": ...} for latpulldown
+    down_state: str
+    up_states: List[str]                        # sorted list (original config uses set)
+    count_on: str
+    primary_signal: str
+    min_valid_range: float
+    good_depth_threshold: Optional[float]
+    extra_range_checks: Dict[str, float]
+    form_warnings: Dict[str, Any]
+    visibility_threshold: float
+    rotate_frame: Optional[str]                 # e.g. "ROTATE_90_CLOCKWISE" or null
 
 
 class ExercisesResponse(BaseModel):
-    exercises: Dict[str, ExerciseInfo]
+    exercises: Dict[str, ExerciseConfig]
 
+
+class ExerciseInfo(BaseModel):
+    """Kept for internal use; full shape is ExerciseConfig."""
+    display_name: str
+
+
+# --- Session ---
 
 class StartSessionRequest(BaseModel):
     exercise: str
@@ -48,8 +80,14 @@ class SessionResponse(BaseModel):
     rep_count: int
 
 
+class EndSessionRequest(BaseModel):
+    session_id: str = Field(..., min_length=1, max_length=128)
+
+
+# --- Predict ---
+
 class PredictRequest(BaseModel):
-    exercise: str
+    exercise: Optional[str] = None   # optional; if provided, must match the session's exercise
     session_id: str = Field(..., min_length=1, max_length=128)
     signals: Dict[str, float]
 
@@ -58,6 +96,17 @@ class PredictRequest(BaseModel):
     def signals_not_empty(cls, v: Dict[str, float]) -> Dict[str, float]:
         if not v:
             raise ValueError("signals must contain at least one value")
+        return v
+
+    @field_validator("signals")
+    @classmethod
+    def validate_signal_values(cls, v: Dict[str, float]) -> Dict[str, float]:
+        for name, val in v.items():
+            if math.isnan(val) or math.isinf(val) or not (0.0 <= val <= 360.0):
+                raise ValueError(
+                    f"Signal '{name}' has invalid value {val}. "
+                    "All signals must be finite numbers in the range [0, 360]."
+                )
         return v
 
 

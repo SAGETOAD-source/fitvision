@@ -122,11 +122,11 @@ def create_app() -> FastAPI:
     register_exception_handlers(app)
 
     # --- Routes ---
-    app.include_router(health.router)
-    app.include_router(auth.router)
-    app.include_router(exercises.router)
-    app.include_router(sessions.router)
-    app.include_router(predict.router)
+    app.include_router(health.router)                           # /health, /health/ready (no prefix)
+    app.include_router(auth.router,      prefix="/v1")         # /v1/auth/...
+    app.include_router(exercises.router, prefix="/v1")         # /v1/exercises
+    app.include_router(sessions.router,  prefix="/v1")         # /v1/session/...
+    app.include_router(predict.router,   prefix="/v1")         # /v1/predict
 
     return app
 

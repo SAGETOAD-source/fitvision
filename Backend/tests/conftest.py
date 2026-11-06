@@ -113,18 +113,18 @@ def auth_headers(client):
     Usage::
 
         def test_foo(client, auth_headers):
-            resp = client.post("/session/start", json={...}, headers=auth_headers)
+            resp = client.post("/v1/session/start", json={...}, headers=auth_headers)
     """
-    client.post("/auth/signup", json={"email": "test@example.com", "password": "password123"})
-    resp = client.post("/auth/login", json={"email": "test@example.com", "password": "password123"})
+    client.post("/v1/auth/signup", json={"email": "test@example.com", "password": "password123"})
+    resp = client.post("/v1/auth/login", json={"email": "test@example.com", "password": "password123"})
     token = resp.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
 def auth_client(client):
-    client.post("/auth/signup", json={"email": "test@example.com", "password": "password123"})
-    resp = client.post("/auth/login", json={"email": "test@example.com", "password": "password123"})
+    client.post("/v1/auth/signup", json={"email": "test@example.com", "password": "password123"})
+    resp = client.post("/v1/auth/login", json={"email": "test@example.com", "password": "password123"})
     token = resp.json()["access_token"]
     client.headers.update({"Authorization": f"Bearer {token}"})
     return client
@@ -132,8 +132,8 @@ def auth_client(client):
 
 @pytest.fixture
 def auth_client_2(client):
-    client.post("/auth/signup", json={"email": "test2@example.com", "password": "password123"})
-    resp = client.post("/auth/login", json={"email": "test2@example.com", "password": "password123"})
+    client.post("/v1/auth/signup", json={"email": "test2@example.com", "password": "password123"})
+    resp = client.post("/v1/auth/login", json={"email": "test2@example.com", "password": "password123"})
     token = resp.json()["access_token"]
     
     from app.main import app

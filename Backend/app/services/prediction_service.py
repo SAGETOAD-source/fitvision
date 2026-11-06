@@ -11,12 +11,13 @@ streaming - a natural upgrade once this is working over plain HTTP).
 """
 
 from datetime import datetime, timezone
-from typing import Dict
+from typing import Dict, Optional
 
 from sqlmodel import Session
 
 from app.db.models import WorkoutSession
 from app.exceptions import (
+    ExerciseMismatchError,
     MissingSignalError,
     ModelNotLoadedError,
     SessionNotFoundError,
@@ -77,20 +78,31 @@ def end_session(
 def run_prediction(
     session_manager: SessionManager,
     model_registry: ModelRegistry,
-    exercise: str,
+    body_exercise: Optional[str],
     session_id: str,
     owner_id: str,
     signals: Dict[str, float],
 ):
+    # Look up the session first so we can use the stored exercise name.
+    counter = session_manager.get(session_id, owner_id)
+    if counter is None:
+        raise SessionNotFoundError(f"No active session '{session_id}'. Call /session/start first.")
+
+    # The authoritative exercise comes from the session, not the request body.
+    # If the client includes an exercise field it must match exactly, so
+    # the caller gets a clear 400 rather than silent garbage predictions.
+    exercise = counter.exercise_name
+    if body_exercise is not None and body_exercise != exercise:
+        raise ExerciseMismatchError(
+            f"Session exercise is '{exercise}', but request body says '{body_exercise}'. "
+            "Omit the exercise field or match the session."
+        )
+
     config = validate_exercise(exercise)
 
     model = model_registry.get(exercise)
     if model is None:
         raise ModelNotLoadedError(f"Model for '{exercise}' is not currently loaded on this server")
-
-    counter = session_manager.get(session_id, owner_id)
-    if counter is None:
-        raise SessionNotFoundError(f"No active session '{session_id}'. Call /session/start first.")
 
     # Feature order must match training order - exercises_config.py's
     # "signals" dict preserves insertion order, same contract used by

@@ -95,7 +95,7 @@ def test_postgres_end_to_end_smoke(pg_engine):
         with TestClient(app) as client:
             # 1. Sign up
             signup_resp = client.post(
-                "/auth/signup",
+                "/v1/auth/signup",
                 json={"email": test_email, "password": test_password},
             )
             assert signup_resp.status_code == 200, f"Signup failed: {signup_resp.text}"
@@ -105,7 +105,7 @@ def test_postgres_end_to_end_smoke(pg_engine):
 
             # 2. Log in
             login_resp = client.post(
-                "/auth/login",
+                "/v1/auth/login",
                 json={"email": test_email, "password": test_password},
             )
             assert login_resp.status_code == 200, f"Login failed: {login_resp.text}"
@@ -113,7 +113,7 @@ def test_postgres_end_to_end_smoke(pg_engine):
             auth_headers = {"Authorization": f"Bearer {token}"}
 
             # 3. Check /auth/me
-            me_resp = client.get("/auth/me", headers=auth_headers)
+            me_resp = client.get("/v1/auth/me", headers=auth_headers)
             assert me_resp.status_code == 200, f"/auth/me failed: {me_resp.text}"
             me_data = me_resp.json()
             assert me_data["email"] == test_email
@@ -122,7 +122,7 @@ def test_postgres_end_to_end_smoke(pg_engine):
 
             # 4. Start a workout session
             start_resp = client.post(
-                "/session/start",
+                "/v1/session/start",
                 json={"exercise": "squat", "session_id": session_id},
                 headers=auth_headers,
             )
@@ -130,7 +130,8 @@ def test_postgres_end_to_end_smoke(pg_engine):
 
             # 5. End session
             end_resp = client.post(
-                f"/session/end?session_id={session_id}",
+                "/v1/session/end",
+                json={"session_id": session_id},
                 headers=auth_headers,
             )
             assert end_resp.status_code == 200, f"End session failed: {end_resp.text}"
@@ -224,20 +225,20 @@ def test_postgres_email_case_insensitivity_and_normalization(pg_engine):
     try:
         with TestClient(app) as client:
             signup_resp = client.post(
-                "/auth/signup",
+                "/v1/auth/signup",
                 json={"email": mixed_email, "password": test_password},
             )
             assert signup_resp.status_code == 200
 
             # Log in using lowercase
             login_resp = client.post(
-                "/auth/login",
+                "/v1/auth/login",
                 json={"email": expected_normalized, "password": test_password},
             )
             assert login_resp.status_code == 200
             token = login_resp.json()["access_token"]
 
-            me_resp = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+            me_resp = client.get("/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
             assert me_resp.status_code == 200
             assert me_resp.json()["email"] == expected_normalized
             user_id = me_resp.json()["id"]

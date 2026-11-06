@@ -13,7 +13,7 @@ from app.auth.dependencies import get_current_user
 from app.db.database import get_session
 from app.db.models import User
 from app.dependencies import get_model_registry, get_sessions
-from app.models.schemas import SessionResponse, StartSessionRequest
+from app.models.schemas import EndSessionRequest, SessionResponse, StartSessionRequest
 from app.services import prediction_service
 from app.services.model_registry import ModelRegistry
 from app.services.session_manager import SessionManager
@@ -34,12 +34,12 @@ def start_session(
 
 @router.post("/end", response_model=SessionResponse)
 def end_session(
-    session_id: str,
+    body: EndSessionRequest,
     sessions: SessionManager = Depends(get_sessions),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
     counter = prediction_service.end_session(
-        sessions, session_id, str(current_user.id), db=db, user_id=current_user.id
+        sessions, body.session_id, str(current_user.id), db=db, user_id=current_user.id
     )
-    return SessionResponse(session_id=session_id, exercise=counter.exercise_name, rep_count=counter.rep_count)
+    return SessionResponse(session_id=body.session_id, exercise=counter.exercise_name, rep_count=counter.rep_count)

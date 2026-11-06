@@ -14,13 +14,11 @@ sure the models/ directory is copied into the image at that same
 relative location, or override the paths via an environment-based
 MODELS_DIR at startup - see app/services/model_registry.py.
 
-This file also imports mediapipe + cv2 just to reference
-PL.<LANDMARK> and cv2.ROTATE_* constants, even though the backend's
-/predict endpoint never processes video - it only needs down_state,
-up_states, min_valid_range, signals.keys(), model_path, and
-good_depth_threshold. Kept as one shared file (rather than a slimmer
-backend-only version) so there's a single source of truth; worth
-trimming down once you're optimizing container image size.
+Landmark points are stored as strings (e.g. "LEFT_HIP") matching the
+MediaPipe PoseLandmark enum names. The frontend (MediaPipe.js) and the
+src/ scripts both use these names to look up the numeric landmark index.
+rotate_frame is stored as a string (e.g. "ROTATE_90_CLOCKWISE") or null;
+the src/ scripts map it back to a cv2 constant via pose_utils.py.
 
 NOTE (latpulldown's extra_signals): the backend doesn't compute
 signals from video, it receives them as JSON from the client. The
@@ -31,12 +29,6 @@ prediction_service.py's feature-building step (which only reads
 server-side, the future frontend needs to include "torso" alongside
 the elbow angles when it POSTs to /predict for a latpulldown session.
 """
-
-import mediapipe as mp
-import cv2
-
-mp_pose = mp.solutions.pose
-PL = mp_pose.PoseLandmark
 
 
 EXERCISES = {
@@ -49,9 +41,9 @@ EXERCISES = {
         # Each "signal" is one angle computed from three landmarks.
         # feature_name must match a column in the training CSV.
         "signals": {
-            "left":  {"points": (PL.LEFT_HIP, PL.LEFT_KNEE, PL.LEFT_ANKLE),
+            "left":  {"points": ("LEFT_HIP", "LEFT_KNEE", "LEFT_ANKLE"),
                        "feature_name": "left_knee_angle"},
-            "right": {"points": (PL.RIGHT_HIP, PL.RIGHT_KNEE, PL.RIGHT_ANKLE),
+            "right": {"points": ("RIGHT_HIP", "RIGHT_KNEE", "RIGHT_ANKLE"),
                        "feature_name": "right_knee_angle"},
         },
 
@@ -74,9 +66,9 @@ EXERCISES = {
         "training_data_path": "../data/pushup_training_dataset.csv",
 
         "signals": {
-            "left":  {"points": (PL.LEFT_SHOULDER, PL.LEFT_ELBOW, PL.LEFT_WRIST),
+            "left":  {"points": ("LEFT_SHOULDER", "LEFT_ELBOW", "LEFT_WRIST"),
                        "feature_name": "left_elbow_angle"},
-            "right": {"points": (PL.RIGHT_SHOULDER, PL.RIGHT_ELBOW, PL.RIGHT_WRIST),
+            "right": {"points": ("RIGHT_SHOULDER", "RIGHT_ELBOW", "RIGHT_WRIST"),
                        "feature_name": "right_elbow_angle"},
         },
 
@@ -87,7 +79,7 @@ EXERCISES = {
         "good_depth_threshold": 90,
 
         "visibility_threshold": 0.5,
-        "rotate_frame": cv2.ROTATE_90_CLOCKWISE,
+        "rotate_frame": "ROTATE_90_CLOCKWISE",
 
         "count_on": "up",
         "primary_signal": "left",
@@ -99,9 +91,9 @@ EXERCISES = {
         "training_data_path": "../data/situp_training_dataset.csv",
 
         "signals": {
-            "left":  {"points": (PL.LEFT_SHOULDER, PL.LEFT_HIP, PL.LEFT_KNEE),
+            "left":  {"points": ("LEFT_SHOULDER", "LEFT_HIP", "LEFT_KNEE"),
                        "feature_name": "left_torso_angle"},
-            "right": {"points": (PL.RIGHT_SHOULDER, PL.RIGHT_HIP, PL.RIGHT_KNEE),
+            "right": {"points": ("RIGHT_SHOULDER", "RIGHT_HIP", "RIGHT_KNEE"),
                        "feature_name": "right_torso_angle"},
         },
 
@@ -124,9 +116,9 @@ EXERCISES = {
         "training_data_path": "../data/pullup_training_dataset.csv",
 
         "signals": {
-            "left":  {"points": (PL.LEFT_SHOULDER, PL.LEFT_ELBOW, PL.LEFT_WRIST),
+            "left":  {"points": ("LEFT_SHOULDER", "LEFT_ELBOW", "LEFT_WRIST"),
                        "feature_name": "left_elbow_angle"},
-            "right": {"points": (PL.RIGHT_SHOULDER, PL.RIGHT_ELBOW, PL.RIGHT_WRIST),
+            "right": {"points": ("RIGHT_SHOULDER", "RIGHT_ELBOW", "RIGHT_WRIST"),
                        "feature_name": "right_elbow_angle"},
         },
 
@@ -151,11 +143,11 @@ EXERCISES = {
         # Jumping jack needs THREE signals, not two - arms (both sides)
         # plus one leg-spread signal using a computed hip midpoint.
         "signals": {
-            "left_arm":  {"points": (PL.LEFT_ELBOW, PL.LEFT_SHOULDER, PL.LEFT_HIP),
+            "left_arm":  {"points": ("LEFT_ELBOW", "LEFT_SHOULDER", "LEFT_HIP"),
                            "feature_name": "left_arm_angle"},
-            "right_arm": {"points": (PL.RIGHT_ELBOW, PL.RIGHT_SHOULDER, PL.RIGHT_HIP),
+            "right_arm": {"points": ("RIGHT_ELBOW", "RIGHT_SHOULDER", "RIGHT_HIP"),
                            "feature_name": "right_arm_angle"},
-            "leg_spread": {"points": (PL.RIGHT_KNEE, "MID_HIP", PL.LEFT_KNEE),
+            "leg_spread": {"points": ("RIGHT_KNEE", "MID_HIP", "LEFT_KNEE"),
                             "feature_name": "leg_spread_angle"},
         },
 
@@ -185,9 +177,9 @@ EXERCISES = {
         # pulled down to chest = "up". Classifier trained on elbow
         # angles ONLY (left_elbow_angle, right_elbow_angle).
         "signals": {
-            "left":  {"points": (PL.LEFT_SHOULDER, PL.LEFT_ELBOW, PL.LEFT_WRIST),
+            "left":  {"points": ("LEFT_SHOULDER", "LEFT_ELBOW", "LEFT_WRIST"),
                        "feature_name": "left_elbow_angle"},
-            "right": {"points": (PL.RIGHT_SHOULDER, PL.RIGHT_ELBOW, PL.RIGHT_WRIST),
+            "right": {"points": ("RIGHT_SHOULDER", "RIGHT_ELBOW", "RIGHT_WRIST"),
                        "feature_name": "right_elbow_angle"},
         },
 
@@ -197,7 +189,7 @@ EXERCISES = {
         # send "torso" in the /predict payload for this to fire here.
         "extra_signals": {
             "torso": {
-                "points": (PL.LEFT_SHOULDER, PL.LEFT_HIP, PL.RIGHT_SHOULDER, PL.RIGHT_HIP),
+                "points": ("LEFT_SHOULDER", "LEFT_HIP", "RIGHT_SHOULDER", "RIGHT_HIP"),
                 "type": "lean_avg",
             },
         },

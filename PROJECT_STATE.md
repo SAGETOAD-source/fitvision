@@ -39,7 +39,7 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
   - `exercises_config.py`: pure-data config without mediapipe or opencv dependencies (landmarks as strings, rotate_frame as string/null)
   - cross-cutting: config (pydantic-settings), middleware (request ID), exceptions (uniform error JSON with RequestValidationError handling avoiding NaN/inf crash), rate_limit (slowapi), logging
 - **Sessions:** in-memory per process (thread-safe, TTL sweep). Keyed by `user_id:session_id`.
-- **Frontend:** NOT STARTED (planned Next.js + MediaPipe.js).
+- **Frontend:** IN PROGRESS (Next.js 14 App Router, TypeScript, Tailwind, @mediapipe/tasks-vision, pure-data config, TS RF classifier, RepCounter port, /m0 prototype, /workout screen).
 - **Deployment:** NOT STARTED (planned Railway / Render / Fly.io; DB: Neon Postgres). Dockerfile packages app + alembic.
 
 ### API endpoints (current)
@@ -85,9 +85,9 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 | Backend production hardening | ~60% | Uniform RequestValidationError handling without NaN/inf crash; email normalization; DB secrets masked; single worker Dockerfile. |
 | Database | ~80% | Dual SQLite & Neon PostgreSQL supported; psycopg[binary]==3.3.7, Alembic migrations (0001 initial, 0002 TIMESTAMPTZ), connection pooling with pre-ping/recycle. |
 | Auth | ~75% | Core works; email validation, lowercasing, and case-insensitive duplicate prevention done; rate limits & token strategy pending. |
-| Frontend | ~40% | M0 Parity Prototype + Mobile-first live workout screen (/workout) with pose skeleton overlay, 2m HUD, and error/loading states (38 Vitest tests passing). |
+| Frontend | ~25% | M0 Parity Prototype + Mobile-first live workout screen (/workout) with pure reducer, useWorkoutEngine hook, pose overlay, 2m HUD, and error/loading states (46 Vitest tests passing). |
 | Deployment / CI | ~20% | Dockerfile packages app, alembic.ini, and migrations; Neon Postgres connected. |
-| **Overall** | **~72%** | Rough guess. |
+| **Overall** | **~62%** | Rough guess. |
 
 ---
 
@@ -137,13 +137,14 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
   - Verified `raw_videos/squat.mp4` parity between Python baseline (6 reps, 126.33° avg angle) and MediaPipe Tasks-Vision `pose_landmarker_lite.task` (6 reps, 126.81° avg angle): rep count matches 100% on the exact same frames, mean angle delta is 0.48° (well below the < 5.0° exit threshold).
   - Vitest: 29 passed (100% pass rate); Pytest: 105 passed; Next.js `npm run build`: successful.
 - [x] Mobile-first live workout screen (session 11):
-  - Created `WorkoutScreen.tsx` full-screen mobile camera view (`100dvh`) with mirrored video and aligned skeleton canvas overlay.
+  - Created `frontend/src/lib/workout_reducer.ts` pure state reducer (states: loading, active, permission_denied, body_not_visible, error, stopped) and `frontend/src/hooks/useWorkoutEngine.ts` custom hook encapsulating camera stream, MediaPipe pose detection, RF classifier, RepCounter loop, Wake Lock API, and pure `cleanupWorkoutEngine` teardown function taking resources as arguments.
+  - Render-only `WorkoutScreen.tsx` full-screen mobile camera view (`100dvh`) with mirrored video and aligned skeleton canvas overlay.
   - Giant top HUD: 2-meter readable rep counter (font-black text-8xl/9xl) with minimal exercise name and confirmed state badge ("SQUAT • DOWN").
   - Dynamic feedback pill below counter: green for good reps ("Good depth!"), amber for corrective warnings ("Go lower", "Avoid leaning back").
-  - Touch-friendly bottom Stop Workout button with summary transition.
-  - Dedicated states: camera loading with pulsing spinner, camera permission denied with recovery instructions & retry button, and non-blocking amber "Step back — ensure full body is visible" warning when landmarks fall below visibility threshold.
+  - Touch-friendly bottom Stop Workout button displaying final rep count and Back button when stopped (transition to `stopped` state).
+  - Dedicated states: camera loading with pulsing spinner, camera permission denied with recovery instructions & retry button, non-blocking amber body visibility warning, and stopped state with summary & back navigation.
   - Exposing route `/workout?exercise=squat` (with Suspense wrapper).
-  - Added 9 unit tests in `workout_screen.test.ts` for feedback coloring variants, visibility detection, and camera stream teardown (38 Vitest tests pass).
+  - 17 unit tests in `workout_screen.test.ts` for reducer transitions, query validation, and real `cleanupWorkoutEngine` resource teardown (46 Vitest tests pass).
 
 ## 5. In progress
 
@@ -290,7 +291,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 | 8 | 2026-11-07 | Antigravity (Gemini 3.8 Flash) | Pure-data exercise config (string landmarks, rotate_frame string/null, mediapipe/cv2 removed from Backend), full GET /v1/exercises response with torso extra_signal, /v1 API route prefix, session-bound /predict with 400 mismatch error, JSON body /session/end, [0, 360] angle validation, RequestValidationError handler preventing json.dumps crash on NaN/inf, updated README and test suite (76 tests pass) | Backend/app/exercises_config.py, Backend/requirements.txt, Backend/app/models/schemas.py, Backend/app/routers/exercises.py, Backend/app/routers/sessions.py, Backend/app/services/prediction_service.py, Backend/app/exceptions.py, Backend/app/auth/dependencies.py, Backend/app/main.py, Backend/tests/conftest.py, Backend/tests/test_auth.py, Backend/tests/test_sessions.py, Backend/tests/test_predict.py, Backend/tests/test_postgres_smoke.py, README.md, PROJECT_STATE.md |
 | 9 | 2026-11-07 | Antigravity (Gemini 3.8 Flash) | Profile & onboarding (GET/PUT /v1/profile), static rules-based routines (GET /v1/routines, routines_data.py, exercise contract validation), workout history (POST/GET /v1/workouts with pagination & server UUID), personal stats (GET /v1/stats with UTC calendar streak and 7-day breakdown), 29 new tests (105 tests pass) | Backend/app/models/schemas.py, Backend/app/routines_data.py, Backend/app/services/profile_service.py, Backend/app/services/routine_service.py, Backend/app/services/workout_service.py, Backend/app/routers/profile.py, Backend/app/routers/routines.py, Backend/app/routers/workouts.py, Backend/app/routers/stats.py, Backend/app/main.py, Backend/tests/test_profile.py, Backend/tests/test_routines.py, Backend/tests/test_workouts.py, Backend/tests/test_stats.py, README.md, PROJECT_STATE.md |
 | 10 | 2026-11-07 | Antigravity (Gemini 3.8 Flash) | Milestone 0 (M0) Parity Prototype: exported 6 RF models to JSON (`models_json/`, `frontend/public/models/`), TypeScript classifier with `Math.fround` (100% golden parity on 1500 vectors), TS RepCounter port + tests, /v1/exercises snapshot contract test, pose geometry utils, Next.js /m0 squat prototype with webcam & video benchmark. Verified squat.mp4 parity (6 reps, 0.48° angle delta vs Python baseline). 29 Vitest tests pass, 105 Pytest pass. | src/export_models_json.py, src/save_exercises_snapshot.py, models_json/*, frontend/*, PROJECT_STATE.md |
-| 11 | 2026-11-07 | Antigravity (Gemini 3.8 Flash) | Mobile-first live workout screen: full-screen camera view (`100dvh`), pose skeleton overlay, 2m-readable top HUD (font-black text-8xl/9xl), dynamic feedback coloring (green/amber), exercise & state pill ("SQUAT • DOWN"), big Stop button, dedicated loading, permission denied, and body visibility warning states. Added /workout route. 9 unit tests added (38 Vitest tests pass, 105 Pytest pass, Next.js build succeeds). | frontend/src/components/WorkoutScreen.tsx, frontend/src/app/workout/page.tsx, frontend/src/app/page.tsx, frontend/tests/workout_screen.test.ts, PROJECT_STATE.md |
+| 11 | 2026-11-07 | Antigravity (Gemini 3.8 Flash) | Mobile-first live workout screen: decoupled pure workout reducer (loading, active, permission_denied, body_not_visible, error, stopped with final reps display), useWorkoutEngine hook with pure cleanupWorkoutEngine resource teardown, render-only WorkoutScreen (100dvh full-screen camera, pose skeleton overlay, 2m-readable top HUD, dynamic green/amber feedback line, big Stop button), /workout route. 17 unit tests in workout_screen.test.ts (46 Vitest tests pass, 105 Pytest pass, Next.js build succeeds). | frontend/src/lib/workout_reducer.ts, frontend/src/hooks/useWorkoutEngine.ts, frontend/src/components/WorkoutScreen.tsx, frontend/src/app/workout/page.tsx, frontend/src/app/page.tsx, frontend/tests/workout_screen.test.ts, PROJECT_STATE.md |
 
 ---
 
@@ -300,7 +301,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 You are continuing work on FitVision (repo: SAGETOAD-source/fitvision).
 1. Read AGENTS.md and PROJECT_STATE.md in the repo root before anything else.
 2. Follow AGENTS.md strictly: send a Change Plan (files to modify/create, nothing else touched) and wait for approval before editing.
-3. Current state: ML pipeline done for 6 exercises; FastAPI backend has complete /v1 API suite (105 tests pass); Milestone 0 (M0) parity prototype and Mobile-First Live Workout screen complete on branch feat/mobile-workout-screen: Next.js 14, TypeScript, Tailwind, @mediapipe/tasks-vision, in-browser RF tree evaluation with 100% golden test parity, TS RepCounter port, full-screen live workout screen (`WorkoutScreen.tsx`, `/workout`), 2-meter HUD, dynamic green/amber feedback line, and robust states for loading, permission denied, and body visibility. Full test suites pass: 38 Vitest tests + 105 Pytest tests. Do NOT push without explicit user instruction.
+3. Current state: ML pipeline done for 6 exercises; FastAPI backend has complete /v1 API suite (105 tests pass); Milestone 0 (M0) parity prototype and Mobile-First Live Workout screen complete on branch feat/mobile-workout-screen: Next.js 14, TypeScript, Tailwind, @mediapipe/tasks-vision, in-browser RF tree evaluation with 100% golden test parity, TS RepCounter port, decoupled pure reducer (`workout_reducer.ts`), custom hook (`useWorkoutEngine.ts`), render-only full-screen live workout screen (`WorkoutScreen.tsx`, `/workout`), 2-meter HUD, dynamic green/amber feedback line, stopped state with final reps display, and robust states for loading, permission denied, and body visibility. Full test suites pass: 46 Vitest tests + 105 Pytest tests. Do NOT push without explicit user instruction.
 4. Next recommended task: Milestone 1 (M1) - Auth + Onboarding: Signup, login, route guard, profile screen (goal & focus selection) per FRONTEND_SPEC.md.
 5. At the end, update PROJECT_STATE.md fully and show me the complete file.
 ```

@@ -9,12 +9,20 @@ export default function Home() {
       <p className="max-w-xl text-lg text-slate-300 mb-8">
         Privacy-first browser-based rep counter & form feedback engine powered by MediaPipe and Random Forest.
       </p>
-      <Link
-        href="/m0"
-        className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-lg shadow-lg transition"
-      >
-        Launch Milestone 0 (M0) Prototype
-      </Link>
+      <div className="flex flex-col sm:flex-row gap-4">
+        <Link
+          href="/workout?exercise=squat"
+          className="px-6 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold rounded-xl shadow-lg transition"
+        >
+          Start Live Workout
+        </Link>
+        <Link
+          href="/m0"
+          className="px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl border border-slate-700 transition"
+        >
+          M0 Parity Benchmark
+        </Link>
+      </div>
     </main>
   );
 }

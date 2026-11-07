@@ -3,8 +3,8 @@
 > Every AI agent: read this first. Update it at the end of every session (see AGENTS.md section 9).
 > Progress percentages are rough estimates, not measurements. Update honestly.
 
-**Last updated:** 2026-11-07 | **Session #:** 9
-**Updated by:** Antigravity (Gemini 3.8 Flash) — feat/profile-routines-history branch
+**Last updated:** 2026-11-07 | **Session #:** 10
+**Updated by:** Antigravity (Gemini 3.8 Flash) — feat/frontend-m0-parity branch
 **Repo:** https://github.com/SAGETOAD-source/fitvision (branch `main`)
 **Owner:** Krishnendu | **Dev environment:** Windows, Antigravity IDE
 
@@ -80,14 +80,14 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 
 | Area | Est. done | Notes |
 |---|---|---|
-| ML pipeline (6 exercises) | ~85% | Trained and running locally. Validation gaps (see Known issues). |
+| ML pipeline (6 exercises) | ~90% | Trained, exported to JSON (`models_json/` & `frontend/public/models/`), golden test passes 100%. |
 | Backend core (auth, sessions, predict, profile, routines, history, stats) | ~92% | Full /v1 API suite, pure-data config, layered architecture (routers -> services -> schemas), user-isolated history & stats; 105 tests passing. |
 | Backend production hardening | ~60% | Uniform RequestValidationError handling without NaN/inf crash; email normalization; DB secrets masked; single worker Dockerfile. |
 | Database | ~80% | Dual SQLite & Neon PostgreSQL supported; psycopg[binary]==3.3.7, Alembic migrations (0001 initial, 0002 TIMESTAMPTZ), connection pooling with pre-ping/recycle. |
 | Auth | ~75% | Core works; email validation, lowercasing, and case-insensitive duplicate prevention done; rate limits & token strategy pending. |
-| Frontend | 0% | Not started. |
+| Frontend | ~25% | M0 Parity Prototype complete (Next.js 14, TypeScript, Tailwind, @mediapipe/tasks-vision, TS classifier, RepCounter port, /m0 prototype page, 29 Vitest tests passing). |
 | Deployment / CI | ~20% | Dockerfile packages app, alembic.ini, and migrations; Neon Postgres connected. |
-| **Overall** | **~58%** | Rough guess. |
+| **Overall** | **~68%** | Rough guess. |
 
 ---
 
@@ -126,10 +126,20 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
   - Task G: `POST /v1/workouts` (auth; validates exercise existence, 0-1000 reps, ended_at >= started_at, duration <= 3h, server UUID `session_id`, saves `WorkoutSession`) and `GET /v1/workouts?limit=&offset=` (auth; paginated history, newest first, user-isolated).
   - Task H: `GET /v1/stats` (auth; total workouts & reps, reps per exercise breakdown, consecutive day streak in UTC, and 7-day rolling UTC breakdown).
   - Added 29 new tests across `test_profile.py`, `test_routines.py`, `test_workouts.py`, `test_stats.py`; 105 tests passing (100% pass rate).
+- [x] Milestone 0 (M0) Frontend Parity Prototype (session 10):
+  - Exported all 6 trained Random Forest models to JSON format (`src/export_models_json.py`) into `models_json/` and `frontend/public/models/`.
+  - Generated golden test dataset (250 feature vectors per exercise, 1500 total).
+  - Built TypeScript tree walker and argmax classifier (`frontend/src/lib/classifier.ts`) using `Math.fround` float32 comparisons; passed golden test with 100% identical predictions to scikit-learn.
+  - Ported `RepCounter` state machine to TypeScript (`frontend/src/lib/rep_counter.ts`); ported all unit tests from `Backend/tests/test_rep_counter.py`.
+  - Generated API snapshot from `/v1/exercises` (`src/save_exercises_snapshot.py`); added snapshot contract test verifying TypeScript types against real backend response.
+  - Ported angle and signal extraction utilities (`frontend/src/lib/pose_utils.ts`).
+  - Implemented Next.js `/m0` squat parity prototype with webcam feed, skeleton rendering, rep counter, real-time feedback, and video parity benchmark.
+  - Verified `raw_videos/squat.mp4` parity between Python baseline (6 reps, 126.33° avg angle) and MediaPipe Tasks-Vision `pose_landmarker_lite.task` (6 reps, 126.81° avg angle): rep count matches 100% on the exact same frames, mean angle delta is 0.48° (well below the < 5.0° exit threshold).
+  - Vitest: 29 passed (100% pass rate); Pytest: 105 passed; Next.js `npm run build`: successful.
 
 ## 5. In progress
 
-- [ ] Nothing actively being built. Waiting for user guidance on the next priority task.
+- [ ] Nothing actively being built. Waiting for user guidance on next milestone (M1: Auth + Onboarding).
 
 ## 6. Next (recommended order)
 
@@ -141,12 +151,13 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 5. [x] ~~Exercise config as pure data + API~~ — DONE (session 8)
 6. [x] ~~Contract and session fixes: items 1, 10, 11, 12~~ — DONE (session 8)
 7. [x] ~~Profile, onboarding, history, stats, routines endpoints (item 6)~~ — DONE (session 9)
+8. [x] ~~M0 Parity Prototype: TS classifier, RepCounter port, golden test, /m0 squat page, squat.mp4 parity verification~~ — DONE (session 10)
 
-### Roadmap
-1. [ ] Auth hardening: items 7, 8, 9, 14, plus token strategy, CORS and a login/signup rate limit, and replacing python-jose
-2. [ ] Deployment readiness: items 2, 3, 4, 13, 15
-3. [ ] Session TTL sweep saves workout on timeout (item 5 / Known issue 6)
-4. [ ] Frontend foundation, then the live workout
+### Frontend Milestones Roadmap
+1. [ ] **M1 - Auth + onboarding:** Signup, login, route guard, profile screen (goal & focus selection).
+2. [ ] **M2 - Workout:** All 6 exercises, camera permission handling, setup guide, summary screen, save to `/v1/workouts`.
+3. [ ] **M3 - Routine, history, stats:** Home screen with routine, history list, stats page.
+4. [ ] **M4 - Polish + deploy:** Mobile layout, error and empty states, deploy frontend and backend.
 
 ### Before launch
 - [ ] Rotate the Neon `neondb_owner` password and create a limited app DB role.
@@ -221,13 +232,13 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 - Profile `GET /v1/profile` returns defaults without inserting an unneeded DB row until onboarding completion.
 - Routine plans are static, rules-based, and only reference the 6 verified exercises in `EXERCISES`.
 - History and stats calculations are strictly user-isolated and evaluate dates and streaks using UTC calendar days.
+- In-browser model execution: Random Forest models exported to JSON (`models_json/`, `frontend/public/models/`), evaluated in TypeScript via `Math.fround` float32 comparisons; RepCounter ported line-by-line to TS. Video never leaves device, and per-frame backend requests are eliminated.
+- Frontend stack: Next.js 14 App Router, TypeScript, Tailwind CSS, `@mediapipe/tasks-vision`.
 - Dev in Antigravity; AI agents follow `AGENTS.md`.
 
 ### Open (user must decide)
-1. Where does the model + RepCounter run: **browser** (recommended, fits privacy) or **server** over WebSocket? (This decides the per-frame rate-limit problem).
-2. Token strategy: short access token + httpOnly refresh cookie, or keep a long bearer token?
-3. Keep Random Forest, or replace with simple thresholds + hysteresis (easier to port to the browser)?
-4. Add biceps curl as a 7th exercise now or later?
+1. Token strategy: short access token + httpOnly refresh cookie, or keep a long bearer token?
+2. Add biceps curl as a 7th exercise now or later?
 
 ---
 
@@ -270,6 +281,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 | 7 | 2026-11-04 | Antigravity (Gemini 3.8 Flash) | Added 19 code review findings (items 1–19) to Known issues, restructured Next list into 7-phase roadmap, added Before launch section (Neon password rotation/app role), and refined browser-vs-server open decision | PROJECT_STATE.md |
 | 8 | 2026-11-07 | Antigravity (Gemini 3.8 Flash) | Pure-data exercise config (string landmarks, rotate_frame string/null, mediapipe/cv2 removed from Backend), full GET /v1/exercises response with torso extra_signal, /v1 API route prefix, session-bound /predict with 400 mismatch error, JSON body /session/end, [0, 360] angle validation, RequestValidationError handler preventing json.dumps crash on NaN/inf, updated README and test suite (76 tests pass) | Backend/app/exercises_config.py, Backend/requirements.txt, Backend/app/models/schemas.py, Backend/app/routers/exercises.py, Backend/app/routers/sessions.py, Backend/app/services/prediction_service.py, Backend/app/exceptions.py, Backend/app/auth/dependencies.py, Backend/app/main.py, Backend/tests/conftest.py, Backend/tests/test_auth.py, Backend/tests/test_sessions.py, Backend/tests/test_predict.py, Backend/tests/test_postgres_smoke.py, README.md, PROJECT_STATE.md |
 | 9 | 2026-11-07 | Antigravity (Gemini 3.8 Flash) | Profile & onboarding (GET/PUT /v1/profile), static rules-based routines (GET /v1/routines, routines_data.py, exercise contract validation), workout history (POST/GET /v1/workouts with pagination & server UUID), personal stats (GET /v1/stats with UTC calendar streak and 7-day breakdown), 29 new tests (105 tests pass) | Backend/app/models/schemas.py, Backend/app/routines_data.py, Backend/app/services/profile_service.py, Backend/app/services/routine_service.py, Backend/app/services/workout_service.py, Backend/app/routers/profile.py, Backend/app/routers/routines.py, Backend/app/routers/workouts.py, Backend/app/routers/stats.py, Backend/app/main.py, Backend/tests/test_profile.py, Backend/tests/test_routines.py, Backend/tests/test_workouts.py, Backend/tests/test_stats.py, README.md, PROJECT_STATE.md |
+| 10 | 2026-11-07 | Antigravity (Gemini 3.8 Flash) | Milestone 0 (M0) Parity Prototype: exported 6 RF models to JSON (`models_json/`, `frontend/public/models/`), TypeScript classifier with `Math.fround` (100% golden parity on 1500 vectors), TS RepCounter port + tests, /v1/exercises snapshot contract test, pose geometry utils, Next.js /m0 squat prototype with webcam & video benchmark. Verified squat.mp4 parity (6 reps, 0.48° angle delta vs Python baseline). 29 Vitest tests pass, 105 Pytest pass. | src/export_models_json.py, src/save_exercises_snapshot.py, models_json/*, frontend/*, PROJECT_STATE.md |
 
 ---
 
@@ -279,7 +291,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 You are continuing work on FitVision (repo: SAGETOAD-source/fitvision).
 1. Read AGENTS.md and PROJECT_STATE.md in the repo root before anything else.
 2. Follow AGENTS.md strictly: send a Change Plan (files to modify/create, nothing else touched) and wait for approval before editing.
-3. Current state: ML pipeline done for 6 exercises; FastAPI backend has complete /v1 API suite (auth, exercises, sessions, predict, profile, routines, workouts history, stats) on branch feat/profile-routines-history: layered architecture (routers -> services -> schemas), user-isolated workout history and personal statistics (UTC calendar day streak and 7-day breakdown), rules-based routines validated against EXERCISES, pure-data config without mediapipe/cv2 in Backend. Full test suite passing (105 tests: 76 unit/API + 26 real-model + 3 Postgres smoke tests). Do NOT push without explicit user instruction.
-4. Next recommended task: "Auth hardening: items 7, 8, 9, 14, plus token strategy, CORS and a login/signup rate limit, and replacing python-jose" (item 1 in section 6 roadmap).
+3. Current state: ML pipeline done for 6 exercises; FastAPI backend has complete /v1 API suite (105 tests pass); Milestone 0 (M0) frontend parity prototype complete on branch feat/frontend-m0-parity (Next.js 14, TypeScript, Tailwind, @mediapipe/tasks-vision, in-browser RF tree evaluation with 100% golden test parity, TS RepCounter port, /m0 prototype page, 29 Vitest tests pass). Verified squat.mp4 parity against Python baseline: 6 reps (exact match) and 0.48° mean angle delta (< 5.0° threshold). Do NOT push without explicit user instruction.
+4. Next recommended task: Milestone 1 (M1) - Auth + Onboarding: Signup, login, route guard, profile screen (goal & focus selection) per FRONTEND_SPEC.md.
 5. At the end, update PROJECT_STATE.md fully and show me the complete file.
 ```

@@ -1,0 +1,235 @@
+{
+  "exercises": {
+    "squat": {
+      "display_name": "Squat",
+      "signals": {
+        "left": {
+          "points": [
+            "LEFT_HIP",
+            "LEFT_KNEE",
+            "LEFT_ANKLE"
+          ],
+          "feature_name": "left_knee_angle"
+        },
+        "right": {
+          "points": [
+            "RIGHT_HIP",
+            "RIGHT_KNEE",
+            "RIGHT_ANKLE"
+          ],
+          "feature_name": "right_knee_angle"
+        }
+      },
+      "extra_signals": {},
+      "down_state": "squat_down",
+      "up_states": [
+        "squat_up",
+        "standing"
+      ],
+      "count_on": "up",
+      "primary_signal": "left",
+      "min_valid_range": 40.0,
+      "good_depth_threshold": 100.0,
+      "extra_range_checks": {},
+      "form_warnings": {},
+      "visibility_threshold": 0.3,
+      "rotate_frame": null
+    },
+    "pushup": {
+      "display_name": "Push-up",
+      "signals": {
+        "left": {
+          "points": [
+            "LEFT_SHOULDER",
+            "LEFT_ELBOW",
+            "LEFT_WRIST"
+          ],
+          "feature_name": "left_elbow_angle"
+        },
+        "right": {
+          "points": [
+            "RIGHT_SHOULDER",
+            "RIGHT_ELBOW",
+            "RIGHT_WRIST"
+          ],
+          "feature_name": "right_elbow_angle"
+        }
+      },
+      "extra_signals": {},
+      "down_state": "pushup_down",
+      "up_states": [
+        "pushup_up"
+      ],
+      "count_on": "up",
+      "primary_signal": "left",
+      "min_valid_range": 40.0,
+      "good_depth_threshold": 90.0,
+      "extra_range_checks": {},
+      "form_warnings": {},
+      "visibility_threshold": 0.5,
+      "rotate_frame": "ROTATE_90_CLOCKWISE"
+    },
+    "situp": {
+      "display_name": "Sit-up",
+      "signals": {
+        "left": {
+          "points": [
+            "LEFT_SHOULDER",
+            "LEFT_HIP",
+            "LEFT_KNEE"
+          ],
+          "feature_name": "left_torso_angle"
+        },
+        "right": {
+          "points": [
+            "RIGHT_SHOULDER",
+            "RIGHT_HIP",
+            "RIGHT_KNEE"
+          ],
+          "feature_name": "right_torso_angle"
+        }
+      },
+      "extra_signals": {},
+      "down_state": "situp_down",
+      "up_states": [
+        "situp_up"
+      ],
+      "count_on": "down",
+      "primary_signal": "left",
+      "min_valid_range": 40.0,
+      "good_depth_threshold": null,
+      "extra_range_checks": {},
+      "form_warnings": {},
+      "visibility_threshold": 0.5,
+      "rotate_frame": null
+    },
+    "pullup": {
+      "display_name": "Pull-up",
+      "signals": {
+        "left": {
+          "points": [
+            "LEFT_SHOULDER",
+            "LEFT_ELBOW",
+            "LEFT_WRIST"
+          ],
+          "feature_name": "left_elbow_angle"
+        },
+        "right": {
+          "points": [
+            "RIGHT_SHOULDER",
+            "RIGHT_ELBOW",
+            "RIGHT_WRIST"
+          ],
+          "feature_name": "right_elbow_angle"
+        }
+      },
+      "extra_signals": {},
+      "down_state": "pullup_down",
+      "up_states": [
+        "pullup_up"
+      ],
+      "count_on": "down",
+      "primary_signal": "left",
+      "min_valid_range": 40.0,
+      "good_depth_threshold": null,
+      "extra_range_checks": {},
+      "form_warnings": {},
+      "visibility_threshold": 0.5,
+      "rotate_frame": null
+    },
+    "jumpingjack": {
+      "display_name": "Jumping Jack",
+      "signals": {
+        "left_arm": {
+          "points": [
+            "LEFT_ELBOW",
+            "LEFT_SHOULDER",
+            "LEFT_HIP"
+          ],
+          "feature_name": "left_arm_angle"
+        },
+        "right_arm": {
+          "points": [
+            "RIGHT_ELBOW",
+            "RIGHT_SHOULDER",
+            "RIGHT_HIP"
+          ],
+          "feature_name": "right_arm_angle"
+        },
+        "leg_spread": {
+          "points": [
+            "RIGHT_KNEE",
+            "MID_HIP",
+            "LEFT_KNEE"
+          ],
+          "feature_name": "leg_spread_angle"
+        }
+      },
+      "extra_signals": {},
+      "down_state": "jack_in",
+      "up_states": [
+        "jack_out"
+      ],
+      "count_on": "down",
+      "primary_signal": "leg_spread",
+      "min_valid_range": 30.0,
+      "good_depth_threshold": null,
+      "extra_range_checks": {
+        "left_arm": 90.0,
+        "right_arm": 90.0
+      },
+      "form_warnings": {},
+      "visibility_threshold": 0.5,
+      "rotate_frame": null
+    },
+    "latpulldown": {
+      "display_name": "Lat Pulldown",
+      "signals": {
+        "left": {
+          "points": [
+            "LEFT_SHOULDER",
+            "LEFT_ELBOW",
+            "LEFT_WRIST"
+          ],
+          "feature_name": "left_elbow_angle"
+        },
+        "right": {
+          "points": [
+            "RIGHT_SHOULDER",
+            "RIGHT_ELBOW",
+            "RIGHT_WRIST"
+          ],
+          "feature_name": "right_elbow_angle"
+        }
+      },
+      "extra_signals": {
+        "torso": {
+          "points": [
+            "LEFT_SHOULDER",
+            "LEFT_HIP",
+            "RIGHT_SHOULDER",
+            "RIGHT_HIP"
+          ],
+          "type": "lean_avg"
+        }
+      },
+      "down_state": "latpulldown_down",
+      "up_states": [
+        "latpulldown_up"
+      ],
+      "count_on": "down",
+      "primary_signal": "left",
+      "min_valid_range": 60.0,
+      "good_depth_threshold": null,
+      "extra_range_checks": {},
+      "form_warnings": {
+        "torso": {
+          "ceiling": 18.0,
+          "message": "Avoid leaning back"
+        }
+      },
+      "visibility_threshold": 0.5,
+      "rotate_frame": null
+    }
+  }
+}

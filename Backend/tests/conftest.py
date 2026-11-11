@@ -71,9 +71,14 @@ def stub_registry():
     )
 
 
+@pytest.fixture(autouse=True)
+def _reset_rate_limiter():
+    limiter.reset()
+    yield
+
+
 @pytest.fixture
 def client(stub_registry):
-    limiter.reset()  # in-memory rate-limit counters must not leak between tests
     # In-memory SQLite, fresh per test. StaticPool keeps it alive for
     # the duration of the test (a plain in-memory DB would otherwise
     # vanish between connections).

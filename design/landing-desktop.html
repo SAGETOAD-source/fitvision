@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FitVision Desktop Landing Page</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Montserrat:wght@600;700;800;900&amp;family=Lora:ital,wght@1,500;1,600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "tertiary": "#a1cde5",
+            "surface-container-low": "#1c1b1c",
+            "error": "#ffb4ab",
+            "error-container": "#93000a",
+            "on-primary-fixed-variant": "#891a2c",
+            "on-primary-fixed": "#40000b",
+            "tertiary-fixed-dim": "#a1cde5",
+            "surface-tint": "#ffb3b5",
+            "surface-bright": "#3a393a",
+            "inverse-on-surface": "#313031",
+            "primary": "#ffb3b5",
+            "surface": "#131314",
+            "on-secondary": "#67001e",
+            "on-secondary-container": "#ffb7bc",
+            "secondary-fixed": "#ffdadb",
+            "on-secondary-fixed": "#40000f",
+            "surface-variant": "#353436",
+            "surface-dim": "#131314",
+            "primary-fixed": "#ffdada",
+            "on-background": "#e5e2e3",
+            "on-tertiary-container": "#76a2b9",
+            "surface-container-high": "#2a2a2b",
+            "on-primary-container": "#fa6f7a",
+            "background": "#131314",
+            "inverse-primary": "#aa3341",
+            "primary-fixed-dim": "#ffb3b5",
+            "on-error-container": "#ffdad6",
+            "surface-container-lowest": "#0e0e0f",
+            "secondary": "#ffb2b8",
+            "tertiary-container": "#00384c",
+            "secondary-container": "#ac0037",
+            "on-surface-variant": "#debfbf",
+            "on-tertiary": "#003548",
+            "on-tertiary-fixed-variant": "#1d4c60",
+            "on-surface": "#e5e2e3",
+            "outline-variant": "#574142",
+            "secondary-fixed-dim": "#ffb2b8",
+            "surface-container": "#201f20",
+            "on-primary": "#680018",
+            "on-tertiary-fixed": "#001e2b",
+            "tertiary-fixed": "#c1e8ff",
+            "outline": "#a68a8a",
+            "primary-container": "#6d001a",
+            "surface-container-highest": "#353436",
+            "on-error": "#690005",
+            "inverse-surface": "#e5e2e3",
+            "on-secondary-fixed-variant": "#91002d"
+          },
+          borderRadius: {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          spacing: {
+            "space-md": "1rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2.25rem",
+            "space-lg": "1.5rem",
+            "gutter": "1rem",
+            "margin": "1rem"
+          },
+          fontFamily: {
+            "body-md": ["Inter"],
+            "headline-xl-mobile": ["Montserrat"],
+            "headline-lg": ["Montserrat"],
+            "label-md": ["Inter"],
+            "headline-xl": ["Montserrat"],
+            "headline-md": ["Montserrat"],
+            "body-sm": ["Inter"],
+            "label-lg": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-lg-mobile": ["Montserrat"],
+            "label-sm": ["Inter"],
+            "headline-sm": ["Montserrat"],
+            "serif-accent": ["Lora", "serif"]
+          },
+          fontSize: {
+            "body-md": ["15px", { lineHeight: "22px", fontWeight: "400" }],
+            "headline-xl-mobile": ["32px", { lineHeight: "38px", letterSpacing: "-0.03em", fontWeight: "800" }],
+            "headline-lg": ["36px", { lineHeight: "42px", letterSpacing: "-0.025em", fontWeight: "800" }],
+            "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
+            "headline-xl": ["48px", { lineHeight: "52px", letterSpacing: "-0.03em", fontWeight: "800" }],
+            "headline-md": ["24px", { lineHeight: "30px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "body-sm": ["13px", { lineHeight: "18px", fontWeight: "400" }],
+            "label-lg": ["14px", { lineHeight: "20px", fontWeight: "600" }],
+            "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+            "headline-lg-mobile": ["26px", { lineHeight: "32px", letterSpacing: "-0.025em", fontWeight: "800" }],
+            "label-sm": ["10px", { lineHeight: "14px", letterSpacing: "0.08em", fontWeight: "700" }],
+            "headline-sm": ["18px", { lineHeight: "24px", letterSpacing: "-0.01em", fontWeight: "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .neon-glow {
+      box-shadow: 0 0 20px rgba(255, 77, 109, 0.45);
+    }
+    .card-border {
+      border: 1px solid #1A1A1E;
+    }
+  </style>
+</head>
+<body class="bg-black text-on-surface antialiased selection:bg-secondary-container selection:text-white min-h-screen flex flex-col">
+<!-- TOP APP BAR -->
+<header class="sticky top-0 z-50 bg-black/90 backdrop-blur-md border-b border-outline-variant/30">
+<div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+<!-- Brand Logo / Leading -->
+<a class="flex items-center gap-3 group" href="#">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center neon-glow">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-md text-headline-md tracking-tight font-extrabold text-white uppercase">FitVision</span>
+<span class="w-2 h-2 rounded-full bg-[#FF4D6D] animate-pulse"></span>
+</div>
+</a>
+<!-- Desktop Nav Items -->
+<nav class="hidden md:flex items-center gap-8">
+<a class="font-label-lg text-label-lg text-on-surface-variant hover:text-white transition-colors duration-150" href="#technology">Technology</a>
+<a class="font-label-lg text-label-lg text-on-surface-variant hover:text-white transition-colors duration-150" href="#exercises">Exercises</a>
+<a class="font-label-lg text-label-lg text-on-surface-variant hover:text-white transition-colors duration-150" href="#privacy">Privacy</a>
+<a class="font-label-lg text-label-lg text-on-surface-variant hover:text-white transition-colors duration-150" href="#how-it-works">How it Works</a>
+</nav>
+<!-- Trailing Action -->
+<div class="flex items-center gap-4">
+<button class="h-12 px-7 rounded-full bg-primary-container text-white font-headline-sm text-headline-sm hover:brightness-110 active:scale-95 transition-all duration-150 shadow-lg shadow-primary-container/40">
+          Get Started
+        </button>
+</div>
+</div>
+</header>
+<!-- MAIN VIEWPORT CONTAINER -->
+<main class="flex-grow">
+<!-- HERO SECTION (Wide 1280px+ Two-Column Grid) -->
+<section class="max-w-7xl mx-auto px-6 pt-12 pb-24">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<!-- Left Hero Column -->
+<div class="lg:col-span-6 flex flex-col space-y-8">
+<!-- Status Pill Badge -->
+<div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#FF4D6D]/10 border border-[#FF4D6D]/40 w-fit">
+<span class="w-2.5 h-2.5 rounded-full bg-[#FF4D6D] animate-ping"></span>
+<span class="font-label-sm text-label-sm tracking-wider uppercase text-white font-bold">
+              ZERO VIDEO UPLOADS • 100% CLIENT-SIDE INFERENCE
+            </span>
+</div>
+<!-- Massive Headline with Single Italic Serif Flourish -->
+<h1 class="font-headline-xl text-headline-xl text-white tracking-tight font-extrabold leading-tight">
+            Master Every <span class="font-serif-accent italic font-normal text-white">Rep</span> with Edge AI Precision
+          </h1>
+<!-- Subhead -->
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed max-w-xl">
+            Real-time computer vision fitness coaching directly in your browser. Millisecond biomechanical feedback, local skeletal angle computation, and verifiable hardware privacy with zero latency.
+          </p>
+<!-- Dual Hero CTAs -->
+<div class="flex flex-wrap items-center gap-4 pt-2">
+<button class="h-[52px] px-8 rounded-full bg-primary-container text-white font-headline-sm text-headline-sm flex items-center gap-3 hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-primary-container/40">
+<span>Start Workout</span>
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<button class="h-[52px] px-7 rounded-full bg-[#0B0B0C] card-border text-white font-headline-sm text-headline-sm flex items-center gap-3 hover:border-[#FF4D6D] active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[#FF4D6D]" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+<span>View Demo</span>
+</button>
+</div>
+<!-- Telemetry Chips -->
+<div class="flex flex-wrap items-center gap-3 pt-4">
+<div class="px-3.5 py-1.5 rounded-full bg-surface-container card-border flex items-center gap-2">
+<span class="font-label-md text-label-md text-white font-medium">⚡ 60 FPS Browser Inference</span>
+</div>
+<div class="px-3.5 py-1.5 rounded-full bg-surface-container card-border flex items-center gap-2">
+<span class="font-label-md text-label-md text-white font-medium">🔒 100% On-Device WebAssembly</span>
+</div>
+<div class="px-3.5 py-1.5 rounded-full bg-surface-container card-border flex items-center gap-2">
+<span class="font-label-md text-label-md text-white font-medium">🎯 33 Skeletal Keypoints</span>
+</div>
+</div>
+</div>
+<!-- Right Hero Column (HUD Visual Showcase) -->
+<div class="lg:col-span-6">
+<div class="relative rounded-3xl overflow-hidden card-border bg-[#0B0B0C] shadow-2xl">
+<!-- Video / Live HUD Container -->
+<div class="relative aspect-[4/3] w-full overflow-hidden bg-black">
+<!-- Visual Hero Photograph -->
+<img alt="FitVision real-time pose tracking" class="w-full h-full object-cover object-center filter contrast-105 brightness-95" src="https://lh3.googleusercontent.com/aida/ALJJyrA2JOpE8YbqKAtKNzetcT2xPeuWvr2OB20nrxOEvMAU8iYL9VQvWRKjQMD94dJpYVXSso-3RklL63iE6vbAGjzUWIZDYvjwRZms_yc-0mwD7OAYVQNYvvStbPjG9B0tUy13pZmuKoi1DFRs6UlFYsrg--T1aXfFOmWPk28vbKG5rfk5CecWII7fKNIJtRU0fZhkZOpOZlnZxCKxEvW6KaCymnU5AboZZCFNkcxybkRJkNoc_DRgSElrOg"/>
+<!-- Top Telemetry Status Overlay Bar -->
+<div class="absolute top-4 inset-x-4 flex items-center justify-between pointer-events-none">
+<div class="flex items-center gap-2 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md card-border">
+<span class="w-2 h-2 rounded-full bg-[#FF4D6D] animate-pulse"></span>
+<span class="font-label-sm text-label-sm font-bold text-white tracking-wider">LIVE CAMERA (LOCAL ONLY)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md card-border font-label-sm text-label-sm font-semibold text-white">
+                    60 FPS
+                  </div>
+<div class="px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md card-border font-label-sm text-label-sm font-semibold text-[#FF4D6D]">
+                    LATENCY: 12ms
+                  </div>
+</div>
+</div>
+<!-- HUD Overlay Badges & Telemetry Nodes -->
+<!-- Knee Angle Node Overlay -->
+<div class="absolute bottom-28 left-6 bg-black/80 backdrop-blur-md card-border rounded-2xl p-3 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full border-2 border-[#FF4D6D] flex items-center justify-center font-label-sm text-label-sm font-bold text-[#FF4D6D]">
+                  88°
+                </div>
+<div>
+<div class="font-label-sm text-label-sm text-on-surface-variant font-medium">Knee Angle: 88°</div>
+<div class="font-label-sm text-label-sm text-white font-bold">Parallel Achieved</div>
+</div>
+</div>
+<!-- Giant 2-Meter Readable Rep Counter Card -->
+<div class="absolute top-16 right-6 bg-primary-container/90 backdrop-blur-md border border-[#FF4D6D]/40 rounded-2xl px-5 py-3 text-center shadow-lg">
+<div class="font-label-sm text-label-sm text-white/80 uppercase tracking-widest font-bold">Active Set</div>
+<div class="font-headline-xl text-headline-xl text-white font-black leading-none mt-0.5">12</div>
+<div class="font-label-sm text-label-sm text-[#FF4D6D] font-bold mt-1">REP TARGET 15</div>
+</div>
+<!-- Form Quality Badge -->
+<div class="absolute bottom-6 left-6 bg-black/85 backdrop-blur-md card-border rounded-full px-4 py-2 flex items-center gap-2.5">
+<span class="material-symbols-outlined text-[#FF4D6D] text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-md text-label-md text-white font-semibold">Form: 98% (Optimal Depth)</span>
+</div>
+</div>
+<!-- Bottom Telemetry Strip -->
+<div class="px-6 py-4 bg-[#0B0B0C] border-t border-[#1A1A1E] flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">memory</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-semibold">On-Device Canvas Pipeline</span>
+</div>
+<div class="flex items-center gap-2 text-white font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[#FF4D6D] text-sm">shield</span>
+<span>ZERO SERVER TRANSMISSION</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION DIVIDER WAVE -->
+<div class="w-full overflow-hidden leading-none opacity-30">
+<svg class="relative block w-full h-8 text-[#1A1A1E]" preserveaspectratio="none" viewbox="0 0 1200 120">
+<path d="M0,0 C150,90 350,-40 500,45 C650,120 900,10 1200,40 L1200,120 L0,120 Z" fill="currentColor"></path>
+</svg>
+</div>
+<!-- PRIVACY ASSURANCE BANNER SECTION -->
+<section class="max-w-7xl mx-auto px-6 py-20" id="privacy">
+<div class="rounded-3xl bg-[#0B0B0C] card-border p-8 md:p-12 relative overflow-hidden">
+<div class="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-primary-container/20 blur-3xl pointer-events-none"></div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+<div class="lg:col-span-4 flex flex-col space-y-4">
+<div class="w-14 h-14 rounded-2xl bg-primary-container flex items-center justify-center neon-glow">
+<span class="material-symbols-outlined text-white text-3xl" style="font-variation-settings: 'FILL' 1;">lock</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-white font-extrabold tracking-tight">
+              Your video never leaves your device
+            </h2>
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FF4D6D]/10 border border-[#FF4D6D]/30 w-fit">
+<span class="w-2 h-2 rounded-full bg-[#FF4D6D]"></span>
+<span class="font-label-sm text-label-sm font-bold text-white uppercase">Client-Side Architecture Guarantee</span>
+</div>
+</div>
+<div class="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="p-6 rounded-2xl bg-surface card-border">
+<div class="flex items-center gap-3 mb-3 text-white font-headline-sm text-headline-sm font-bold">
+<span class="material-symbols-outlined text-[#FF4D6D]">memory_alt</span>
+                WebAssembly Isolation
+              </div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                Raw webcam frames are piped strictly through standard browser <code class="text-white bg-black/60 px-1.5 py-0.5 rounded text-xs">getUserMedia</code> handles directly into in-memory WebAssembly buffers. No networking socket ever touches pixel arrays.
+              </p>
+</div>
+<div class="p-6 rounded-2xl bg-surface card-border">
+<div class="flex items-center gap-3 mb-3 text-white font-headline-sm text-headline-sm font-bold">
+<span class="material-symbols-outlined text-[#FF4D6D]">phonelink_erase</span>
+                Zero Server Transmission
+              </div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                Computer vision coordinates, joint angle calculations, and rep state logs are discarded upon session conclusion. No video files, image frames, or biometric identifiers are saved to any remote host.
+              </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- HOW IT WORKS (3 Steps Bento Grid) -->
+<section class="max-w-7xl mx-auto px-6 py-20" id="how-it-works">
+<div class="text-center max-w-2xl mx-auto mb-16">
+<div class="font-label-sm text-label-sm uppercase tracking-widest text-[#FF4D6D] font-bold mb-2">Workflow</div>
+<h2 class="font-headline-lg text-headline-lg text-white font-extrabold tracking-tight">
+          How On-Device Vision Operates
+        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-3">
+          No wearables. No proprietary sensor straps. Position any webcam and train with millisecond edge feedback.
+        </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Step 01 -->
+<div class="rounded-3xl bg-[#0B0B0C] card-border p-8 flex flex-col justify-between hover:border-[#FF4D6D]/40 transition-all duration-200">
+<div>
+<div class="font-headline-xl text-headline-xl font-black text-outline-variant/40 mb-4">01</div>
+<h3 class="font-headline-md text-headline-md text-white font-bold mb-3">Position Your Camera</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+              Open FitVision on your laptop or propped phone against a water bottle or wall. Ensure your entire body is framed within 2 to 3 meters. No wearable sensors or calibrate markers required.
+            </p>
+</div>
+<div class="mt-8 pt-6 border-t border-[#1A1A1E] flex items-center gap-3 text-white font-label-md text-label-md">
+<span class="material-symbols-outlined text-[#FF4D6D]">videocam</span>
+<span>Webcam or Mobile Browser</span>
+</div>
+</div>
+<!-- Step 02 -->
+<div class="rounded-3xl bg-[#0B0B0C] card-border p-8 flex flex-col justify-between hover:border-[#FF4D6D]/40 transition-all duration-200">
+<div>
+<div class="font-headline-xl text-headline-xl font-black text-outline-variant/40 mb-4">02</div>
+<h3 class="font-headline-md text-headline-md text-white font-bold mb-3">Instant Skeletal Tracking</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+              Our lightweight MediaPipe neural net identifies 33 full-body landmarks locally at 60 FPS. It calculates acute angles at shoulders, elbows, hips, and knees on every WebGL frame.
+            </p>
+</div>
+<div class="mt-8 pt-6 border-t border-[#1A1A1E] flex items-center gap-3 text-white font-label-md text-label-md">
+<span class="material-symbols-outlined text-[#FF4D6D]">hub</span>
+<span>33 Biomechanical Nodes</span>
+</div>
+</div>
+<!-- Step 03 -->
+<div class="rounded-3xl bg-[#0B0B0C] card-border p-8 flex flex-col justify-between hover:border-[#FF4D6D]/40 transition-all duration-200">
+<div>
+<div class="font-headline-xl text-headline-xl font-black text-outline-variant/40 mb-4">03</div>
+<h3 class="font-headline-md text-headline-md text-white font-bold mb-3">Real-Time Debouncing &amp; Form Cues</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+              A local Random Forest state machine debounces repetition states, incrementing only verified complete movement trajectories while alerting you when knees cave or spines arch.
+            </p>
+</div>
+<div class="mt-8 pt-6 border-t border-[#1A1A1E] flex items-center gap-3 text-white font-label-md text-label-md">
+<span class="material-symbols-outlined text-[#FF4D6D]">graphic_eq</span>
+<span>Sub-16ms Audio-Visual Cues</span>
+</div>
+</div>
+</div>
+</section>
+<!-- EXERCISES SUPPORTED (6 Bento Cards in 3-Column Grid) -->
+<section class="max-w-7xl mx-auto px-6 py-20" id="exercises">
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+<div>
+<div class="font-label-sm text-label-sm uppercase tracking-widest text-[#FF4D6D] font-bold mb-2">Supported Library</div>
+<h2 class="font-headline-lg text-headline-lg text-white font-extrabold tracking-tight">
+            Validated Exercise Movements
+          </h2>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md">
+          Each movement is calibrated with anatomical joint angular thresholds and algorithmic cadence gates.
+        </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- 1. Squat -->
+<div class="rounded-3xl bg-[#0B0B0C] card-border p-6 hover:border-[#FF4D6D]/50 transition-all duration-200">
+<div class="flex items-center justify-between mb-4">
+<span class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-[#FF4D6D]">
+<span class="material-symbols-outlined">directions_walk</span>
+</span>
+<span class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-surface-container card-border text-on-surface-variant font-bold">KNEE 90°</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white font-bold mb-1">Squat</h3>
+<p class="font-label-md text-label-md text-[#FF4D6D] font-semibold mb-4">Target: Quads &amp; Glutes</p>
+<div class="space-y-2 border-t border-[#1A1A1E] pt-4 font-body-sm text-body-sm text-on-surface-variant">
+<div class="flex justify-between">
+<span>Validated Angle:</span>
+<span class="text-white font-medium">Femur-Tibia 90°</span>
+</div>
+<div class="flex justify-between">
+<span>Live Cue:</span>
+<span class="text-white font-medium">Depth check &amp; knee tracking</span>
+</div>
+</div>
+</div>
+<!-- 2. Push-up -->
+<div class="rounded-3xl bg-[#0B0B0C] card-border p-6 hover:border-[#FF4D6D]/50 transition-all duration-200">
+<div class="flex items-center justify-between mb-4">
+<span class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-[#FF4D6D]">
+<span class="material-symbols-outlined">fitness_center</span>
+</span>
+<span class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-surface-container card-border text-on-surface-variant font-bold">ELBOW 90°</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white font-bold mb-1">Push-up</h3>
+<p class="font-label-md text-label-md text-[#FF4D6D] font-semibold mb-4">Target: Chest &amp; Core</p>
+<div class="space-y-2 border-t border-[#1A1A1E] pt-4 font-body-sm text-body-sm text-on-surface-variant">
+<div class="flex justify-between">
+<span>Validated Angle:</span>
+<span class="text-white font-medium">Elbow Flexion 90°</span>
+</div>
+<div class="flex justify-between">
+<span>Live Cue:</span>
+<span class="text-white font-medium">Chest lock &amp; flat spine</span>
+</div>
+</div>
+</div>
+<!-- 3. Sit-up -->
+<div class="rounded-3xl bg-[#0B0B0C] card-border p-6 hover:border-[#FF4D6D]/50 transition-all duration-200">
+<div class="flex items-center justify-between mb-4">
+<span class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-[#FF4D6D]">
+<span class="material-symbols-outlined">airline_seat_recline_extra</span>
+</span>
+<span class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-surface-container card-border text-on-surface-variant font-bold">CADENCE 1.8s</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white font-bold mb-1">Sit-up</h3>
+<p class="font-label-md text-label-md text-[#FF4D6D] font-semibold mb-4">Target: Abdominals</p>
+<div class="space-y-2 border-t border-[#1A1A1E] pt-4 font-body-sm text-body-sm text-on-surface-variant">
+<div class="flex justify-between">
+<span>Cadence Metric:</span>
+<span class="text-white font-medium">1.8s / Rep Cycle</span>
+</div>
+<div class="flex justify-between">
+<span>Live Cue:</span>
+<span class="text-white font-medium">Full trunk flexion</span>
+</div>
+</div>
+</div>
+<!-- 4. Pull-up -->
+<div class="rounded-3xl bg-[#0B0B0C] card-border p-6 hover:border-[#FF4D6D]/50 transition-all duration-200">
+<div class="flex items-center justify-between mb-4">
+<span class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-[#FF4D6D]">
+<span class="material-symbols-outlined">accessibility_new</span>
+</span>
+<span class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-surface-container card-border text-on-surface-variant font-bold">BAR OVER CHIN</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white font-bold mb-1">Pull-up</h3>
+<p class="font-label-md text-label-md text-[#FF4D6D] font-semibold mb-4">Target: Lats &amp; Biceps</p>
+<div class="space-y-2 border-t border-[#1A1A1E] pt-4 font-body-sm text-body-sm text-on-surface-variant">
+<div class="flex justify-between">
+<span>Key Metric:</span>
+<span class="text-white font-medium">Chin clearance elevation</span>
+</div>
+<div class="flex justify-between">
+<span>Live Cue:</span>
+<span class="text-white font-medium">Full dead-hang lockout</span>
+</div>
+</div>
+</div>
+<!-- 5. Jumping Jack -->
+<div class="rounded-3xl bg-[#0B0B0C] card-border p-6 hover:border-[#FF4D6D]/50 transition-all duration-200">
+<div class="flex items-center justify-between mb-4">
+<span class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-[#FF4D6D]">
+<span class="material-symbols-outlined">sports_gymnastics</span>
+</span>
+<span class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-surface-container card-border text-on-surface-variant font-bold">SWEEP 180°</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white font-bold mb-1">Jumping Jack</h3>
+<p class="font-label-md text-label-md text-[#FF4D6D] font-semibold mb-4">Target: Full Body</p>
+<div class="space-y-2 border-t border-[#1A1A1E] pt-4 font-body-sm text-body-sm text-on-surface-variant">
+<div class="flex justify-between">
+<span>Metric:</span>
+<span class="text-white font-medium">Arm sweep 180° arch</span>
+</div>
+<div class="flex justify-between">
+<span>Live Cue:</span>
+<span class="text-white font-medium">Synchronous lateral stride</span>
+</div>
+</div>
+</div>
+<!-- 6. Lat Pulldown -->
+<div class="rounded-3xl bg-[#0B0B0C] card-border p-6 hover:border-[#FF4D6D]/50 transition-all duration-200">
+<div class="flex items-center justify-between mb-4">
+<span class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-[#FF4D6D]">
+<span class="material-symbols-outlined">expand</span>
+</span>
+<span class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-surface-container card-border text-on-surface-variant font-bold">TUCK 75°</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white font-bold mb-1">Lat Pulldown</h3>
+<p class="font-label-md text-label-md text-[#FF4D6D] font-semibold mb-4">Target: Upper Back</p>
+<div class="space-y-2 border-t border-[#1A1A1E] pt-4 font-body-sm text-body-sm text-on-surface-variant">
+<div class="flex justify-between">
+<span>Metric:</span>
+<span class="text-white font-medium">Elbow tuck 75° depression</span>
+</div>
+<div class="flex justify-between">
+<span>Live Cue:</span>
+<span class="text-white font-medium">Scapular retraction</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- TECHNOLOGY & ENGINE PIPELINE (Horizontal Flow Architecture) -->
+<section class="max-w-7xl mx-auto px-6 py-20" id="technology">
+<div class="rounded-3xl bg-[#0B0B0C] card-border p-8 md:p-12">
+<div class="text-center max-w-2xl mx-auto mb-12">
+<div class="font-label-sm text-label-sm uppercase tracking-widest text-[#FF4D6D] font-bold mb-2">Internal Architecture</div>
+<h2 class="font-headline-lg text-headline-lg text-white font-extrabold tracking-tight">
+            The 60 FPS Edge Pipeline
+          </h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">
+            Deterministic inference loops operating purely inside standard WebAssembly &amp; WebGL contexts without cloud bottlenecks.
+          </p>
+</div>
+<!-- Horizontal Pipeline Diagram Cards -->
+<div class="grid grid-cols-1 md:grid-cols-6 gap-3 items-center">
+<div class="p-4 rounded-2xl bg-surface card-border text-center">
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-1">NODE 01</div>
+<div class="font-headline-sm text-headline-sm text-white font-bold text-sm">Camera Stream</div>
+<div class="text-[11px] text-white/60 mt-1 font-mono">[getUserMedia]</div>
+</div>
+<div class="hidden md:flex justify-center text-[#FF4D6D]">
+<span class="material-symbols-outlined text-lg">arrow_forward</span>
+</div>
+<div class="p-4 rounded-2xl bg-surface card-border text-center">
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-1">NODE 02</div>
+<div class="font-headline-sm text-headline-sm text-white font-bold text-sm">MediaPipe 33</div>
+<div class="text-[11px] text-white/60 mt-1 font-mono">WASM 60 FPS</div>
+</div>
+<div class="hidden md:flex justify-center text-[#FF4D6D]">
+<span class="material-symbols-outlined text-lg">arrow_forward</span>
+</div>
+<div class="p-4 rounded-2xl bg-surface card-border text-center">
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-1">NODE 03</div>
+<div class="font-headline-sm text-headline-sm text-white font-bold text-sm">Joint Vectors</div>
+<div class="text-[11px] text-white/60 mt-1 font-mono">Trigonometric Arc</div>
+</div>
+<div class="hidden md:flex justify-center text-[#FF4D6D]">
+<span class="material-symbols-outlined text-lg">arrow_forward</span>
+</div>
+<div class="p-4 rounded-2xl bg-primary-container text-white text-center md:col-span-2">
+<div class="font-label-sm text-label-sm text-white/80 mb-1">EXECUTION STATE</div>
+<div class="font-headline-sm text-headline-sm text-white font-bold text-sm">Random Forest Classifier</div>
+<div class="text-[11px] text-white/90 mt-1 font-mono">Rep Counter &amp; Audio Cues</div>
+</div>
+</div>
+<!-- Metric highlights -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 pt-8 border-t border-[#1A1A1E]">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-[#FF4D6D]">
+<span class="material-symbols-outlined">timer</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm text-white font-bold">&lt; 16ms</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Frame Inference Budget</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-[#FF4D6D]">
+<span class="material-symbols-outlined">cloud_off</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm text-white font-bold">0 Kilobytes</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Cloud Video Transmission</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-[#FF4D6D]">
+<span class="material-symbols-outlined">devices</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm text-white font-bold">100% Native</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Runs on Safari, Chrome, Edge</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- BOTTOM CTA HERO CONTAINER -->
+<section class="max-w-7xl mx-auto px-6 py-16">
+<div class="rounded-3xl bg-primary-container p-12 md:p-16 text-center relative overflow-hidden shadow-2xl">
+<div class="max-w-2xl mx-auto relative z-10 flex flex-col items-center">
+<div class="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center mb-6 neon-glow">
+<span class="material-symbols-outlined text-white text-3xl" style="font-variation-settings: 'FILL' 1;">lock</span>
+</div>
+<h2 class="font-headline-xl text-headline-xl text-white font-black tracking-tight mb-4">
+            Ready to Train in Private?
+          </h2>
+<p class="font-body-lg text-body-lg text-white/90 mb-8 max-w-xl">
+            No account required. Instant camera launch directly in modern desktop browsers. Zero video uploads, zero setup fatigue.
+          </p>
+<button class="h-[52px] px-8 rounded-full bg-white text-on-primary-fixed font-headline-sm text-headline-sm font-bold flex items-center gap-3 hover:bg-white/90 active:scale-95 transition-all shadow-xl">
+<span class="material-symbols-outlined text-on-primary-fixed" style="font-variation-settings: 'FILL' 1;">videocam</span>
+<span>Launch Live Camera</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- DESKTOP FOOTER -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant/30 py-12">
+<div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+<!-- Brand & Copy -->
+<div class="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-xs" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+</div>
+<span class="font-headline-sm text-headline-sm font-bold text-white uppercase tracking-tight">FitVision</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline">
+          © 2025 FitVision. Zero video uploads. 100% on-device client-side inference.
+        </p>
+</div>
+<!-- Footer Navigation Links -->
+<div class="flex items-center gap-6 font-label-sm text-label-sm">
+<a class="text-outline hover:text-primary transition-colors duration-150" href="#privacy">Privacy Protocol</a>
+<a class="text-outline hover:text-primary transition-colors duration-150" href="#technology">Edge AI Docs</a>
+<a class="text-outline hover:text-primary transition-colors duration-150" href="#">Terms of Service</a>
+</div>
+</div>
+</footer>
+</body></html>

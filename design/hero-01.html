@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FitVision — Intelligent Real-Time Athletic Vision</title>
+<!-- Material Symbols & Typography -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Lora:ital,wght@1,400;1,500;1,600&amp;family=Montserrat:wght@700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration matching the Brand & Style System -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-surface": "#e5e2e3",
+            "surface": "#131314",
+            "on-tertiary-container": "#76a2b9",
+            "primary-fixed": "#ffdada",
+            "on-surface-variant": "#debfbf",
+            "secondary-fixed-dim": "#ffb2b8",
+            "inverse-on-surface": "#313031",
+            "inverse-surface": "#e5e2e3",
+            "tertiary-fixed": "#c1e8ff",
+            "primary-container": "#6d001a",
+            "on-tertiary-fixed": "#001e2b",
+            "on-secondary-fixed": "#40000f",
+            "on-primary-fixed-variant": "#891a2c",
+            "secondary-fixed": "#ffdadb",
+            "surface-container": "#201f20",
+            "error-container": "#93000a",
+            "surface-variant": "#353436",
+            "primary-fixed-dim": "#ffb3b5",
+            "primary": "#ffb3b5",
+            "surface-bright": "#3a393a",
+            "tertiary-container": "#00384c",
+            "surface-tint": "#ffb3b5",
+            "on-secondary": "#67001e",
+            "secondary": "#ffb2b8",
+            "tertiary": "#a1cde5",
+            "on-primary": "#680018",
+            "on-tertiary": "#003548",
+            "secondary-container": "#ac0037",
+            "background": "#000000",
+            "surface-container-lowest": "#0b0b0c",
+            "on-secondary-container": "#ffb7bc",
+            "tertiary-fixed-dim": "#a1cde5",
+            "on-primary-fixed": "#40000b",
+            "surface-container-high": "#2a2a2b",
+            "on-secondary-fixed-variant": "#91002d",
+            "surface-container-low": "#1c1b1c",
+            "surface-container-highest": "#353436",
+            "on-error": "#690005",
+            "outline": "#a68a8a",
+            "on-error-container": "#ffdad6",
+            "inverse-primary": "#aa3341",
+            "outline-variant": "#574142",
+            "on-tertiary-fixed-variant": "#1d4c60",
+            "on-primary-container": "#fa6f7a",
+            "surface-dim": "#131314",
+            "error": "#ffb4ab",
+            "on-background": "#e5e2e3"
+          },
+          borderRadius: {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          spacing: {
+            "space-md": "1rem",
+            "gutter": "1rem",
+            "margin": "1rem",
+            "space-xl": "2.25rem",
+            "space-lg": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem"
+          },
+          fontFamily: {
+            "headline-xl": ["Montserrat", "sans-serif"],
+            "headline-lg": ["Montserrat", "sans-serif"],
+            "headline-md": ["Montserrat", "sans-serif"],
+            "headline-sm": ["Montserrat", "sans-serif"],
+            "headline-xl-mobile": ["Montserrat", "sans-serif"],
+            "headline-lg-mobile": ["Montserrat", "sans-serif"],
+            "body-lg": ["Inter", "sans-serif"],
+            "body-md": ["Inter", "sans-serif"],
+            "body-sm": ["Inter", "sans-serif"],
+            "label-lg": ["Inter", "sans-serif"],
+            "label-md": ["Inter", "sans-serif"],
+            "label-sm": ["Inter", "sans-serif"],
+            "serif-italic": ["Lora", "serif"]
+          },
+          fontSize: {
+            "headline-xl": ["48px", { lineHeight: "52px", letterSpacing: "-0.03em", fontWeight: "800" }],
+            "headline-lg": ["36px", { lineHeight: "42px", letterSpacing: "-0.025em", fontWeight: "800" }],
+            "headline-md": ["24px", { lineHeight: "30px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "headline-sm": ["18px", { lineHeight: "24px", letterSpacing: "-0.01em", fontWeight: "700" }],
+            "headline-xl-mobile": ["32px", { lineHeight: "38px", letterSpacing: "-0.03em", fontWeight: "800" }],
+            "headline-lg-mobile": ["26px", { lineHeight: "32px", letterSpacing: "-0.025em", fontWeight: "800" }],
+            "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+            "body-md": ["15px", { lineHeight: "22px", fontWeight: "400" }],
+            "body-sm": ["13px", { lineHeight: "18px", fontWeight: "400" }],
+            "label-lg": ["14px", { lineHeight: "20px", fontWeight: "600" }],
+            "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
+            "label-sm": ["10px", { lineHeight: "14px", letterSpacing: "0.08em", fontWeight: "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Subtle athletic vignette */
+    .bg-vignette {
+      background: radial-gradient(circle at 75% 45%, rgba(109, 0, 26, 0.12) 0%, rgba(11, 11, 12, 0.4) 45%, rgba(0, 0, 0, 0.95) 85%);
+    }
+    /* Glow for telemetry dot */
+    .telemetry-node-glow {
+      box-shadow: 0 0 12px rgba(255, 77, 109, 0.55);
+    }
+  </style>
+</head>
+<body class="bg-black text-on-surface antialiased overflow-x-hidden selection:bg-primary-container selection:text-white relative min-h-screen flex flex-col justify-between">
+<!-- Atmospheric Background Treatment -->
+<div class="fixed inset-0 pointer-events-none bg-vignette z-0"></div>
+<!-- Subtle edge lighting line top -->
+<div class="fixed top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent z-40"></div>
+<!-- 1. Minimal Navigation Bar -->
+<header class="relative z-30 w-full max-w-7xl mx-auto px-6 lg:px-8 py-6">
+<nav class="flex items-center justify-between">
+<!-- Left: FITVISION® Wordmark -->
+<div class="flex items-center gap-3">
+<span class="font-headline-sm text-headline-sm tracking-tight font-extrabold text-white uppercase tracking-wider">
+          FITVISION<span class="text-[#FF4D6D] text-xs align-super ml-0.5 font-mono">®</span>
+</span>
+</div>
+<!-- Centre: Navigation Links -->
+<div class="hidden md:flex items-center gap-10">
+<a class="font-label-md text-label-md tracking-wider text-neutral-300 hover:text-white transition-colors duration-150" href="#experience">
+          Experience
+        </a>
+<a class="font-label-md text-label-md tracking-wider text-neutral-300 hover:text-white transition-colors duration-150" href="#exercises">
+          Exercises
+        </a>
+<a class="font-label-md text-label-md tracking-wider text-neutral-300 hover:text-white transition-colors duration-150" href="#technology">
+          Technology
+        </a>
+</div>
+<!-- Right: Action Cluster -->
+<div class="flex items-center">
+<a class="font-label-md text-label-md text-neutral-300 hover:text-white mr-6 transition-colors duration-150" href="#login">
+          Log in
+        </a>
+<a class="bg-primary-container hover:bg-[#8B0021] text-white px-6 py-2.5 rounded-full font-label-md text-label-md font-bold tracking-wider uppercase transition-all duration-150 active:scale-95 shadow-sm inline-flex items-center justify-center" href="#get-started">
+          GET STARTED
+        </a>
+</div>
+</nav>
+</header>
+<!-- 2. Hero Split Composition (Desktop 1440x1000px Hero Viewport) -->
+<main class="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 flex-1 flex items-center my-auto py-10 lg:py-0">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center w-full">
+<!-- Left Column (Content & CTAs) - 7 cols on desktop for editorial breathing room -->
+<div class="lg:col-span-7 flex flex-col justify-center select-none">
+<!-- Main Headline -->
+<h1 class="flex flex-col tracking-tight text-white">
+<span class="font-headline-xl text-[54px] sm:text-7xl lg:text-[88px] leading-[0.95] font-extrabold uppercase tracking-tight text-white">
+            YOUR BODY.
+          </span>
+<span class="font-headline-xl text-[54px] sm:text-7xl lg:text-[88px] leading-[0.95] font-extrabold uppercase tracking-tight text-white mt-1">
+            YOUR DATA.
+          </span>
+<span class="font-serif-italic italic text-4xl sm:text-6xl lg:text-[76px] leading-[1.08] text-white/90 font-normal mt-2 lowercase first-letter:capitalize">
+            Your evolution.
+          </span>
+</h1>
+<!-- Supporting Copy -->
+<p class="font-body-lg text-body-lg text-neutral-400 max-w-lg mt-7 font-normal tracking-normal leading-relaxed">
+          Train with intelligence. Improve with every repetition.
+        </p>
+<!-- Dual Calls to Action -->
+<div class="flex flex-wrap items-center gap-4 mt-10">
+<!-- Primary CTA -->
+<a class="h-[52px] bg-primary-container hover:bg-[#800020] text-white font-label-md text-label-md font-bold tracking-wider uppercase rounded-full px-8 flex items-center justify-center gap-2 transition-transform duration-150 active:scale-95 shadow-lg border border-[#FF4D6D]/20" href="#train">
+<span>START TRAINING</span>
+<span class="text-base leading-none">↗</span>
+</a>
+<!-- Secondary CTA -->
+<a class="h-[52px] bg-[#0B0B0C] border border-white/20 hover:border-white/50 text-white font-label-md text-label-md font-medium tracking-wider uppercase rounded-full px-8 flex items-center justify-center transition-colors duration-150" href="#explore">
+            EXPLORE THE EXPERIENCE
+          </a>
+</div>
+<!-- Privacy Signal Guarantee -->
+<div class="flex items-center gap-2.5 mt-8 pt-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF4D6D] opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-[#FF4D6D]"></span>
+</span>
+<p class="font-mono text-xs font-semibold tracking-widest text-neutral-300 uppercase">
+            YOUR VIDEO NEVER LEAVES YOUR DEVICE.
+          </p>
+</div>
+</div>
+<!-- Right Column (Athlete Photography & Single Restrained HUD Interface Preview) - 5 cols -->
+<div class="lg:col-span-5 relative flex items-center justify-center lg:justify-end">
+<div class="relative w-full max-w-[480px] lg:max-w-[520px] aspect-[4/5] rounded-3xl overflow-hidden bg-[#0B0B0C] border border-white/10 shadow-2xl">
+<!-- Athlete Photography with subtle dark gradient blend -->
+<img alt="FitVision Athlete in high-performance dynamic sprint stance inside an atmospheric training facility" class="w-full h-full object-cover object-center filter contrast-105 brightness-95" src="https://lh3.googleusercontent.com/aida/ALJJyrA2JOpE8YbqKAtKNzetcT2xPeuWvr2OB20nrxOEvMAU8iYL9VQvWRKjQMD94dJpYVXSso-3RklL63iE6vbAGjzUWIZDYvjwRZms_yc-0mwD7OAYVQNYvvStbPjG9B0tUy13pZmuKoi1DFRs6UlFYsrg--T1aXfFOmWPk28vbKG5rfk5CecWII7fKNIJtRU0fZhkZOpOZlnZxCKxEvW6KaCymnU5AboZZCFNkcxybkRJkNoc_DRgSElrOg" onerror="this.onerror=null;this.src='hero-athlete.png';"/>
+<!-- Edge vignette overlays ensuring seamless integration with pitch black -->
+<div class="absolute inset-0 bg-gradient-to-t from-[#000000] via-transparent to-transparent opacity-80 pointer-events-none"></div>
+<div class="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/30 pointer-events-none"></div>
+<!-- EXACTLY ONE Floating HUD Interface Card positioned near the athlete -->
+<div class="absolute bottom-6 left-6 right-6 sm:right-auto sm:left-6 sm:w-[260px] bg-[#0e0e10]/85 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-2xl z-20 transition-all duration-300">
+<!-- Card Header -->
+<div class="flex items-center justify-between pb-3 border-b border-white/10">
+<span class="font-mono text-[11px] tracking-widest text-white/70 uppercase font-semibold">
+                FITVISION LIVE
+              </span>
+<!-- Restrained signal-rose indicator node -->
+<span class="relative flex h-2 w-2">
+<span class="w-2 h-2 rounded-full bg-[#FF4D6D] ring-4 ring-[#FF4D6D]/20 telemetry-node-glow"></span>
+</span>
+</div>
+<!-- Metrics / Body -->
+<div class="pt-3.5 flex flex-col">
+<div class="flex items-baseline justify-between">
+<span class="font-mono text-2xl font-bold tracking-tight text-white tabular-nums">
+                  08 <span class="text-sm font-normal text-white/60">REPS</span>
+</span>
+<span class="text-xs font-label-md tracking-widest text-neutral-400 uppercase font-medium">
+                  SQUAT
+                </span>
+</div>
+<!-- Form Status Badge -->
+<div class="mt-2.5">
+<span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono px-2.5 py-1 rounded-full font-semibold uppercase tracking-wider inline-flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  FORM: GOOD
+                </span>
+</div>
+</div>
+</div>
+<!-- Subtle hairline grid markings in corners for biometric instrument feel -->
+<div class="absolute top-4 left-4 font-mono text-[9px] text-white/40 tracking-widest pointer-events-none">
+            [SYS_RDY: 60FPS]
+          </div>
+<div class="absolute top-4 right-4 font-mono text-[9px] text-white/40 tracking-widest pointer-events-none flex items-center gap-1">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            ON-DEVICE AI
+          </div>
+</div>
+</div>
+</div>
+</main>
+<!-- 3. Bottom Element: Minimal Vertical Scroll Cue Indicator -->
+<footer class="relative z-20 w-full py-6 flex flex-col items-center justify-center select-none pointer-events-none">
+<div class="flex flex-col items-center gap-2">
+<span class="font-mono uppercase tracking-[0.25em] text-[10px] text-neutral-500">
+        SCROLL
+      </span>
+<div class="w-[1px] h-6 bg-gradient-to-b from-neutral-500 to-transparent"></div>
+</div>
+</footer>
+</body></html>

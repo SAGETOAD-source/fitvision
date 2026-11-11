@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>FitVision - On-Device Edge AI Workout Coach</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Montserrat:ital,wght@0,700;0,800;1,700;1,800&amp;family=Playfair+Display:ital,wght@1,400;1,600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Script -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-highest": "#353436",
+            "tertiary-fixed": "#c1e8ff",
+            "on-secondary-fixed": "#40000f",
+            "on-secondary": "#67001e",
+            "on-primary-container": "#fa6f7a",
+            "on-secondary-container": "#ffb7bc",
+            "inverse-surface": "#e5e2e3",
+            "error": "#ffb4ab",
+            "tertiary-container": "#00384c",
+            "error-container": "#93000a",
+            "surface-tint": "#ffb3b5",
+            "outline-variant": "#574142",
+            "tertiary-fixed-dim": "#a1cde5",
+            "on-tertiary": "#003548",
+            "background": "#131314",
+            "surface-bright": "#3a393a",
+            "on-primary-fixed-variant": "#891a2c",
+            "surface-container-lowest": "#0e0e0f",
+            "inverse-on-surface": "#313031",
+            "surface-dim": "#131314",
+            "on-background": "#e5e2e3",
+            "secondary-container": "#ac0037",
+            "secondary-fixed": "#ffdadb",
+            "secondary": "#ffb2b8",
+            "primary-fixed": "#ffdada",
+            "on-error-container": "#ffdad6",
+            "on-tertiary-fixed": "#001e2b",
+            "on-surface": "#e5e2e3",
+            "on-primary-fixed": "#40000b",
+            "primary-fixed-dim": "#ffb3b5",
+            "on-tertiary-container": "#76a2b9",
+            "surface": "#131314",
+            "surface-container": "#201f20",
+            "secondary-fixed-dim": "#ffb2b8",
+            "on-error": "#690005",
+            "primary-container": "#6d001a",
+            "surface-container-low": "#1c1b1c",
+            "primary": "#ffb3b5",
+            "tertiary": "#a1cde5",
+            "surface-variant": "#353436",
+            "on-surface-variant": "#debfbf",
+            "on-tertiary-fixed-variant": "#1d4c60",
+            "outline": "#a68a8a",
+            "inverse-primary": "#aa3341",
+            "surface-container-high": "#2a2a2b",
+            "on-primary": "#680018",
+            "on-secondary-fixed-variant": "#91002d"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-xl": "2.25rem",
+            "space-md": "1rem",
+            "gutter": "1rem",
+            "space-lg": "1.5rem",
+            "margin": "1rem"
+          },
+          "fontFamily": {
+            "headline-lg": ["Montserrat", "sans-serif"],
+            "headline-lg-mobile": ["Montserrat", "sans-serif"],
+            "headline-md": ["Montserrat", "sans-serif"],
+            "headline-sm": ["Montserrat", "sans-serif"],
+            "headline-xl": ["Montserrat", "sans-serif"],
+            "headline-xl-mobile": ["Montserrat", "sans-serif"],
+            "body-lg": ["Inter", "sans-serif"],
+            "body-md": ["Inter", "sans-serif"],
+            "body-sm": ["Inter", "sans-serif"],
+            "label-lg": ["Inter", "sans-serif"],
+            "label-md": ["Inter", "sans-serif"],
+            "label-sm": ["Inter", "sans-serif"],
+            "editorial": ["Playfair Display", "serif"]
+          },
+          "fontSize": {
+            "headline-lg": ["36px", { "lineHeight": "42px", "letterSpacing": "-0.025em", "fontWeight": "800" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.025em", "fontWeight": "800" }],
+            "headline-md": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "headline-xl": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+            "headline-xl-mobile": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+            "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+            "body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .hud-glow {
+      box-shadow: 0 0 16px rgba(255, 77, 109, 0.45);
+    }
+    .hud-pip-pulse {
+      animation: pulseGlow 1.8s infinite ease-in-out;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+  </style>
+</head>
+<body class="bg-black text-on-surface antialiased selection:bg-secondary-container selection:text-white">
+<!-- Container restricted to 390px mobile viewport canvas -->
+<div class="w-full max-w-[390px] mx-auto min-h-screen bg-black flex flex-col relative overflow-x-hidden shadow-2xl">
+<!-- 1. Header / Top Navigation (Shared Component Anchor) -->
+<header class="sticky top-0 z-50 flex items-center justify-between w-full max-w-[390px] mx-auto px-margin py-space-sm bg-background/90 dark:bg-background/90 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex items-center gap-2">
+<img alt="FitVision Logo" class="w-8 h-8 rounded-full border border-[#FF4D6D]/40 object-cover p-0.5 bg-[#0B0B0C]" src="https://lh3.googleusercontent.com/aida/ALJJyrCs_5s-Tt95oCQeZ3PD5O7L_oTAUYrKpRJbpEprurOd51HtHlX_jMcoBr9etIS8eOadHJJzItL1JgCssTzAfuzIF-i4swnbTh1lUrR72xde88LVTSfsyuzrX7iQN8Em7NHgoMZecQJxYKCrOHRoIzBHICOtxxQbA1RYiEqKhF-t4fxZFmTunxnAvFA2j0gOUgusQvLEGka-yKc_a9sc8ddnXYVk10zjhHmFHnDfnuJafla6pIHSUWrXOn8"/>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="fitness_center">fitness_center</span>
+<span class="font-headline-sm text-headline-sm tracking-tight font-extrabold text-on-surface uppercase">FitVision</span>
+</div>
+</div>
+<button class="px-4 py-2 rounded-full bg-primary-container text-white font-label-md text-label-md active:scale-95 transition-transform duration-150 shadow-sm border border-secondary/20">
+        Start Free
+      </button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col">
+<!-- 2. Hero Section -->
+<section class="px-margin pt-6 pb-4 flex flex-col gap-5">
+<!-- Privacy Badge -->
+<div class="self-start inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FF4D6D]/10 border border-[#FF4D6D]/40 backdrop-blur-sm">
+<span class="w-2 h-2 rounded-full bg-[#FF4D6D] hud-pip-pulse"></span>
+<span class="text-white text-label-sm font-label-sm tracking-wider uppercase">Your video never leaves your device</span>
+</div>
+<!-- Headline with Editorial Serif Accent -->
+<h1 class="font-headline-xl-mobile text-headline-xl-mobile text-white leading-tight font-extrabold tracking-tight">
+          Master Every Rep with <span class="font-editorial italic font-normal text-white">Intelligent</span> Vision
+        </h1>
+<p class="font-body-md text-body-md text-on-surface-variant font-normal leading-relaxed">
+          Real-time joint tracking and live rep counting directly in your browser. Powered by 100% on-device edge AI.
+        </p>
+<!-- CTA Pill Button -->
+<a class="w-full h-[52px] rounded-full bg-primary-container text-white font-headline-sm text-headline-sm flex items-center justify-center gap-2 active:scale-98 transition-all shadow-lg hover:brightness-110" href="#camera-view">
+<span>Start Free Workout</span>
+<span class="material-symbols-outlined text-white text-xl" data-icon="arrow_forward">arrow_forward</span>
+</a>
+<!-- Live AI Camera HUD Card -->
+<div class="relative rounded-3xl overflow-hidden border border-[#1A1A1E] bg-[#0B0B0C] mt-2 shadow-2xl" id="camera-view">
+<!-- Athlete Hero Visual -->
+<div class="relative w-full aspect-[4/3] bg-black">
+<img alt="Athlete in motion with AI skeleton" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChwaeqx6GAMYk-v74d4mho5I7AqrMeF-E13q5iBzfW-lQHr09ki4KwKYG7vzXgah92y2lW3-MKn1Pq44D9a8nyJUu47rgeB39k3-g9XODnYLiI4rAeOS_h1AZ_CLqVRBSILfWnvrcGu1ivj2DIFhZtXTN-QXm4xchD9gcop55meMu6u5AmcGqJNxyIIrQPXX3RAOzX6TnnXtrJUd06XtCZ2MMqcbn5zerQCjkQRS186IKO7wfHJA2_6geKem80ruJzkX2DdyvteI8"/>
+<!-- Vignette Overlay -->
+<div class="absolute inset-0 bg-gradient-to-t from-[#0B0B0C] via-transparent to-black/60 pointer-events-none"></div>
+<!-- HUD Overlays -->
+<!-- Top Status Pip -->
+<div class="absolute top-3 left-3 flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10">
+<span class="w-1.5 h-1.5 rounded-full bg-[#FF4D6D] hud-pip-pulse"></span>
+<span class="text-white font-label-sm text-label-sm uppercase tracking-wider">CAMERA ACTIVE (LOCAL ONLY)</span>
+</div>
+<div class="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 text-white font-label-sm text-label-sm">
+              60 FPS
+            </div>
+<!-- Skeletal Telemetry Joint Markers (Simulated browser HUD) -->
+<div class="absolute top-[32%] left-[48%] w-3 h-3 -ml-1.5 -mt-1.5 rounded-full bg-[#FF4D6D] border-2 border-white hud-glow"></div>
+<div class="absolute top-[28%] left-[58%] w-3 h-3 -ml-1.5 -mt-1.5 rounded-full bg-[#FF4D6D] border-2 border-white hud-glow"></div>
+<div class="absolute top-[48%] left-[46%] w-3 h-3 -ml-1.5 -mt-1.5 rounded-full bg-[#a1cde5] border-2 border-white"></div>
+<div class="absolute top-[60%] left-[58%] w-3 h-3 -ml-1.5 -mt-1.5 rounded-full bg-[#FF4D6D] border-2 border-white hud-glow"></div>
+<!-- Bottom Floating Live Stats within Frame -->
+<div class="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none">
+<div class="bg-black/85 backdrop-blur-md border border-[#1A1A1E] rounded-2xl px-3 py-1.5 flex items-center gap-2">
+<span class="text-[#D1D5DB] font-label-sm text-label-sm uppercase">Reps</span>
+<span class="font-headline-sm text-headline-sm text-white font-extrabold">14</span>
+</div>
+<div class="bg-black/85 backdrop-blur-md border border-[#1A1A1E] rounded-2xl px-3 py-1.5 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-[#FF4D6D]"></span>
+<span class="text-white font-label-sm text-label-sm font-semibold">Form: 98% (Optimal)</span>
+</div>
+</div>
+</div>
+<!-- Bottom Telemetry Strip in Card -->
+<div class="p-3.5 bg-[#0B0B0C] flex items-center justify-between border-t border-[#1A1A1E]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#FF4D6D] text-lg" data-icon="videocam">videocam</span>
+<span class="text-white font-label-md text-label-md font-medium">On-Device Canvas Pipeline</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-[#a1cde5] font-label-sm text-label-sm font-semibold uppercase tracking-wider">Zero Uploads</span>
+</div>
+</div>
+</section>
+<!-- 3. Organic SVG Wave Divider -->
+<div class="w-full overflow-hidden leading-none pt-2">
+<svg class="relative block w-full h-8 text-[#0B0B0C]" fill="currentColor" preserveaspectratio="none" viewbox="0 0 390 32">
+<path d="M0,16 C90,32 180,0 270,16 C330,26 360,10 390,16 L390,32 L0,32 Z"></path>
+</svg>
+</div>
+<!-- 4. Section 2: How It Works -->
+<section class="bg-[#0B0B0C] px-margin py-8 flex flex-col gap-6">
+<div>
+<span class="text-[#FF4D6D] font-label-sm text-label-sm uppercase tracking-widest font-bold">Client-Side Architecture</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-white font-extrabold mt-1">
+            Three Steps to <span class="font-editorial italic font-normal text-white">Flawless</span> Form
+          </h2>
+</div>
+<div class="flex flex-col gap-3.5">
+<!-- Step 1 Card -->
+<div class="p-4 rounded-3xl bg-black border border-[#1A1A1E] flex flex-col gap-2 relative">
+<div class="flex items-center justify-between">
+<span class="w-7 h-7 rounded-full bg-[#FF4D6D] text-white font-headline-sm text-label-md flex items-center justify-center font-bold">01</span>
+<span class="material-symbols-outlined text-outline text-lg" data-icon="smartphone">smartphone</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-white font-bold">Frame Your Camera</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Place your phone against a water bottle or wall. No sensors or wearables needed.</p>
+</div>
+<!-- Step 2 Card -->
+<div class="p-4 rounded-3xl bg-black border border-[#1A1A1E] flex flex-col gap-2 relative">
+<div class="flex items-center justify-between">
+<span class="w-7 h-7 rounded-full bg-[#FF4D6D] text-white font-headline-sm text-label-md flex items-center justify-center font-bold">02</span>
+<span class="material-symbols-outlined text-[#FF4D6D] text-lg" data-icon="polyline">polyline</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-white font-bold">AI Counts Reps &amp; Checks Depth</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Browser vision tracks 33 skeletal keypoints locally at 60 FPS, validating full range of motion.</p>
+</div>
+<!-- Step 3 Card -->
+<div class="p-4 rounded-3xl bg-black border border-[#1A1A1E] flex flex-col gap-2 relative">
+<div class="flex items-center justify-between">
+<span class="w-7 h-7 rounded-full bg-[#FF4D6D] text-white font-headline-sm text-label-md flex items-center justify-center font-bold">03</span>
+<span class="material-symbols-outlined text-outline text-lg" data-icon="speed">speed</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-white font-bold">Review Instant Form Feedback</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Get visual cues when your knees cave or spine arches, with zero latency.</p>
+</div>
+</div>
+</section>
+<!-- 5. Section 3: Supported Exercises -->
+<section class="px-margin py-8 flex flex-col gap-6 bg-black">
+<div>
+<span class="text-[#FF4D6D] font-label-sm text-label-sm uppercase tracking-widest font-bold">Telemetry Engine</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-white font-extrabold mt-1">
+            Trained on <span class="font-editorial italic font-normal text-white">Essential</span> Movements
+          </h2>
+</div>
+<!-- 2x3 Grid of Exercises -->
+<div class="grid grid-cols-2 gap-3">
+<!-- Exercise 1: Squat -->
+<div class="p-3.5 rounded-3xl bg-[#0B0B0C] border border-[#1A1A1E] flex flex-col justify-between gap-3">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Quads • Glutes</span>
+<span class="material-symbols-outlined text-[#FF4D6D] text-base" data-icon="accessibility_new">accessibility_new</span>
+</div>
+<h3 class="font-headline-sm text-base text-white font-bold">Squat</h3>
+</div>
+<div class="px-2 py-1 rounded-full bg-black/60 border border-[#FF4D6D]/40 text-[#FF4D6D] font-label-sm text-[11px] font-medium leading-none">
+              Depth: 90° validated
+            </div>
+</div>
+<!-- Exercise 2: Push-up -->
+<div class="p-3.5 rounded-3xl bg-[#0B0B0C] border border-[#1A1A1E] flex flex-col justify-between gap-3">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Chest • Core</span>
+<span class="material-symbols-outlined text-[#FF4D6D] text-base" data-icon="fitness_center">fitness_center</span>
+</div>
+<h3 class="font-headline-sm text-base text-white font-bold">Push-up</h3>
+</div>
+<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white font-label-sm text-[11px] font-medium leading-none">
+              Chest lock: Active
+            </div>
+</div>
+<!-- Exercise 3: Sit-up -->
+<div class="p-3.5 rounded-3xl bg-[#0B0B0C] border border-[#1A1A1E] flex flex-col justify-between gap-3">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Abdominals</span>
+<span class="material-symbols-outlined text-[#FF4D6D] text-base" data-icon="self_improvement">self_improvement</span>
+</div>
+<h3 class="font-headline-sm text-base text-white font-bold">Sit-up</h3>
+</div>
+<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white font-label-sm text-[11px] font-medium leading-none">
+              Cadence: 1.8s/rep
+            </div>
+</div>
+<!-- Exercise 4: Pull-up -->
+<div class="p-3.5 rounded-3xl bg-[#0B0B0C] border border-[#1A1A1E] flex flex-col justify-between gap-3">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Lats • Biceps</span>
+<span class="material-symbols-outlined text-[#FF4D6D] text-base" data-icon="sports_gymnastics">sports_gymnastics</span>
+</div>
+<h3 class="font-headline-sm text-base text-white font-bold">Pull-up</h3>
+</div>
+<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white font-label-sm text-[11px] font-medium leading-none">
+              Chin clearance: Tracked
+            </div>
+</div>
+<!-- Exercise 5: Jumping Jack -->
+<div class="p-3.5 rounded-3xl bg-[#0B0B0C] border border-[#1A1A1E] flex flex-col justify-between gap-3">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Full Body</span>
+<span class="material-symbols-outlined text-[#FF4D6D] text-base" data-icon="directions_run">directions_run</span>
+</div>
+<h3 class="font-headline-sm text-base text-white font-bold">Jumping Jack</h3>
+</div>
+<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white font-label-sm text-[11px] font-medium leading-none">
+              Arm sweep: 180°
+            </div>
+</div>
+<!-- Exercise 6: Lat Pulldown -->
+<div class="p-3.5 rounded-3xl bg-[#0B0B0C] border border-[#1A1A1E] flex flex-col justify-between gap-3">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Upper Back</span>
+<span class="material-symbols-outlined text-[#FF4D6D] text-base" data-icon="exercise">exercise</span>
+</div>
+<h3 class="font-headline-sm text-base text-white font-bold">Lat Pulldown</h3>
+</div>
+<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white font-label-sm text-[11px] font-medium leading-none">
+              Elbow tuck: Monitored
+            </div>
+</div>
+</div>
+</section>
+<!-- 6. Section Highlight Band (Rich Burgundy Fill #6D001A) -->
+<section class="px-margin py-6">
+<div class="p-6 rounded-3xl bg-primary-container text-white border border-[#FF4D6D]/30 flex flex-col items-center text-center gap-3 shadow-xl">
+<div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-2xl" data-icon="lock">lock</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-white font-bold leading-tight">
+            Ready to Train in Private?
+          </h2>
+<p class="font-body-sm text-body-sm text-white/90">
+            No account required. Instant camera launch.
+          </p>
+<button class="mt-2 w-full h-12 rounded-full bg-white text-primary-container font-headline-sm text-label-lg font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-md">
+<span>Launch Live Camera</span>
+<span class="material-symbols-outlined text-primary-container text-lg" data-icon="videocam">videocam</span>
+</button>
+</div>
+</section>
+</main>
+<!-- 7. Footer (Shared Component Anchor) -->
+<footer class="flex flex-col items-center text-center w-full max-w-[390px] mx-auto px-margin py-space-xl space-y-space-md bg-surface-container-lowest border-t border-outline-variant/30">
+<div class="flex items-center gap-2">
+<img alt="FitVision Logo" class="w-6 h-6 rounded-full border border-outline-variant/30 object-cover" src="https://lh3.googleusercontent.com/aida/ALJJyrCs_5s-Tt95oCQeZ3PD5O7L_oTAUYrKpRJbpEprurOd51HtHlX_jMcoBr9etIS8eOadHJJzItL1JgCssTzAfuzIF-i4swnbTh1lUrR72xde88LVTSfsyuzrX7iQN8Em7NHgoMZecQJxYKCrOHRoIzBHICOtxxQbA1RYiEqKhF-t4fxZFmTunxnAvFA2j0gOUgusQvLEGka-yKc_a9sc8ddnXYVk10zjhHmFHnDfnuJafla6pIHSUWrXOn8"/>
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">FitVision</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline max-w-[300px]">
+        © 2025 FitVision. Zero video uploads. 100% on-device client-side inference.
+      </p>
+<div class="flex items-center gap-4 text-label-sm font-label-sm text-outline">
+<a class="hover:text-primary transition-colors duration-150" href="#privacy">Privacy Protocol</a>
+<span>•</span>
+<a class="hover:text-primary transition-colors duration-150" href="#edge-docs">Edge AI Docs</a>
+<span>•</span>
+<a class="hover:text-primary transition-colors duration-150" href="#terms">Terms of Service</a>
+</div>
+</footer>
+</div>
+</body></html>

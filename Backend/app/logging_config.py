@@ -23,6 +23,9 @@ def configure_logging() -> None:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     handler.setFormatter(formatter)
+    # Filter on the handler (not just per-logger) so records from uvicorn/third-party
+    # loggers also get a request_id and don't break the formatter.
+    handler.addFilter(RequestIdFilter())
 
     root = logging.getLogger()
     root.setLevel(settings.log_level.upper())

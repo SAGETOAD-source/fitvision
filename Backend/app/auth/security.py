@@ -19,6 +19,9 @@ _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
+    # bcrypt silently ignores bytes past 72; refuse instead of truncating.
+    if len(password.encode("utf-8")) > 72:
+        raise ValueError("Password must be at most 72 bytes in UTF-8")
     return _pwd_context.hash(password)
 
 

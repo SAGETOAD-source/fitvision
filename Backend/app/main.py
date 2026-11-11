@@ -18,7 +18,7 @@ from fastapi import FastAPI
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.config import get_settings
+from app.config import DEFAULT_JWT_SECRET, get_settings
 from app.db.database import engine, init_db
 from app.exceptions import register_exception_handlers
 from app.logging_config import configure_logging, get_logger
@@ -52,6 +52,12 @@ async def _session_cleanup_loop(interval_seconds: int) -> None:
 async def lifespan(app: FastAPI):
     settings = get_settings()
     configure_logging()
+
+    if settings.environment == "production":
+        if settings.jwt_secret_key == DEFAULT_JWT_SECRET:
+            raise RuntimeError("Refusing to start in production with the default JWT_SECRET_KEY")
+        if settings.cors_origins.strip() == "*":
+            raise RuntimeError("Refusing to start in production with CORS_ORIGINS='*'")
 
     logger.info(f"Starting {settings.app_name} in '{settings.environment}' mode")
 

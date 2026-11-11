@@ -3,8 +3,8 @@
 > Every AI agent: read this first. Update it at the end of every session (see AGENTS.md section 9).
 > Progress percentages are rough estimates, not measurements. Update honestly.
 
-**Last updated:** 2026-11-07 | **Session #:** 11
-**Updated by:** Antigravity (Gemini 3.8 Flash) — feat/mobile-workout-screen branch
+**Last updated:** 2026-11-11 | **Session #:** 12
+**Updated by:** Claude (Sonnet 5.5) — chore/hygiene-auth-hardening branch
 **Repo:** https://github.com/SAGETOAD-source/fitvision (branch `main`)
 **Owner:** Krishnendu | **Dev environment:** Windows, Antigravity IDE
 
@@ -81,10 +81,10 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 | Area | Est. done | Notes |
 |---|---|---|
 | ML pipeline (6 exercises) | ~90% | Trained, exported to JSON (`models_json/` & `frontend/public/models/`), golden test passes 100%. |
-| Backend core (auth, sessions, predict, profile, routines, history, stats) | ~92% | Full /v1 API suite, pure-data config, layered architecture (routers -> services -> schemas), user-isolated history & stats; 105 tests passing. |
-| Backend production hardening | ~60% | Uniform RequestValidationError handling without NaN/inf crash; email normalization; DB secrets masked; single worker Dockerfile. |
+| Backend core (auth, sessions, predict, profile, routines, history, stats) | ~92% | Full /v1 API suite, pure-data config, layered architecture (routers -> services -> schemas), user-isolated history & stats; 114 tests passing (1 Postgres smoke skipped without `TEST_DATABASE_URL`). |
+| Backend production hardening | ~70% | Uniform RequestValidationError handling without NaN/inf crash; email normalization; DB secrets masked; single worker Dockerfile; production startup guard (default JWT secret / CORS `*`); handler-level request_id log filter. |
 | Database | ~80% | Dual SQLite & Neon PostgreSQL supported; psycopg[binary]==3.3.7, Alembic migrations (0001 initial, 0002 TIMESTAMPTZ), connection pooling with pre-ping/recycle. |
-| Auth | ~75% | Core works; email validation, lowercasing, and case-insensitive duplicate prevention done; rate limits & token strategy pending. |
+| Auth | ~85% | Core works; email normalization, duplicate-signup race -> 409, 72-byte password limit, 5/min rate limit on signup/login done; token strategy, login timing leak, proxy-aware rate-limit key pending. |
 | Frontend | ~25% | M0 Parity Prototype + Mobile-first live workout screen (/workout) with pure reducer, useWorkoutEngine hook, pose overlay, 2m HUD, and error/loading states (46 Vitest tests passing). |
 | Deployment / CI | ~20% | Dockerfile packages app, alembic.ini, and migrations; Neon Postgres connected. |
 | **Overall** | **~62%** | Rough guess. |
@@ -183,13 +183,13 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 | 4 | Resolved | `/v1/exercises` returns full config with landmark strings, signal ordering, thresholds, and extra_signals (resolved in session 8). |
 | 5 | Resolved | History, stats, profile, onboarding, and routine endpoints implemented under `/v1`; UserProfile table utilized (resolved in session 9). |
 | 6 | Med | Timed-out sessions are deleted, not saved (docstring in models.py claims otherwise). |
-| 7 | Med | No rate limit on /auth/login and /auth/signup. |
-| 8 | Med | Default JWT secret is the dev value; no startup guard for production. |
+| 7 | Resolved | `/v1/auth/signup` and `/v1/auth/login` limited to `RATE_LIMIT_AUTH` (default `5/minute`) per client IP via slowapi (resolved in session 12). Caveat: see #27, the key is the client IP. |
+| 8 | Resolved | App raises RuntimeError at startup when `ENVIRONMENT=production` and the JWT secret is the dev default (resolved in session 12). |
 | 9 | Med | `python-jose` 3.3.0 has known CVEs. |
 | 10 | Resolved | Email normalized to lowercase and validated on SignupRequest & LoginRequest in session 6; rejects invalid formats with 422; duplicate signup with differing case rejected with 409. |
 | 11 | Resolved | Added psycopg[binary]==3.3.7, Alembic migrations with reversible initial schema, and connection pooling settings (pool_pre_ping=True, pool_recycle=300) for Neon idle compute suspension. |
-| 12 | Med | CORS `*` with credentials (TODO already in main.py). |
-| 13 | Low | Logging formatter requires `request_id` but filter is per-logger, not on the handler; 500 responses probably show request_id "-". |
+| 12 | Med | CORS `*` with credentials (TODO already in main.py). Partly resolved in session 12: production now refuses to start with `CORS_ORIGINS=*`; dev still allows it. Set exact frontend origin(s) before deploy. |
+| 13 | Resolved | `RequestIdFilter` now attached to the log handler, so uvicorn/third-party records format correctly (resolved in session 12). |
 | 14 | Low | `RATE_LIMIT_DEFAULT` defined but unused. |
 | 15 | Low | Duplicated `exercises_config.py` and `RepCounter` (src vs Backend) — drift risk. |
 | 16 | Resolved | Backend config uses string landmarks; `mediapipe` and `opencv-python-headless` removed from Backend/requirements.txt (resolved in session 8). |
@@ -203,24 +203,27 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 | 24 | Resolved | All datetime columns converted to TIMESTAMPTZ (`timestamp with time zone`) via migration 0002 with explicit `USING <col> AT TIME ZONE 'UTC'` on upgrade and downgrade (resolved in session 6). |
 | 25 | Resolved | Case-sensitive email comparison on Postgres eliminated through Pydantic email validation and normalization on both signup and login (resolved in session 6). |
 | 26 (Review #1) | Resolved | /v1/predict strictly uses the exercise from the session. Body exercise is optional; mismatch returns 400 ExerciseMismatchError (resolved in session 8). |
-| 27 (Review #2) | High | The rate limiter keys on client IP. Behind a proxy (Render/Railway) all users share one limit. Needs proxy headers or a per-user key. (found in review, not yet verified by running) |
+| 27 (Review #2) | High | The rate limiter keys on client IP. Behind a proxy (Render/Railway) all users share one limit. Needs proxy headers or a per-user key. Session 12 made this worse for auth: 5/min on signup/login means everyone behind one proxy IP or NAT shares 5 attempts per minute. Fix before deploy: custom `key_func` reading `X-Forwarded-For` (trusted proxy only). (found in review, not yet verified by running) |
 | 28 (Review #3) | High | The Dockerfile build context is Backend/, but models live in ../models, which Docker can't COPY. A deployed container would have no models and /health/ready would return 503. (found in review, not yet verified by running) |
 | 29 (Review #4) | High | /health/ready doesn't check the database. (found in review, not yet verified by running) |
 | 30 (Review #5) | High | The session TTL sweep deletes timed-out sessions without saving the workout (the models.py docstring says otherwise). (found in review, not yet verified by running) |
 | 31 (Review #6) | Resolved | No history, stats, profile, onboarding or routine endpoints resolved in session 9; UserProfile table utilized. |
-| 32 (Review #7) | Med | Duplicate signup race: two simultaneous signups hit the unique constraint and return 500 instead of 409. (found in review, not yet verified by running) |
-| 33 (Review #8) | Med | Signup allows 128-char passwords, but bcrypt only uses the first 72 bytes. (found in review, not yet verified by running) |
+| 32 (Review #7) | Resolved | Signup catches `IntegrityError`, rolls back the session, returns 409 (resolved in session 12, tested with a simulated race). |
+| 33 (Review #8) | Resolved | Signup rejects passwords over 72 UTF-8 bytes with 422; `hash_password` also guards. Login is not limited, so older accounts with truncated long passwords can still log in (resolved in session 12). |
 | 34 (Review #9) | Med | Login timing leak: an unknown email returns faster than a wrong password. (found in review, not yet verified by running) |
 | 35 (Review #10) | Resolved | NaN, inf and angles outside [0.0, 360.0] rejected with 422 RequestValidationError; exceptions handler prevents json.dumps crash (resolved in session 8). |
 | 36 (Review #11) | Resolved | POST /v1/session/end accepts session_id in JSON body via EndSessionRequest (resolved in session 8). |
 | 37 (Review #12) | Resolved | Added /v1 prefix to auth, exercises, sessions, predict routes (resolved in session 8). |
 | 38 (Review #13) | Med | /docs and /health are public in production. (found in review, not yet verified by running) |
-| 39 (Review #14) | Med | No guard against the default JWT secret when ENVIRONMENT=production. (found in review, not yet verified by running) |
-| 40 (Review #15) | Low | The logging formatter needs request_id, so third-party log records without it can fail. Crash responses probably show request_id "-" (unverified). (found in review, not yet verified by running) |
-| 41 (Review #16) | Low | 19 log CSVs are still tracked in git even though logs/ is in .gitignore. (found in review, not yet verified by running) |
+| 39 (Review #14) | Resolved | Same fix as #8 (session 12). |
+| 40 (Review #15) | Resolved | Same fix as #13 (session 12). |
+| 41 (Review #16) | Resolved | 19 log CSVs untracked with `git rm --cached` (files kept on disk); `logs/` stays in .gitignore (resolved in session 12). |
 | 42 (Review #17) | Low | There is no CI. (found in review, not yet verified by running) |
 | 43 (Review #18) | Low | python-jose is stale and passlib is unmaintained. (found in review, not yet verified by running) |
 | 44 (Review #19) | Resolved | README updated with `app.main:app`, 6 exercises, 105 test count, endpoints table (resolved in sessions 8 & 9). |
+| 45 | Resolved | Root `requirements.txt` was a 323-line machine freeze (torch, comfyui, etc.). Replaced with 6 packages for `src/` (mediapipe 0.10.14, opencv-python 4.10.0.84, numpy 1.26.4, pandas, scikit-learn 1.9.0, joblib). `.gitignore` now also ignores `.pytest_cache/` and `.venv/` (resolved in session 12). |
+| 46 | Low | `mediapipe==0.10.14` has no wheels for Python 3.13+. Use Python 3.10-3.12 for the root venv (verified: installs cleanly on 3.12; not installable on 3.13). |
+| 47 | Low | README still says 105 tests; actual is 114 passing + 1 skipped. Not touched in session 12 (out of plan). |
 
 ---
 
@@ -261,7 +264,7 @@ pip install -r requirements.txt
 copy .env.example .env
 alembic upgrade head                # applies migrations to DATABASE_URL
 uvicorn app.main:app --reload       # docs at http://localhost:8000/docs
-pytest                              # runs SQLite regression suite (105 tests)
+pytest                              # runs SQLite regression suite (114 tests + 1 Postgres skip)
 pytest tests/test_postgres_smoke.py # runs Postgres smoke test (requires TEST_DATABASE_URL)
 
 # Alembic migrations (from Backend/)
@@ -292,6 +295,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 | 9 | 2026-11-07 | Antigravity (Gemini 3.8 Flash) | Profile & onboarding (GET/PUT /v1/profile), static rules-based routines (GET /v1/routines, routines_data.py, exercise contract validation), workout history (POST/GET /v1/workouts with pagination & server UUID), personal stats (GET /v1/stats with UTC calendar streak and 7-day breakdown), 29 new tests (105 tests pass) | Backend/app/models/schemas.py, Backend/app/routines_data.py, Backend/app/services/profile_service.py, Backend/app/services/routine_service.py, Backend/app/services/workout_service.py, Backend/app/routers/profile.py, Backend/app/routers/routines.py, Backend/app/routers/workouts.py, Backend/app/routers/stats.py, Backend/app/main.py, Backend/tests/test_profile.py, Backend/tests/test_routines.py, Backend/tests/test_workouts.py, Backend/tests/test_stats.py, README.md, PROJECT_STATE.md |
 | 10 | 2026-11-07 | Antigravity (Gemini 3.8 Flash) | Milestone 0 (M0) Parity Prototype: exported 6 RF models to JSON (`models_json/`, `frontend/public/models/`), TypeScript classifier with `Math.fround` (100% golden parity on 1500 vectors), TS RepCounter port + tests, /v1/exercises snapshot contract test, pose geometry utils, Next.js /m0 squat prototype with webcam & video benchmark. Verified squat.mp4 parity (6 reps, 0.48° angle delta vs Python baseline). 29 Vitest tests pass, 105 Pytest pass. | src/export_models_json.py, src/save_exercises_snapshot.py, models_json/*, frontend/*, PROJECT_STATE.md |
 | 11 | 2026-11-07 | Antigravity (Gemini 3.8 Flash) | Mobile-first live workout screen: decoupled pure workout reducer (loading, active, permission_denied, body_not_visible, error, stopped with final reps display), useWorkoutEngine hook with pure cleanupWorkoutEngine resource teardown, render-only WorkoutScreen (100dvh full-screen camera, pose skeleton overlay, 2m-readable top HUD, dynamic green/amber feedback line, big Stop button), /workout route. 17 unit tests in workout_screen.test.ts (46 Vitest tests pass, 105 Pytest pass, Next.js build succeeds). | frontend/src/lib/workout_reducer.ts, frontend/src/hooks/useWorkoutEngine.ts, frontend/src/components/WorkoutScreen.tsx, frontend/src/app/workout/page.tsx, frontend/src/app/page.tsx, frontend/tests/workout_screen.test.ts, PROJECT_STATE.md |
+| 12 | 2026-11-11 | Claude (Sonnet 5.5) | Hygiene + auth hardening on chore/hygiene-auth-hardening: minimal root requirements (numpy<2 for mediapipe), .gitignore, untracked 19 log CSVs, 5/min auth rate limit, signup IntegrityError -> 409 with rollback, 72-byte password guard, production startup guard (default JWT secret / CORS `*`), request_id filter on log handler, limiter reset in test fixture, 12 new tests. Pytest 102 passed + 1 skipped before, 114 passed + 1 skipped after; Vitest 46 pass; squat.mp4 CLI run gives 6 reps on a fresh Python 3.12 venv. Skipped from plan: EmailStr/email-validator (email normalization already existed, see #10). | requirements.txt, .gitignore, Backend/app/config.py, Backend/app/models/schemas.py, Backend/app/auth/security.py, Backend/app/routers/auth.py, Backend/app/main.py, Backend/app/logging_config.py, Backend/tests/conftest.py, Backend/tests/test_auth_hardening.py, PROJECT_STATE.md |
 
 ---
 
@@ -301,7 +305,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 You are continuing work on FitVision (repo: SAGETOAD-source/fitvision).
 1. Read AGENTS.md and PROJECT_STATE.md in the repo root before anything else.
 2. Follow AGENTS.md strictly: send a Change Plan (files to modify/create, nothing else touched) and wait for approval before editing.
-3. Current state: ML pipeline done for 6 exercises; FastAPI backend has complete /v1 API suite (105 tests pass); Milestone 0 (M0) parity prototype and Mobile-First Live Workout screen complete on branch feat/mobile-workout-screen: Next.js 14, TypeScript, Tailwind, @mediapipe/tasks-vision, in-browser RF tree evaluation with 100% golden test parity, TS RepCounter port, decoupled pure reducer (`workout_reducer.ts`), custom hook (`useWorkoutEngine.ts`), render-only full-screen live workout screen (`WorkoutScreen.tsx`, `/workout`), 2-meter HUD, dynamic green/amber feedback line, stopped state with final reps display, and robust states for loading, permission denied, and body visibility. Full test suites pass: 46 Vitest tests + 105 Pytest tests. Do NOT push without explicit user instruction.
+3. Current state: ML pipeline done for 6 exercises; FastAPI backend has complete /v1 API suite (114 tests pass + 1 Postgres skip) with hardened auth (5/min rate limit, signup race -> 409, 72-byte password limit, production startup guard) on branch chore/hygiene-auth-hardening (not pushed, not merged); Milestone 0 (M0) parity prototype and Mobile-First Live Workout screen complete on branch feat/mobile-workout-screen: Next.js 14, TypeScript, Tailwind, @mediapipe/tasks-vision, in-browser RF tree evaluation with 100% golden test parity, TS RepCounter port, decoupled pure reducer (`workout_reducer.ts`), custom hook (`useWorkoutEngine.ts`), render-only full-screen live workout screen (`WorkoutScreen.tsx`, `/workout`), 2-meter HUD, dynamic green/amber feedback line, stopped state with final reps display, and robust states for loading, permission denied, and body visibility. Full test suites pass: 46 Vitest tests + 114 Pytest tests. Do NOT push without explicit user instruction. Before deploy: fix the proxy-aware rate-limit key (#27) and set exact CORS origins (#12).
 4. Next recommended task: Milestone 1 (M1) - Auth + Onboarding: Signup, login, route guard, profile screen (goal & focus selection) per FRONTEND_SPEC.md.
 5. At the end, update PROJECT_STATE.md fully and show me the complete file.
 ```

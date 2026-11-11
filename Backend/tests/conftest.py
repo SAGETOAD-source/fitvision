@@ -17,6 +17,7 @@ from sqlmodel.pool import StaticPool
 from app.db.database import get_session
 from app.dependencies import get_model_registry, get_sessions
 from app.main import app
+from app.rate_limit import limiter
 from app.services.session_manager import SessionManager
 
 
@@ -72,6 +73,7 @@ def stub_registry():
 
 @pytest.fixture
 def client(stub_registry):
+    limiter.reset()  # in-memory rate-limit counters must not leak between tests
     # In-memory SQLite, fresh per test. StaticPool keeps it alive for
     # the duration of the test (a plain in-memory DB would otherwise
     # vanish between connections).

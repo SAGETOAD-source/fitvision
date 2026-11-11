@@ -17,6 +17,9 @@ from typing import List
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Dev-only fallback. The app refuses to start in production if this is still in use.
+DEFAULT_JWT_SECRET = "dev-only-insecure-secret-change-me"
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
@@ -51,6 +54,7 @@ class Settings(BaseSettings):
     # --- Rate limiting ---
     rate_limit_predict: str = Field(default="120/minute")  # ~2 req/sec, generous for a live rep counter
     rate_limit_default: str = Field(default="60/minute")
+    rate_limit_auth: str = Field(default="5/minute")  # /signup and /login, per client IP
 
     # --- Logging ---
     log_level: str = Field(default="INFO")
@@ -65,7 +69,7 @@ class Settings(BaseSettings):
     # --- Auth / JWT ---
     # MUST be overridden via env var in any real deployment. The default
     # here is only safe for local dev - never ship this literal value.
-    jwt_secret_key: str = Field(default="dev-only-insecure-secret-change-me")
+    jwt_secret_key: str = Field(default=DEFAULT_JWT_SECRET)
     jwt_algorithm: str = Field(default="HS256")
     access_token_expire_minutes: int = Field(default=60 * 24 * 7)  # 7 days
 

@@ -13,7 +13,8 @@ app.auth.dependencies.get_current_user dependency this router proves
 out here.
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from app.auth.dependencies import InvalidCredentialsError, get_current_user
@@ -21,20 +22,30 @@ from app.auth.security import create_access_token, hash_password, verify_passwor
 from app.db.database import get_session
 from app.db.models import User
 from app.exceptions import EmailAlreadyRegisteredError
+from app.config import get_settings
 from app.models.schemas import LoginRequest, SignupRequest, TokenResponse, UserPublic
+from app.rate_limit import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+_settings = get_settings()
+
 
 @router.post("/signup", response_model=TokenResponse)
-def signup(body: SignupRequest, session: Session = Depends(get_session)):
+@limiter.limit(_settings.rate_limit_auth)
+def signup(request: Request, body: SignupRequest, session: Session = Depends(get_session)):
     existing = session.exec(select(User).where(User.email == body.email)).first()
     if existing is not None:
         raise EmailAlreadyRegisteredError(f"An account with email '{body.email}' already exists")
 
     user = User(email=body.email, hashed_password=hash_password(body.password))
     session.add(user)
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError:
+        # Two concurrent signups passed the check above; the unique index caught the loser.
+        session.rollback()
+        raise EmailAlreadyRegisteredError(f"An account with email '{body.email}' already exists")
     session.refresh(user)
 
     token = create_access_token(subject=str(user.id))
@@ -42,7 +53,8 @@ def signup(body: SignupRequest, session: Session = Depends(get_session)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(body: LoginRequest, session: Session = Depends(get_session)):
+@limiter.limit(_settings.rate_limit_auth)
+def login(request: Request, body: LoginRequest, session: Session = Depends(get_session)):
     user = session.exec(select(User).where(User.email == body.email)).first()
     if user is None or not verify_password(body.password, user.hashed_password):
         # Deliberately the same error for "no such user" and "wrong password" -

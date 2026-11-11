@@ -143,6 +143,14 @@ class SignupRequest(BaseModel):
     def validate_email(cls, v: str) -> str:
         return validate_and_normalize_email(v)
 
+    @field_validator("password")
+    @classmethod
+    def password_within_bcrypt_limit(cls, v: str) -> str:
+        # bcrypt only uses the first 72 bytes; reject instead of silently truncating.
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("Password must be at most 72 bytes in UTF-8")
+        return v
+
 
 class LoginRequest(BaseModel):
     email: str

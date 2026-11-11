@@ -3,8 +3,8 @@
 > Every AI agent: read this first. Update it at the end of every session (see AGENTS.md section 9).
 > Progress percentages are rough estimates, not measurements. Update honestly.
 
-**Last updated:** 2026-11-11 | **Session #:** 13
-**Updated by:** Antigravity (Gemini 3.8 Flash) — fix/test-limiter-reset branch
+**Last updated:** 2026-11-11 | **Session #:** 14
+**Updated by:** Antigravity (Gemini 3.8 Flash) — fix/rate-limit-proxy-key branch
 **Repo:** https://github.com/SAGETOAD-source/fitvision (branch `main`)
 **Owner:** Krishnendu | **Dev environment:** Windows, Antigravity IDE
 
@@ -147,6 +147,7 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
   - 17 unit tests in `workout_screen.test.ts` for reducer transitions, query validation, and real `cleanupWorkoutEngine` resource teardown (46 Vitest tests pass).
 - [x] Hygiene + auth hardening batch (session 12): minimal root requirements.txt, .gitignore (.pytest_cache/, .venv/), untracked 19 log CSVs, 5/min rate limit on auth endpoints via settings, signup race IntegrityError -> 409 with rollback, 72-byte UTF-8 password limit, production startup guard, request_id filter on root log handler, 12 new tests in `test_auth_hardening.py` (merged to `main`).
 - [x] Rate limiter test isolation fix (session 13): converted `limiter.reset()` in `Backend/tests/conftest.py` into an `autouse=True` fixture `_reset_rate_limiter` so independent TestClient instances (e.g. in `test_postgres_smoke.py`) do not inherit rate limit counters from earlier tests; 117 tests pass.
+- [x] Proxy-aware rate limiter key (session 14): added `TRUSTED_PROXY_COUNT` setting in `Backend/app/config.py` and `get_client_ip` key_func in `Backend/app/rate_limit.py` to safely extract `parts[-n]` from `X-Forwarded-For` when `n > 0` (falls back to socket IP if missing/too short); prevents IP spoofing and avoids shared limits behind Render/Railway; 6 new tests in `test_rate_limit_proxy.py`; 123 tests pass.
 
 ## 5. In progress
 
@@ -205,7 +206,7 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 | 24 | Resolved | All datetime columns converted to TIMESTAMPTZ (`timestamp with time zone`) via migration 0002 with explicit `USING <col> AT TIME ZONE 'UTC'` on upgrade and downgrade (resolved in session 6). |
 | 25 | Resolved | Case-sensitive email comparison on Postgres eliminated through Pydantic email validation and normalization on both signup and login (resolved in session 6). |
 | 26 (Review #1) | Resolved | /v1/predict strictly uses the exercise from the session. Body exercise is optional; mismatch returns 400 ExerciseMismatchError (resolved in session 8). |
-| 27 (Review #2) | High | The rate limiter keys on client IP. Behind a proxy (Render/Railway) all users share one limit. Needs proxy headers or a per-user key. Session 12 made this worse for auth: 5/min on signup/login means everyone behind one proxy IP or NAT shares 5 attempts per minute. Fix before deploy: custom `key_func` reading `X-Forwarded-For` (trusted proxy only). (found in review, not yet verified by running) |
+| 27 (Review #2) | Resolved | Custom key_func in Backend/app/rate_limit.py reads X-Forwarded-For using TRUSTED_PROXY_COUNT setting (default 0); when n > 0, safely extracts parts[-n] from right to prevent IP spoofing and avoid shared limits behind Render/Railway (resolved in session 14). |
 | 28 (Review #3) | High | The Dockerfile build context is Backend/, but models live in ../models, which Docker can't COPY. A deployed container would have no models and /health/ready would return 503. (found in review, not yet verified by running) |
 | 29 (Review #4) | High | /health/ready doesn't check the database. (found in review, not yet verified by running) |
 | 30 (Review #5) | High | The session TTL sweep deletes timed-out sessions without saving the workout (the models.py docstring says otherwise). (found in review, not yet verified by running) |
@@ -266,7 +267,7 @@ pip install -r requirements.txt
 copy .env.example .env
 alembic upgrade head                # applies migrations to DATABASE_URL
 uvicorn app.main:app --reload       # docs at http://localhost:8000/docs
-pytest                              # runs backend test suite (117 tests passing)
+pytest                              # runs backend test suite (123 tests passing)
 pytest tests/test_postgres_smoke.py # runs Postgres smoke test (requires TEST_DATABASE_URL)
 
 # Alembic migrations (from Backend/)
@@ -299,6 +300,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 | 11 | 2026-11-07 | Antigravity (Gemini 3.8 Flash) | Mobile-first live workout screen: decoupled pure workout reducer (loading, active, permission_denied, body_not_visible, error, stopped with final reps display), useWorkoutEngine hook with pure cleanupWorkoutEngine resource teardown, render-only WorkoutScreen (100dvh full-screen camera, pose skeleton overlay, 2m-readable top HUD, dynamic green/amber feedback line, big Stop button), /workout route. 17 unit tests in workout_screen.test.ts (46 Vitest tests pass, 105 Pytest pass, Next.js build succeeds). | frontend/src/lib/workout_reducer.ts, frontend/src/hooks/useWorkoutEngine.ts, frontend/src/components/WorkoutScreen.tsx, frontend/src/app/workout/page.tsx, frontend/src/app/page.tsx, frontend/tests/workout_screen.test.ts, PROJECT_STATE.md |
 | 12 | 2026-11-11 | Claude (Sonnet 5.5) | Hygiene + auth hardening on chore/hygiene-auth-hardening (merged to main): minimal root requirements (numpy<2 for mediapipe), .gitignore, untracked 19 log CSVs, 5/min auth rate limit, signup IntegrityError -> 409 with rollback, 72-byte password guard, production startup guard (default JWT secret / CORS `*`), request_id filter on log handler, limiter reset in test fixture, 12 new tests. Pytest 102 passed + 1 skipped before, 114 passed + 1 skipped after; Vitest 46 pass; squat.mp4 CLI run gives 6 reps on a fresh Python 3.12 venv. Skipped from plan: EmailStr/email-validator (email normalization already existed, see #10). | requirements.txt, .gitignore, Backend/app/config.py, Backend/app/models/schemas.py, Backend/app/auth/security.py, Backend/app/routers/auth.py, Backend/app/main.py, Backend/app/logging_config.py, Backend/tests/conftest.py, Backend/tests/test_auth_hardening.py, PROJECT_STATE.md |
 | 13 | 2026-11-11 | Antigravity (Gemini 3.8 Flash) | Fixed rate limiter counter leak into independent TestClient instances in Backend/tests/test_postgres_smoke.py by converting limiter.reset() in Backend/tests/conftest.py into an autouse=True fixture (_reset_rate_limiter). Pytest: 117 passed (0 failed). | Backend/tests/conftest.py, PROJECT_STATE.md |
+| 14 | 2026-11-11 | Antigravity (Gemini 3.8 Flash) | Fixed Known issue #27: added trusted_proxy_count setting to config.py and .env.example, replaced key_func in rate_limit.py with get_client_ip reading parts[-n] from X-Forwarded-For when n > 0 with fallback to socket IP. Added 6 unit/integration tests in test_rate_limit_proxy.py. Pytest: 123 passed (0 failed). | Backend/app/config.py, Backend/app/rate_limit.py, Backend/.env.example, Backend/tests/test_rate_limit_proxy.py, PROJECT_STATE.md |
 
 ---
 
@@ -308,7 +310,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 You are continuing work on FitVision (repo: SAGETOAD-source/fitvision).
 1. Read AGENTS.md and PROJECT_STATE.md in the repo root before anything else.
 2. Follow AGENTS.md strictly: send a Change Plan (files to modify/create, nothing else touched) and wait for approval before editing.
-3. Current state: ML pipeline done for 6 exercises; FastAPI backend has complete /v1 API suite (117 tests pass) with hardened auth (5/min rate limit, signup race -> 409, 72-byte password limit, production startup guard) merged to main; rate limiter test isolation fixture (autouse=True) in conftest.py on branch fix/test-limiter-reset; Milestone 0 (M0) parity prototype and Mobile-First Live Workout screen complete on branch feat/mobile-workout-screen: Next.js 14, TypeScript, Tailwind, @mediapipe/tasks-vision, in-browser RF tree evaluation with 100% golden test parity, TS RepCounter port, decoupled pure reducer (`workout_reducer.ts`), custom hook (`useWorkoutEngine.ts`), render-only full-screen live workout screen (`WorkoutScreen.tsx`, `/workout`), 2-meter HUD, dynamic green/amber feedback line, stopped state with final reps display, and robust states for loading, permission denied, and body visibility. Full test suites pass: 46 Vitest tests + 117 Pytest tests. Do NOT push to main without explicit user instruction. Before deploy: fix the proxy-aware rate-limit key (#27) and set exact CORS origins (#12).
+3. Current state: ML pipeline done for 6 exercises; FastAPI backend has complete /v1 API suite (123 tests pass) with hardened auth (5/min rate limit, signup race -> 409, 72-byte password limit, production startup guard), rate limiter test isolation fixture (autouse=True) in conftest.py, and proxy-aware client IP extraction (TRUSTED_PROXY_COUNT, parts[-n] from X-Forwarded-For) on branch fix/rate-limit-proxy-key; Milestone 0 (M0) parity prototype and Mobile-First Live Workout screen complete on branch feat/mobile-workout-screen: Next.js 14, TypeScript, Tailwind, @mediapipe/tasks-vision, in-browser RF tree evaluation with 100% golden test parity, TS RepCounter port, decoupled pure reducer (`workout_reducer.ts`), custom hook (`useWorkoutEngine.ts`), render-only full-screen live workout screen (`WorkoutScreen.tsx`, `/workout`), 2-meter HUD, dynamic green/amber feedback line, stopped state with final reps display, and robust states for loading, permission denied, and body visibility. Full test suites pass: 46 Vitest tests + 123 Pytest tests. Do NOT push to main without explicit user instruction. Before deploy: set exact CORS origins (#12).
 4. Next recommended task: Milestone 1 (M1) - Auth + Onboarding: Signup, login, route guard, profile screen (goal & focus selection) per FRONTEND_SPEC.md.
 5. At the end, update PROJECT_STATE.md fully and show me the complete file.
 ```

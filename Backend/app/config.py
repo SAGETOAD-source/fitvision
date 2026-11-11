@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     rate_limit_predict: str = Field(default="120/minute")  # ~2 req/sec, generous for a live rep counter
     rate_limit_default: str = Field(default="60/minute")
     rate_limit_auth: str = Field(default="5/minute")  # /signup and /login, per client IP
+    trusted_proxy_count: int = Field(default=0)  # 0 = ignore X-Forwarded-For; 1 = behind single proxy (Render/Railway)
 
     # --- Logging ---
     log_level: str = Field(default="INFO")

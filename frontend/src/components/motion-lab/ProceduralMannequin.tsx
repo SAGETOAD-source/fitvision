@@ -1,7 +1,13 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { calculateInteriorKneeAngle, solveTwoSegmentPlanarIK } from './joint_math';
+import {
+  calculateInteriorKneeAngle,
+  solveTwoSegmentPlanarIK,
+  evaluateSquatTrajectory,
+  Y_HIP_STAND,
+  Z_HIP_STAND,
+} from './joint_math';
 
 interface ProceduralMannequinProps {
   isPlaying: boolean;
@@ -14,17 +20,6 @@ const L2_SHANK = 0.42;
 const HIP_WIDTH = 0.28; // Distance between left and right hip pivots
 const ANKLE_Y = 0.08;   // Ankle pivot height above ground
 const ANKLE_Z = 0.0;    // Ankle pivot Z position (clamped in world space)
-
-// Standing hip height reconciled to 0.9331m producing near-extended 165.5° knee angle
-const Y_HIP_STAND = 0.9331;
-const Z_HIP_STAND = 0.0;
-const Y_HIP_BOTTOM = 0.54;
-const Z_HIP_BOTTOM = -0.16;
-
-// Smooth cubic ease-in-out
-function easeInOutCubic(t: number): number {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-}
 
 export default function ProceduralMannequin({
   isPlaying,
@@ -73,17 +68,23 @@ export default function ProceduralMannequin({
   // Shared Materials
   const materials = useMemo(() => {
     return {
-      // Matte dark graphite athletic finish
+      // Matte athletic graphite/slate finish (strictly non-metallic, roughness 0.75)
       graphiteBody: new THREE.MeshStandardMaterial({
-        color: '#161618',
-        roughness: 0.78,
-        metalness: 0.15,
+        color: '#2C2D35',
+        roughness: 0.75,
+        metalness: 0.0,
       }),
-      // Slightly lighter carbon for torso & spine
+      // Slightly deeper matte carbon for torso & spine
       carbonTorso: new THREE.MeshStandardMaterial({
-        color: '#1E1E22',
+        color: '#24252C',
+        roughness: 0.78,
+        metalness: 0.0,
+      }),
+      // Articulated pelvis/hip connector tone
+      pelvisMaterial: new THREE.MeshStandardMaterial({
+        color: '#363842',
         roughness: 0.72,
-        metalness: 0.2,
+        metalness: 0.0,
       }),
       // Signal-Rose joint node beacons
       signalRoseJoint: new THREE.MeshBasicMaterial({
@@ -96,9 +97,9 @@ export default function ProceduralMannequin({
       }),
       // Muted foot sole
       footMaterial: new THREE.MeshStandardMaterial({
-        color: '#26262B',
-        roughness: 0.85,
-        metalness: 0.1,
+        color: '#222329',
+        roughness: 0.82,
+        metalness: 0.0,
       }),
     };
   }, []);
@@ -130,37 +131,8 @@ export default function ProceduralMannequin({
       timeRef.current = (timeRef.current + delta) % 7.0;
     }
 
-    const t = timeRef.current;
-    let progress = 0; // 0 = standing, 1 = bottom squat
-    let phaseName = 'Phase 1: Standing Base';
-
-    if (t < 1.0) {
-      // Phase 1: Standing Base (1.0s)
-      progress = 0;
-      phaseName = 'Phase 1: Standing Base';
-    } else if (t < 3.0) {
-      // Phase 2: Controlled Descent (2.0s)
-      const norm = (t - 1.0) / 2.0;
-      progress = easeInOutCubic(norm);
-      phaseName = 'Phase 2: Controlled Descent';
-    } else if (t < 4.0) {
-      // Phase 3: Parallel Bottom (1.0s)
-      progress = 1.0;
-      phaseName = 'Phase 3: Parallel Depth';
-    } else if (t < 6.0) {
-      // Phase 4: Concentric Ascent (2.0s)
-      const norm = (t - 4.0) / 2.0;
-      progress = 1.0 - easeInOutCubic(norm);
-      phaseName = 'Phase 4: Concentric Ascent';
-    } else {
-      // Phase 5: Lockout Pause (1.0s)
-      progress = 0;
-      phaseName = 'Phase 5: Lockout Pause';
-    }
-
-    // Parametric Hip Trajectory (smooth hip hinge)
-    const yHip = Y_HIP_STAND - progress * (Y_HIP_STAND - Y_HIP_BOTTOM);
-    const zHip = Z_HIP_STAND + progress * Z_HIP_BOTTOM; // Shifts backward to counterbalance
+    // Pure 5-phase parametric squat trajectory evaluation (C0 & C1 continuous)
+    const { yHip, zHip, progress, phaseName } = evaluateSquatTrajectory(timeRef.current);
 
     // Analytical 2-segment planar IK for both legs
     const ik = solveTwoSegmentPlanarIK(yHip, zHip, ANKLE_Y, ANKLE_Z, L1_THIGH, L2_SHANK);
@@ -263,7 +235,7 @@ export default function ProceduralMannequin({
       {/* 2. Pelvis Group (Moves dynamically with hip trajectory) */}
       <group ref={pelvisGroupRef} position={[0, Y_HIP_STAND, Z_HIP_STAND]}>
         {/* Pelvic Core Box */}
-        <mesh position={[0, 0, 0]} material={materials.graphiteBody}>
+        <mesh position={[0, 0, 0]} material={materials.pelvisMaterial}>
           <cylinderGeometry args={[HIP_WIDTH / 2.2, HIP_WIDTH / 2.4, 0.12, 16]} />
         </mesh>
 

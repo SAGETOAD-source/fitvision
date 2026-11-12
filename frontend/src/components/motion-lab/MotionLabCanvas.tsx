@@ -26,11 +26,17 @@ const LOOK_AT_TARGET = new THREE.Vector3(0, 0.85, 0);
 function CameraAndControls({ currentView }: { currentView: CameraPreset }) {
   const { camera, gl } = useThree();
   const controlsRef = useRef<OrbitControls | null>(null);
+
+  // Transition state tracking
+  const isTransitioningRef = useRef<boolean>(false);
+  const startPosRef = useRef<THREE.Vector3>(new THREE.Vector3());
   const targetPosRef = useRef<THREE.Vector3>(
     new THREE.Vector3(...CAMERA_PRESETS[currentView])
   );
+  const transitionProgressRef = useRef<number>(0);
+  const isFirstMountRef = useRef<boolean>(true);
 
-  // Initialize native OrbitControls
+  // Initialize native OrbitControls with interaction cancellation listener
   useEffect(() => {
     const controls = new OrbitControls(camera, gl.domElement);
     controls.enablePan = false; // Disable panning per spec
@@ -42,25 +48,56 @@ function CameraAndControls({ currentView }: { currentView: CameraPreset }) {
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
 
+    // Manual pointer interaction immediately cancels any active preset transition
+    const onInteractionStart = () => {
+      isTransitioningRef.current = false;
+    };
+
+    controls.addEventListener('start', onInteractionStart);
     controlsRef.current = controls;
 
     return () => {
+      controls.removeEventListener('start', onInteractionStart);
       controls.dispose();
       controlsRef.current = null;
     };
   }, [camera, gl.domElement]);
 
-  // Update target coordinates when preset button is clicked
+  // Trigger smooth transition from current camera position when a preset button is selected
   useEffect(() => {
-    const [x, y, z] = CAMERA_PRESETS[currentView];
-    targetPosRef.current.set(x, y, z);
-  }, [currentView]);
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      return; // Do not lerp on initial mount; camera already initialized at profile preset
+    }
 
-  // Smoothly interpolate camera position toward target preset in useFrame
+    const [x, y, z] = CAMERA_PRESETS[currentView];
+    startPosRef.current.copy(camera.position);
+    targetPosRef.current.set(x, y, z);
+    transitionProgressRef.current = 0;
+    isTransitioningRef.current = true;
+  }, [currentView, camera]);
+
+  // Frame update: animate active preset transition, then delegate 100% control to OrbitControls
   useFrame((_, delta) => {
+    if (isTransitioningRef.current) {
+      // Smooth ~0.65s transition (1.0 / 0.65 ≈ 1.54 rate)
+      transitionProgressRef.current += delta * 1.6;
+      const alpha = Math.min(1.0, transitionProgressRef.current);
+
+      // Smooth cubic ease-in-out
+      const easedAlpha =
+        alpha < 0.5 ? 4 * alpha * alpha * alpha : 1 - Math.pow(-2 * alpha + 2, 3) / 2;
+
+      camera.position.lerpVectors(startPosRef.current, targetPosRef.current, easedAlpha);
+
+      // Once transition completes, OrbitControls fully owns the camera
+      if (alpha >= 1.0 || camera.position.distanceTo(targetPosRef.current) < 0.005) {
+        camera.position.copy(targetPosRef.current);
+        isTransitioningRef.current = false;
+      }
+    }
+
     if (controlsRef.current) {
-      // Lerp camera position toward preset position
-      camera.position.lerp(targetPosRef.current, Math.min(1.0, delta * 4.5));
       controlsRef.current.update();
     }
   });
@@ -91,22 +128,26 @@ export default function MotionLabCanvas({
         }}
       >
         {/* Studio Lighting Setup */}
-        {/* Directional Key Light */}
-        <directionalLight position={[3, 5, 4]} intensity={1.1} color="#FFFFFF" />
-        {/* Directional Rim Light (Subtle Burgundy Accent) */}
-        <directionalLight position={[-3, 4, -3]} intensity={0.4} color="#6D001A" />
-        {/* Ambient Fill */}
-        <ambientLight intensity={0.3} color="#202024" />
+        {/* Soft Neutral Key Light */}
+        <directionalLight position={[3.2, 4.8, 3.6]} intensity={1.5} color="#F8F9FA" />
+        {/* Restrained Burgundy / Signal-Rose Contour Rim Light */}
+        <directionalLight position={[-3.2, 3.8, -3.2]} intensity={1.2} color="#851630" />
+        {/* Secondary Lateral Contour Fill */}
+        <directionalLight position={[-2.5, 1.5, 2.5]} intensity={0.4} color="#383B46" />
+        {/* Hemisphere Ambient Ground/Sky Balance */}
+        <hemisphereLight args={['#32333D', '#121214', 0.65]} />
+        {/* Ambient Base Fill */}
+        <ambientLight intensity={0.25} color="#202026" />
 
         {/* Studio Ground Reference Disc */}
         <group position={[0, -0.001, 0]}>
           <mesh rotation={[-Math.PI / 2, 0, 0]}>
             <circleGeometry args={[1.5, 36]} />
-            <meshBasicMaterial color="#0E0E10" />
+            <meshBasicMaterial color="#0C0C0E" />
           </mesh>
           <mesh rotation={[-Math.PI / 2, 0, 0]}>
             <ringGeometry args={[1.48, 1.5, 36]} />
-            <meshBasicMaterial color="#1A1A1E" />
+            <meshBasicMaterial color="#26262E" />
           </mesh>
         </group>
 

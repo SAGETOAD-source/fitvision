@@ -7,7 +7,7 @@ interface MotionLabControlsProps {
   onViewChange: (view: CameraPreset) => void;
   isPlaying: boolean;
   onTogglePlay: () => void;
-  calculatedAngle: number;
+  calculatedAngle: number | null;
   currentPhase: string;
 }
 
@@ -108,7 +108,7 @@ export default function MotionLabControls({
           </div>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="font-mono text-3xl sm:text-4xl font-extrabold text-white tabular-nums tracking-tight">
-              {Math.round(calculatedAngle)}°
+              {calculatedAngle !== null ? `${Math.round(calculatedAngle)}°` : '—°'}
             </span>
             <span className="font-mono text-xs text-white/60 uppercase">
               Interior Knee Angle

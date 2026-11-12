@@ -21,8 +21,8 @@ export default function MotionLabClient() {
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [isReducedMotion, setIsReducedMotion] = useState<boolean>(false);
 
-  // Real-time kinematic state
-  const [calculatedAngle, setCalculatedAngle] = useState<number>(165);
+  // Real-time kinematic state (nullable initial state, populated dynamically from live 3D coordinates)
+  const [calculatedAngle, setCalculatedAngle] = useState<number | null>(null);
   const [currentPhase, setCurrentPhase] = useState<string>('Phase 1: Standing Base');
 
   // Viewport visibility state (gating frameloop)

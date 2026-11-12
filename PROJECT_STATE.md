@@ -3,8 +3,8 @@
 > Every AI agent: read this first. Update it at the end of every session (see AGENTS.md section 9).
 > Progress percentages are rough estimates, not measurements. Update honestly.
 
-**Last updated:** 2026-11-12 | **Session #:** 16
-**Updated by:** Antigravity (Gemini 3.8 Flash) — chore/motion-3d-spec branch
+**Last updated:** 2026-11-12 | **Session #:** 17
+**Updated by:** Antigravity (Gemini 3.8 Flash) — docs/motion-3d-spec-accuracy branch
 **Repo:** https://github.com/SAGETOAD-source/fitvision (branch `main`)
 **Owner:** Krishnendu | **Dev environment:** Windows, Antigravity IDE
 
@@ -303,6 +303,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 | 14 | 2026-11-11 | Antigravity (Gemini 3.8 Flash) | Fixed Known issue #27: added trusted_proxy_count setting to config.py and .env.example, replaced key_func in rate_limit.py with get_client_ip reading parts[-n] from X-Forwarded-For when n > 0 with fallback to socket IP. Added 6 unit/integration tests in test_rate_limit_proxy.py. Pytest: 123 passed (0 failed). | Backend/app/config.py, Backend/app/rate_limit.py, Backend/.env.example, Backend/tests/test_rate_limit_proxy.py, PROJECT_STATE.md |
 | 15 | 2026-11-12 | Antigravity (Gemini 3.8 Flash) | Refined FitVision landing page design system across design/hero-01.html, design/landing-desktop.html, design/landing-mobile.html: exact uppercase headline (YOUR BODY. YOUR DATA. YOUR EVOLUTION.) with Lora Italic, unified brand mark FITVISION® and CTAs (START TRAINING ↗, GET STARTED, LOG IN, EXPLORE THE EXPERIENCE), updated HUD status badge with #FF4D6D rose pip on dark surface, labeled ILLUSTRATIVE WORKOUT PREVIEW, 5-stage horizontal architecture pipeline on desktop verified at 1024px/1280px/1440px with zero overflow, audited marketing copy/claims, switched to local hero-athlete.png asset, and captured review screenshots (hero-01-review.png, landing-desktop-review.png, landing-mobile-review.png). | design/hero-01.html, design/landing-desktop.html, design/landing-mobile.html, design/*-review.png, PROJECT_STATE.md |
 | 16 | 2026-11-12 | Antigravity (Gemini 3.8 Flash) | Authored complete Motion Design & Interactive 3D technical specification (design/FITVISION_MOTION_3D_SPEC.md): procedural articulated biomechanical mannequin evaluation, 5-phase kinematic squat cycle with vector-calculated angles, matte carbon & #FF4D6D visual direction, GSAP ScrollTrigger choreography without scroll hijacking, performance & mobile GPU budget, reduced-motion/a11y/teardown protocol, and React 18 / Next.js 14 stack verification (R3F v8). Zero application code modified or dependencies installed. | design/FITVISION_MOTION_3D_SPEC.md, PROJECT_STATE.md |
+| 17 | 2026-11-12 | Antigravity (Gemini 3.8 Flash) | Refined FITVISION_MOTION_3D_SPEC.md for technical accuracy: replaced 60 FPS guarantee with desktop/mobile benchmark targets, clarified payload semantics (no external GLTF download, bundle costs noted, gzip marked unverified), stated phase angles describe synthetic keyframe geometry only without form scoring, aligned resource cleanup with R3F standard Canvas ownership, replaced manual looping with declarative frameloop gating, removed global Space/K key interception in favor of focused buttons, and defined empirical acceptance criteria. Updated handoff for isolated /motion-lab procedural squat prototype. | design/FITVISION_MOTION_3D_SPEC.md, PROJECT_STATE.md |
 
 ---
 
@@ -316,7 +317,7 @@ You are continuing work on FitVision (repo: SAGETOAD-source/fitvision).
    - ML pipeline done for 6 exercises; FastAPI backend has complete /v1 API suite (123 tests pass) with hardened auth and proxy-aware rate limiting.
    - Frontend: M0 Parity Prototype and Mobile-First Live Workout screen complete (/workout). 46 Vitest tests + 123 Pytest tests pass.
    - Design: Landing page designs refined across hero-01.html, landing-desktop.html, and landing-mobile.html. Review screenshots generated in design/*-review.png.
-   - Motion & 3D Spec: Complete specification authored in design/FITVISION_MOTION_3D_SPEC.md on branch chore/motion-3d-spec covering hero reveal, procedural biomechanical mannequin squat cycle, mathematically calculated joint angles, GSAP scroll reveals without hijacking, performance budgets, and React 18/R3F v8 compatibility.
-4. Next recommended task: Review Motion & 3D spec, or proceed to Milestone 1 (M1) - Auth + Onboarding: Signup, login, route guard, profile screen (goal & focus selection).
+   - Motion & 3D Spec: Technically accurate specification in design/FITVISION_MOTION_3D_SPEC.md on branch docs/motion-3d-spec-accuracy covering hero reveal, procedural biomechanical mannequin squat cycle, mathematically calculated joint angles without form scoring, declarative R3F frameloop gating, standard R3F lifecycle ownership, accessible view-switch buttons, and empirical benchmark acceptance criteria.
+4. Next recommended task: Isolated /motion-lab procedural squat prototype per design/FITVISION_MOTION_3D_SPEC.md (evaluating custom articulated procedural mannequin segments, 5-phase kinematic squat loop, real-time vector angle calculation, R3F v8 Canvas, and empirical device benchmarking). Do NOT jump to M1 auth until motion-lab prototyping is approved.
 5. At the end, update PROJECT_STATE.md fully.
 ```

@@ -1,8 +1,8 @@
 # FITVISION — Motion Design & Interactive 3D Specification
 
-**Document Version:** 1.0.0  
-**Status:** Approved Architecture & Creative Specification  
-**Branch:** `chore/motion-3d-spec`  
+**Document Version:** 1.1.0  
+**Status:** Approved Technical & Creative Architecture Specification  
+**Branch:** `docs/motion-3d-spec-accuracy`  
 **Target Environments:** Modern Web Browsers (Desktop & Mobile), Next.js 14 App Router, React 18  
 
 ---
@@ -35,7 +35,7 @@ To preserve brand integrity and avoid SaaS or gaming clichés:
 | **Burgundy Accent** | `#6D001A` | Primary interactive buttons, subtle rim lighting accent |
 | **Signal Rose** | `#FF4D6D` | Restrained joint node indicators, tracked apex points |
 | **Pure White** | `#FFFFFF` | Primary headlines, active telemetry readouts |
-| **Muted Silver** | `#A68A8A` / `#D1D5DB` | Secondary captions, degree degree symbols, anatomical labels |
+| **Muted Silver** | `#A68A8A` / `#D1D5DB` | Secondary captions, degree symbols, anatomical labels |
 
 ### Typographic System
 - **Headlines:** `Montserrat ExtraBold 800` (Uppercase, tight letter-spacing `-0.03em`)
@@ -84,7 +84,7 @@ Telemetry                                      [-- Joint Node Signal Rose Pulse 
 
 ## 4. Signature 3D Biomechanical Demonstrator
 
-The signature interactive feature is a dedicated 3D biomechanical visualization demonstrating the anatomy of a correct squat cycle. It serves as an educational bridge between the user's body and FitVision's on-device computer vision engine.
+The signature interactive feature is a dedicated 3D biomechanical visualization demonstrating the anatomy of a procedural squat cycle. It serves as an educational bridge between the user's body and FitVision's on-device computer vision engine.
 
 ```
         [ Head / Cranium ]
@@ -112,24 +112,29 @@ The signature interactive feature is a dedicated 3D biomechanical visualization 
 
 ### 4.1 Procedural Mannequin Architecture (vs. External Rigged Asset)
 **Decision:** We evaluate and specify a **custom procedural articulated mannequin** built directly using Three.js / React Three Fiber primitives:
-- **Zero Asset Payload:** 0 KB GLTF/GLB download, eliminating network latency, asset decoding delays, and CDN failure modes.
+- **No External 3D Model Download:** Zero external GLTF/GLB asset requests, eliminating network transfer latency, asset decoding overhead, and remote asset failure modes.
+  *(Note: Runtime engine libraries—Three.js, React Three Fiber, component logic, and shaders—still carry bundle download, parsing, and execution costs, as evaluated in Section 7.)*
 - **Precise Anatomical Hierarchy:** Assembled from geometric primitives:
   - Pelvis & Torso: Chamfered rounded boxes and tapered cylinders (`CylinderGeometry`).
   - Limbs: Articulated capsules (`CapsuleGeometry`) representing thighs, shanks, arms.
   - Joint Articulations: Spheres (`SphereGeometry`) positioned exactly at joint pivot centers.
-- **Total Polygon Budget:** $\approx 1,850$ triangles total, guaranteeing 60 FPS across low-tier mobile GPUs.
+- **Estimated Geometric Complexity:** Initial estimate of $\approx 1,850$ triangles total.
+  *(Note: Triangle count is an initial engineering budget. Rendering performance is evaluated against empirical device benchmarks rather than static triangle count guarantees; see Section 6.3 & 6.6.)*
 - **Direct Mathematical Control:** Joint rotations are driven directly via parent-child `Group` transforms, guaranteeing 100% stable angle calculation without animation rig de-syncing.
 
 ### 4.2 Five-Phase Kinematic Squat Cycle
-The animation loop is a continuous, anatomically verified kinematic cycle running on a 7.0-second period:
+The animation loop is a continuous kinematic cycle running on a 7.0-second period:
 
-| Phase | Time Window | Biomechanical Action | Hip State | Knee State |
+| Phase | Time Window | Biomechanical Action | Hip State (Keyframe) | Knee State (Keyframe) |
 |---|---|---|---|---|
 | **1. Standing Base** | 0.0s – 1.0s | Upright anatomical posture, stable core | Neutral ($180^\circ$) | Full extension ($180^\circ$) |
 | **2. Controlled Descent** | 1.0s – 3.0s | Smooth hip hinge with simultaneous knee flexion | Flexion ($180^\circ \to 95^\circ$) | Flexion ($180^\circ \to 90^\circ$) |
 | **3. Parallel Inflexion** | 3.0s – 4.0s | Brief deceleration at target parallel depth | Inflexion plateau ($92^\circ$) | Parallel depth ($88^\circ$) |
 | **4. Concentric Ascent** | 4.0s – 6.0s | Controlled drive upward, hips and chest rising synchronously | Extension ($92^\circ \to 180^\circ$) | Extension ($88^\circ \to 180^\circ$) |
 | **5. Full Lockout Pause** | 6.0s – 7.0s | Return to standing equilibrium before next cycle | Rested ($180^\circ$) | Rested ($180^\circ$) |
+
+> [!NOTE]
+> **Synthetic Animation Geometry Only:** The specific joint angles listed in the phase table ($180^\circ \to 90^\circ / 88^\circ$ at parallel inflexion) describe the procedural keyframe geometry of the synthetic 3D mannequin only. They are **not** scientifically validated ideal exercise angles, medical recommendations, or coaching standards for all human bodies. Different body proportions, hip anatomies, and mobility levels produce varying valid squat depths.
 
 ### 4.3 Mathematically Computed Joint Telemetry
 Angle readouts are **never hardcoded or simulated with arbitrary numbers**. Instead, in every frame:
@@ -138,9 +143,11 @@ Angle readouts are **never hardcoded or simulated with arbitrary numbers**. Inst
 2. The internal knee flexion angle is calculated:
    $$\theta_{\text{knee}} = \arccos\left(\frac{\vec{u} \cdot \vec{v}}{\|\vec{u}\| \|\vec{v}\|}\right) \times \frac{180}{\pi}$$
 3. The computed float is rounded to an integer and projected to the HUD readout in real time.
-4. **Mandatory Illustrative Labeling:**
+4. **Strict Form Evaluation Prohibition:**
+   - The illustrative mannequin must **never display a form-quality score** (such as "Score: 98%" or "Form: Good") or imply that the demonstration evaluates or validates a real human athlete's form.
+5. **Mandatory Illustrative Labeling:**
    - Display banner: `CALCULATED MODEL JOINT ANGLE`
-   - Explicit disclaimer: `ILLUSTRATIVE 3D DEMONSTRATION • NOT LIVE CAMERA TRACKING`
+   - Explicit disclaimer: `ILLUSTRATIVE 3D DEMONSTRATION • NOT LIVE CAMERA TRACKING • NOT A FORM STANDARD`
 
 ### 4.4 Shading, Materials & Studio Lighting
 - **Mannequin Finish:** `MeshStandardMaterial`
@@ -162,16 +169,17 @@ Angle readouts are **never hardcoded or simulated with arbitrary numbers**. Inst
   - Orbit rotation via pointer drag with damped inertia (`dampingFactor: 0.05`).
   - Clamped polar angle: $\theta_{\text{polar}} \in [65^\circ, 88^\circ]$ (prevents flipping underneath the ground plane).
   - Clamped azimuth angle: $\theta_{\text{azimuth}} \in [-55^\circ, +55^\circ]$ (maintains focus on frontal/three-quarter movement).
-- **Keyboard Accessibility:**
-  - Accessible button cluster:
-    - `[1] Front View (0°)`
-    - `[2] 45° Athletic Isometric`
-    - `[3] Profile Sagittal View (90°)`
-    - `[Space / K] Pause / Resume Movement`
-  - Full keyboard focus ring (`ring-2 ring-[#FF4D6D]`) and screen reader labels.
+- **Keyboard & Button Accessibility:**
+  - Accessible, explicit button cluster located directly adjacent to the 3D viewport:
+    - `<button>` `Front View (0°)`
+    - `<button>` `45° Isometric`
+    - `<button>` `Profile View (90°)`
+    - `<button>` `Pause / Play Movement`
+  - Every button carries standard focus rings (`focus-visible:ring-2 focus-visible:ring-[#FF4D6D]`) and descriptive `aria-label` attributes.
+  - **No Global Key Interception:** Global keyboard shortcuts (such as intercepting `Space` or `K` on `window`) are strictly avoided so they do not interfere with native page scrolling, assistive tech, or form fields.
 - **Mobile Interaction:**
-  - Touch gestures do not block vertical page scrolling (`touch-action: pan-y`).
-  - Simplified interaction: Tap buttons to cycle between Front, 45°, and Profile views. Drag is optional and single-finger horizontal only.
+  - View switching on mobile is handled via explicit buttons (`Front`, `45°`, `Profile`) rather than touch dragging.
+  - The canvas container strictly enforces `touch-action: pan-y` so vertical page scrolling is never blocked or hijacked.
   - Zero device-orientation / gyroscope APIs used.
 
 ---
@@ -225,7 +233,7 @@ Stagger Cadence              [ Card 1 -> Card 2 -> Card 3 ]
 > - No WebGL contexts, Three.js libraries, or heavy animation libraries shall be imported into the active camera rep-counting pipeline.
 > - The live workout screen maintains its lean, pure 2D Canvas overlay for real-time inference latency integrity.
 
-### 6.2 Dynamic Lazy Loading & Viewport Pausing
+### 6.2 Dynamic Lazy Loading & Declarative Frameloop Gating
 - **Code Splitting:** The 3D experience is dynamically loaded using `next/dynamic` with SSR disabled:
   ```typescript
   const BiomechanicalScene = dynamic(
@@ -233,56 +241,62 @@ Stagger Cadence              [ Card 1 -> Card 2 -> Card 3 ]
     { ssr: false, loading: () => <BiomechanicalSkeletonFallback /> }
   );
   ```
-- **Intersection Observer Rendering Gate:**
-  A dedicated `IntersectionObserver` monitors the 3D container. When the component scrolls outside the active viewport:
-  - The Three.js render loop is suspended (`gl.setAnimationLoop(null)` or internal state `isRendering = false`).
-  - GPU cycles drop to zero until the user scrolls the section back into view.
+- **Declarative Frameloop Gating:**
+  An `IntersectionObserver` tracks the 3D viewport container. We use React Three Fiber's built-in declarative `frameloop` property on `<Canvas>`:
+  ```tsx
+  <Canvas frameloop={isVisible ? "always" : "never"} dpr={[1, Math.min(window.devicePixelRatio, 1.5)]}>
+    {/* Scene content */}
+  </Canvas>
+  ```
+  *(Note: We do not directly manipulate `gl.setAnimationLoop(null)` as the default pausing mechanism; setting `frameloop="never"` allows R3F to cleanly suspend its internal render loop while preserving context and canvas state.)*
 
-### 6.3 Mobile GPU Budget & Constraints
-- **Device Pixel Ratio (DPR) Clamping:** Mobile retina screens (e.g., DPR 3.0) can exhaust mobile GPU fill rate. We enforce:
+### 6.3 Performance Targets & Mobile Constraints
+Performance goals are defined as **benchmark targets** to be empirically verified, not universal guarantees:
+- **Desktop Performance Target:** Steady 60 FPS on modern desktop browsers (Chrome, Edge, Safari).
+- **Mobile Performance Target:** Stable 30–60 FPS with frame-time stability (variance $\le 8\,\text{ms}$, no stutter $> 33.3\,\text{ms}$) on representative mobile devices (e.g., iPhone 12+, Snapdragon 8 Gen 1+ or equivalent).
+- **Device Pixel Ratio (DPR) Clamping:**
   $$\text{DPR}_{\text{clamped}} = \min(\text{window.devicePixelRatio}, 1.5)$$
-- **Antialiasing Optimization:** Enable FXAA or lightweight `antialias: false` on mobile devices with high DPI screens.
-- **Max Budgets:**
-  - Draw Calls: $\le 12$ calls per frame.
-  - Triangle Count: $\le 2,500$ triangles total.
-  - Memory: $\le 18\,\text{MB}$ total WebGL heap allocation.
+- **Antialiasing Optimization:** High-DPI screens can run with `antialias: false` to conserve fragment shader fill rate on mobile GPUs.
+- **Target Budgets:**
+  - Draw Calls: $\le 15$ calls per frame.
+  - Triangle Count: $\le 2,500$ triangles total (initial geometric estimate: $\approx 1,850$).
+  - Memory: $\le 20\,\text{MB}$ total WebGL heap allocation.
 
 ### 6.4 Reduced Motion & Accessibility Protocol
 - **Media Query Compliance:** The system listens for `window.matchMedia('(prefers-reduced-motion: reduce)')`.
   - When enabled:
     - All GSAP timeline durations are collapsed to `0s` (immediate state resolution).
     - The 3D mannequin halts kinematic cycling and displays a static, upright standing anatomical pose.
-    - Pointer auto-rotation is disabled; manual button-based view toggles remain accessible.
+    - Pointer auto-rotation is disabled; explicit buttons for view changes remain functional.
 - **Screen Reader Support:**
   - The 3D canvas is marked with `role="img"` and `aria-label="Interactive 3D anatomical model demonstrating joint angle tracking during a squat exercise."`
   - A hidden semantic text table summarizes the 5 movement phases for visually impaired users.
 - **Static 2D Fallback:**
-  If WebGL is unavailable or context creation fails, the component gracefully renders a high-contrast 2D SVG vector schematic of the squat trajectory with zero layout shift.
+  If WebGL is unavailable, context creation fails, or a low-end device cannot initialize the scene, the component gracefully renders a high-contrast 2D SVG vector schematic of the squat trajectory with zero layout shift.
 
-### 6.5 WebGL Resource Teardown Protocol
-To prevent memory leaks during client-side Next.js route transitions, explicit teardown is enforced on unmount:
-```typescript
-useEffect(() => {
-  return () => {
-    // 1. Revert GSAP contexts
-    ctx.revert();
-    // 2. Dispose Three.js geometries and materials
-    scene.traverse((obj) => {
-      if (obj instanceof THREE.Mesh) {
-        obj.geometry?.dispose();
-        if (Array.isArray(obj.material)) {
-          obj.material.forEach((m) => m.dispose());
-        } else {
-          obj.material?.dispose();
-        }
-      }
-    });
-    // 3. Force WebGL context release
-    renderer.forceContextLoss();
-    renderer.dispose();
-  };
-}, []);
-```
+### 6.5 R3F Resource Lifecycle & Standard Ownership
+React Three Fiber employs a declarative scene graph and reconciler lifecycle. To maintain architectural hygiene:
+- **Standard Ownership Model:**
+  R3F's `<Canvas>` component owns the underlying `WebGLRenderer`, camera, and scene. When `<Canvas>` unmounts, R3F's reconciler automatically handles the disposal of components declared in its JSX tree.
+- **Prohibited Teardown Anti-Patterns:**
+  Do **not** perform manual full-scene recursive traversals calling `.dispose()` on every managed mesh, and do **not** invoke `renderer.forceContextLoss()`. Doing so fights R3F's internal lifecycle management and can corrupt shared WebGL contexts or crash subsequent mounts.
+- **Developer Responsibility Scope:**
+  Cleanup is strictly restricted to developer-allocated non-JSX resources:
+  1. Reverting GSAP timelines and ScrollTrigger instances (`ctx.revert()`).
+  2. Disconnecting custom `IntersectionObserver` instances and window resize listeners.
+  3. Disposing any imperatively created textures, materials, or offscreen render targets created outside the declarative R3F JSX tree.
+
+### 6.6 Empirical Benchmark & Acceptance Criteria
+Before integrating the 3D scene into the main landing page, the prototype must pass empirical benchmarks in the isolated `/motion-lab` environment:
+1. **Device & Browser Documentation:**
+   Benchmark logs must explicitly document the hardware model, OS version, GPU/chipset, and browser version tested.
+2. **Acceptance Criteria Matrix:**
+   - **Median FPS:** $\ge 58\,\text{FPS}$ on desktop; $\ge 30\,\text{FPS}$ floor on mobile.
+   - **Frame-Time Stability:** Frame-time variance $\le 8\,\text{ms}$ during active descent/ascent; zero frame drops exceeding $33.3\,\text{ms}$.
+   - **Initial Load & First Frame:** Time from component mount to first rendered frame $\le 450\,\text{ms}$ on desktop, $\le 800\,\text{ms}$ on mobile.
+   - **Bundle Impact:** Measured via `@next/bundle-analyzer` in production build (`npm run build`).
+   - **Fallback Verification:** Simulated WebGL failure must cleanly mount the static 2D SVG fallback with zero uncaught console exceptions.
+3. **Report Separation:** Measured benchmark results must always be reported separately from target budgets in engineering logs.
 
 ---
 
@@ -300,13 +314,14 @@ FitVision's frontend runs on **Next.js 14.2.18** and **React 18.3.1**.
 | `gsap` | `^3.12.5` | Verified Compatible | Industry-standard performant animation engine. |
 | `@gsap/react` | `^2.1.1` | Verified Compatible | Official `useGSAP` hook with React 18 Strict Mode cleanup support. |
 
-### 7.2 Implementation Size & Alternative Evaluation
-- **Option A (Specified):** R3F v8 + Drei + GSAP.
-  - *Gzip Impact:* $\approx 140\,\text{KB}$ total (fully code-split on landing route, 0 KB in workout route).
+### 7.2 Implementation Size & Bundle Evaluation
+- **Option A (Specified Architecture):** R3F v8 + Drei + GSAP.
+  - *Preliminary Estimate:* $\approx 140\,\text{KB}$ gzip total (unverified estimate; must be measured via `@next/bundle-analyzer` in production build).
+  - *Isolation:* 100% code-split on landing/marketing route; 0 KB impact on workout route.
   - *Advantage:* Declarative JSX scene graph, rapid procedural joint binding, robust React lifecycle.
 - **Option B (Ultra-Minimalist Alternative):** Vanilla Three.js wrapped in a custom `useEffect` canvas + lightweight CSS keyframe animations.
-  - *Gzip Impact:* $\approx 90\,\text{KB}$ total.
-  - *Evaluation:* While slightly smaller, manual Three.js state synchronization with React state increases component complexity. Option A is recommended for reliable maintainability.
+  - *Preliminary Estimate:* $\approx 90\,\text{KB}$ gzip total (unverified estimate).
+  - *Evaluation:* While slightly smaller in bundle size, manual Three.js state synchronization with React state increases component complexity. Option A is recommended for reliable maintainability.
 
 ---
 
@@ -330,10 +345,15 @@ frontend/src/components/landing/
 
 ## 9. Review Checklist & Deliverables
 
-- [x] Evaluated procedural articulated mannequin (0 KB asset payload) over external rigged character.
+- [x] Evaluated procedural articulated mannequin (no external GLTF/GLB download) over external rigged character.
 - [x] Outlined 5-phase squat cycle with real-time vector angle calculation.
+- [x] Clarified that phase angles represent synthetic animation keyframes, not coaching standards.
+- [x] Strictly prohibited displaying a form-quality score based on the illustrative mannequin.
 - [x] Preserved strict FitVision visual identity (Black `#000000`, Carbon `#0B0B0C`, Burgundy `#6D001A`, Rose `#FF4D6D`, White `#FFFFFF`).
 - [x] Banned aggressive gaming tropes, cyan neon, floating cubes, and scroll-jacking.
-- [x] Defined complete performance budgets, mobile DPR clamping, and WebGL resource teardown.
+- [x] Replaced manual context disposal with R3F standard ownership model.
+- [x] Replaced direct `gl.setAnimationLoop` calls with declarative R3F `frameloop={isVisible ? "always" : "never"}`.
+- [x] Replaced global key interception with focused, accessible view-switch buttons.
+- [x] Established empirical benchmark criteria distinguishing desktop/mobile targets from guarantees.
 - [x] Verified React 18 / Next.js 14 compatibility using React Three Fiber v8.
 - [x] Confirmed zero changes to application code, backend, or live workout screens.

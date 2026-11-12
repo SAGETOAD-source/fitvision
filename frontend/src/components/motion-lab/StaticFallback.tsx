@@ -70,40 +70,71 @@ export default function StaticFallback({
             GROUND PLANE (Y = 0)
           </text>
 
-          {/* Standing Leg Silhouette (Muted White/Grey) */}
-          <g opacity="0.35">
-            {/* Torso */}
-            <line x1="200" y1="90" x2="200" y2="160" stroke="#FFFFFF" strokeWidth="6" strokeLinecap="round" />
-            {/* Head */}
-            <circle cx="200" cy="70" r="14" fill="#27272A" stroke="#FFFFFF" strokeWidth="2" />
-            {/* Thigh (Femur) */}
-            <line x1="200" y1="160" x2="205" y2="215" stroke="#FFFFFF" strokeWidth="5" strokeLinecap="round" />
-            {/* Shank (Tibia) */}
-            <line x1="205" y1="215" x2="205" y2="252" stroke="#FFFFFF" strokeWidth="5" strokeLinecap="round" />
-            {/* Foot */}
-            <rect x="195" y="252" width="28" height="8" rx="2" fill="#52525B" />
+          {/* Standing Athletic Female Silhouette (Muted White/Grey) */}
+          <g opacity="0.30">
+            {/* Athletic Head & Ponytail */}
+            <circle cx="200" cy="65" r="12" fill="#27272A" stroke="#FFFFFF" strokeWidth="1.8" />
+            <path d="M 192 64 C 185 64 180 72 178 78 C 182 78 188 74 191 69 Z" fill="#71717A" />
+            {/* Neck */}
+            <line x1="200" y1="77" x2="200" y2="88" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
+            {/* Sports Top & Tapered Athletic Torso */}
+            <path d="M 194 88 L 206 88 L 204 125 L 196 125 Z" fill="#3F3F46" stroke="#FFFFFF" strokeWidth="1.5" />
+            {/* Defined Waist & High-Waist Leggings */}
+            <path d="M 196 125 L 204 125 L 206 158 L 193 158 Z" fill="#27272A" stroke="#FFFFFF" strokeWidth="1.5" />
+            {/* Thigh (Femur with Quad Sweep) */}
+            <path d="M 196 158 Q 206 185 204 215 L 198 215 Q 194 185 196 158 Z" fill="#52525B" stroke="#FFFFFF" strokeWidth="1.2" />
+            {/* Shank (Tibia with Athletic Calf) */}
+            <path d="M 204 215 Q 207 232 204 252 L 199 252 Q 199 232 201 215 Z" fill="#52525B" stroke="#FFFFFF" strokeWidth="1.2" />
+            {/* Athletic Trainer Shoe */}
+            <path d="M 194 252 L 216 252 L 218 258 L 192 258 Z" fill="#71717A" />
           </g>
 
-          {/* Squat Bottom Posture (Bold High-Contrast with Signal-Rose Joint Nodes) */}
+          {/* Squat Bottom Posture (Bold High-Contrast Female Athletic Demonstrator with Signal-Rose Joint Nodes) */}
           <g>
-            {/* Torso inclining forward */}
-            <line x1="165" y1="150" x2="140" y2="205" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" />
-            {/* Head */}
-            <circle cx="178" cy="130" r="14" fill="#18181B" stroke="#FFFFFF" strokeWidth="2.5" />
-            {/* Pelvis/Hip Center */}
-            <circle cx="140" cy="205" r="5" fill="#FF4D6D" />
-            {/* Thigh (Femur) reaching near-parallel */}
-            <line x1="140" y1="205" x2="225" y2="210" stroke="#FFFFFF" strokeWidth="6" strokeLinecap="round" />
-            {/* Knee Joint Node */}
-            <circle cx="225" cy="210" r="6" fill="#FF4D6D" stroke="#FFFFFF" strokeWidth="1.5" />
-            {/* Shank (Tibia) inclined forward */}
-            <line x1="225" y1="210" x2="205" y2="252" stroke="#FFFFFF" strokeWidth="6" strokeLinecap="round" />
-            {/* Ankle Joint Node */}
-            <circle cx="205" cy="252" r="4.5" fill="#FF4D6D" />
-            {/* Planted Foot */}
-            <rect x="195" y="252" width="30" height="8" rx="2" fill="#A1A1AA" />
+            {/* Athletic Head with High Ponytail */}
+            <circle cx="178" cy="122" r="13" fill="#18181B" stroke="#FFFFFF" strokeWidth="2.2" />
+            {/* Ponytail plume */}
+            <path d="M 169 122 C 160 120 152 128 148 135 C 154 135 162 131 168 126 Z" fill="#FF4D6D" opacity="0.85" />
+            {/* Neck */}
+            <line x1="174" y1="134" x2="168" y2="145" stroke="#FFFFFF" strokeWidth="4.5" strokeLinecap="round" />
 
-            {/* Kinetic Descent Curve */}
+            {/* Athletic Torso with Sports Top & Tapered Waist (Inclined Forward) */}
+            <path
+              d="M 172 145 C 164 158 152 178 142 205 C 134 200 134 188 142 175 C 150 162 160 148 172 145 Z"
+              fill="#27272A"
+              stroke="#FFFFFF"
+              strokeWidth="2"
+            />
+
+            {/* Contoured Muscular Thigh with Quad Sweep (Parallel Depth) */}
+            <path
+              d="M 140 205 Q 180 198 225 210 Q 180 218 140 205 Z"
+              fill="#3F3F46"
+              stroke="#FFFFFF"
+              strokeWidth="2"
+            />
+
+            {/* Contoured Shank with Defined Calf Curve */}
+            <path
+              d="M 225 210 Q 220 230 205 252 Q 212 232 225 210 Z"
+              fill="#3F3F46"
+              stroke="#FFFFFF"
+              strokeWidth="2"
+            />
+
+            {/* Athletic Training Shoe */}
+            <path d="M 195 252 L 222 252 L 225 258 L 193 258 Z" fill="#A1A1AA" stroke="#FFFFFF" strokeWidth="1" />
+
+            {/* Biomechanical Hip Joint Node */}
+            <circle cx="140" cy="205" r="5.5" fill="#FF4D6D" stroke="#FFFFFF" strokeWidth="1.5" />
+
+            {/* Biomechanical Knee Joint Node */}
+            <circle cx="225" cy="210" r="6.5" fill="#FF4D6D" stroke="#FFFFFF" strokeWidth="1.8" />
+
+            {/* Biomechanical Ankle Joint Node */}
+            <circle cx="205" cy="252" r="4.5" fill="#FF4D6D" stroke="#FFFFFF" strokeWidth="1.2" />
+
+            {/* Kinetic Hip Descent Path */}
             <path
               d="M 200 160 Q 170 180 140 205"
               stroke="#6D001A"
@@ -111,7 +142,7 @@ export default function StaticFallback({
               strokeDasharray="3 3"
               fill="none"
             />
-            {/* Knee forward travel curve */}
+            {/* Knee Forward Travel Path */}
             <path
               d="M 205 215 Q 215 212 225 210"
               stroke="#FF4D6D"

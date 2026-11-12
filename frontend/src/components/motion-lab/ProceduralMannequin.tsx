@@ -14,7 +14,7 @@ interface ProceduralMannequinProps {
   onAngleUpdate?: (angle: number, phase: string) => void;
 }
 
-// Biomechanical dimension constants (in meters)
+// Biomechanical dimension constants (in meters) - PRESERVED STRICTLY
 const L1_THIGH = 0.44;
 const L2_SHANK = 0.42;
 const HIP_WIDTH = 0.28; // Distance between left and right hip pivots
@@ -29,18 +29,18 @@ export default function ProceduralMannequin({
   const lastUpdateRef = useRef<number>(0);
   const lastAngleRef = useRef<number>(-1);
 
-  // Group references for dynamic mesh transforms
+  // Group references for dynamic transforms
   const rootGroupRef = useRef<THREE.Group>(null);
   const pelvisGroupRef = useRef<THREE.Group>(null);
   const torsoGroupRef = useRef<THREE.Group>(null);
 
-  // Thigh and shank meshes
-  const leftThighRef = useRef<THREE.Mesh>(null);
-  const rightThighRef = useRef<THREE.Mesh>(null);
-  const leftShankRef = useRef<THREE.Mesh>(null);
-  const rightShankRef = useRef<THREE.Mesh>(null);
+  // Leg segment groups (contain contoured thigh and shank geometries)
+  const leftThighGroupRef = useRef<THREE.Group>(null);
+  const rightThighGroupRef = useRef<THREE.Group>(null);
+  const leftShankGroupRef = useRef<THREE.Group>(null);
+  const rightShankGroupRef = useRef<THREE.Group>(null);
 
-  // Joint node spheres
+  // Signal-rose joint node spheres
   const leftHipSphereRef = useRef<THREE.Mesh>(null);
   const rightHipSphereRef = useRef<THREE.Mesh>(null);
   const leftKneeSphereRef = useRef<THREE.Mesh>(null);
@@ -51,7 +51,7 @@ export default function ProceduralMannequin({
   // Angle arc line
   const angleArcLineRef = useRef<THREE.Line>(null);
 
-  // Reusable math objects (avoid garbage collection in useFrame)
+  // Reusable math objects (zero garbage collection in useFrame)
   const mathObjects = useMemo(() => {
     return {
       vUp: new THREE.Vector3(0, 1, 0),
@@ -61,73 +61,91 @@ export default function ProceduralMannequin({
       pHip: new THREE.Vector3(),
       pKnee: new THREE.Vector3(),
       pAnkle: new THREE.Vector3(),
-      arcPoints: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
+      leftHip: new THREE.Vector3(),
+      leftKnee: new THREE.Vector3(),
+      leftAnkle: new THREE.Vector3(),
     };
   }, []);
 
-  // Shared Materials
+  // Shared Materials (Matte, non-metallic, subtle athletic apparel styling)
   const materials = useMemo(() => {
     return {
-      // Matte athletic technical slate finish (strictly non-metallic, elevated brightness)
-      graphiteBody: new THREE.MeshStandardMaterial({
-        color: '#666A78',
+      // Matte athletic skin tone (technical slate, elevated readability against dark studio)
+      skin: new THREE.MeshStandardMaterial({
+        color: '#6A6E7C',
         roughness: 0.72,
         metalness: 0.0,
       }),
-      // Matte deeper carbon for torso & spine (clear visual separation from limbs)
-      carbonTorso: new THREE.MeshStandardMaterial({
-        color: '#565A68',
+      // Fitted athletic sports top (deep performance carbon)
+      sportsTop: new THREE.MeshStandardMaterial({
+        color: '#22232A',
+        roughness: 0.80,
+        metalness: 0.0,
+      }),
+      // Performance leggings (matte dark slate charcoal covering hips, glutes, thighs, shanks)
+      leggings: new THREE.MeshStandardMaterial({
+        color: '#343744',
         roughness: 0.76,
         metalness: 0.0,
       }),
-      // Articulated pelvis/hip connector tone
-      pelvisMaterial: new THREE.MeshStandardMaterial({
-        color: '#4A4E5C',
-        roughness: 0.74,
+      // Subtle waistband accent
+      waistband: new THREE.MeshStandardMaterial({
+        color: '#282A34',
+        roughness: 0.82,
+        metalness: 0.0,
+      }),
+      // Athletic training shoes
+      shoes: new THREE.MeshStandardMaterial({
+        color: '#1A1B22',
+        roughness: 0.85,
+        metalness: 0.0,
+      }),
+      shoeSole: new THREE.MeshStandardMaterial({
+        color: '#383B46',
+        roughness: 0.75,
+        metalness: 0.0,
+      }),
+      // Sleek athletic hair
+      hair: new THREE.MeshStandardMaterial({
+        color: '#1A1B20',
+        roughness: 0.85,
         metalness: 0.0,
       }),
       // Signal-Rose joint node beacons
       signalRoseJoint: new THREE.MeshBasicMaterial({
         color: '#FF4D6D',
       }),
-      // Angle arc line material
+      // Sagittal angle arc line
       angleLine: new THREE.LineBasicMaterial({
         color: '#FF4D6D',
         linewidth: 2,
       }),
-      // Muted foot sole
-      footMaterial: new THREE.MeshStandardMaterial({
-        color: '#3A3E4A',
-        roughness: 0.82,
-        metalness: 0.0,
-      }),
     };
   }, []);
 
-  // Helper to orient a cylinder segment between point A and point B
+  // Helper to orient a compound segment group between point A and point B
   const orientSegment = (
-    mesh: THREE.Mesh | null,
+    group: THREE.Group | null,
     pA: THREE.Vector3,
     pB: THREE.Vector3,
     length: number
   ) => {
-    if (!mesh) return;
+    if (!group) return;
     const { vUp, vDir, vMid, qRot } = mathObjects;
     vMid.addVectors(pA, pB).multiplyScalar(0.5);
-    mesh.position.copy(vMid);
+    group.position.copy(vMid);
 
     vDir.subVectors(pB, pA).normalize();
     qRot.setFromUnitVectors(vUp, vDir);
-    mesh.quaternion.copy(qRot);
+    group.quaternion.copy(qRot);
 
-    // Ensure scale matches true distance
+    // Scale Y strictly by true distance to ensure exact joint alignment
     const dist = pA.distanceTo(pB);
-    mesh.scale.set(1, dist / length, 1);
+    group.scale.set(1, dist / length, 1);
   };
 
   useFrame((_, delta) => {
     if (isPlaying) {
-      // 7.0-second total cycle
       timeRef.current = (timeRef.current + delta) % 7.0;
     }
 
@@ -137,7 +155,7 @@ export default function ProceduralMannequin({
     // Analytical 2-segment planar IK for both legs
     const ik = solveTwoSegmentPlanarIK(yHip, zHip, ANKLE_Y, ANKLE_Z, L1_THIGH, L2_SHANK);
 
-    // Update Pelvis Group (Anchors hip, spine, and torso)
+    // Update Pelvis Group (Anchors hip, glutes, and torso base)
     if (pelvisGroupRef.current) {
       pelvisGroupRef.current.position.set(0, yHip, zHip);
     }
@@ -151,16 +169,16 @@ export default function ProceduralMannequin({
     const halfW = HIP_WIDTH / 2;
 
     // Joint Positions in World Coordinates
-    const { pHip, pKnee, pAnkle } = mathObjects;
+    const { pHip, pKnee, pAnkle, leftHip, leftKnee, leftAnkle } = mathObjects;
 
-    // Right Leg (Primary in Profile View)
+    // Right Leg (Primary in Sagittal Profile View)
     const rightHip = pHip.set(halfW, yHip, zHip);
     const rightKnee = pKnee.set(halfW, ik.kneeY, ik.kneeZ);
     const rightAnkle = pAnkle.set(halfW, ANKLE_Y, ANKLE_Z);
 
-    // Orient Right Thigh & Shank
-    orientSegment(rightThighRef.current, rightHip, rightKnee, L1_THIGH);
-    orientSegment(rightShankRef.current, rightKnee, rightAnkle, L2_SHANK);
+    // Orient Right Thigh & Shank Groups
+    orientSegment(rightThighGroupRef.current, rightHip, rightKnee, L1_THIGH);
+    orientSegment(rightShankGroupRef.current, rightKnee, rightAnkle, L2_SHANK);
 
     // Position Right Joint Spheres
     if (rightHipSphereRef.current) rightHipSphereRef.current.position.copy(rightHip);
@@ -168,12 +186,12 @@ export default function ProceduralMannequin({
     if (rightAnkleSphereRef.current) rightAnkleSphereRef.current.position.copy(rightAnkle);
 
     // Left Leg (Symmetrical bilateral movement)
-    const leftHip = new THREE.Vector3(-halfW, yHip, zHip);
-    const leftKnee = new THREE.Vector3(-halfW, ik.kneeY, ik.kneeZ);
-    const leftAnkle = new THREE.Vector3(-halfW, ANKLE_Y, ANKLE_Z);
+    leftHip.set(-halfW, yHip, zHip);
+    leftKnee.set(-halfW, ik.kneeY, ik.kneeZ);
+    leftAnkle.set(-halfW, ANKLE_Y, ANKLE_Z);
 
-    orientSegment(leftThighRef.current, leftHip, leftKnee, L1_THIGH);
-    orientSegment(leftShankRef.current, leftKnee, leftAnkle, L2_SHANK);
+    orientSegment(leftThighGroupRef.current, leftHip, leftKnee, L1_THIGH);
+    orientSegment(leftShankGroupRef.current, leftKnee, leftAnkle, L2_SHANK);
 
     if (leftHipSphereRef.current) leftHipSphereRef.current.position.copy(leftHip);
     if (leftKneeSphereRef.current) leftKneeSphereRef.current.position.copy(leftKnee);
@@ -189,9 +207,7 @@ export default function ProceduralMannequin({
     // Update 3D angle arc line on right knee
     if (angleArcLineRef.current) {
       const geo = angleArcLineRef.current.geometry;
-      // Ray toward hip
       const rHip = new THREE.Vector3().subVectors(rightHip, rightKnee).normalize().multiplyScalar(0.12);
-      // Ray toward ankle
       const rAnkle = new THREE.Vector3().subVectors(rightAnkle, rightKnee).normalize().multiplyScalar(0.12);
 
       const p1 = new THREE.Vector3().addVectors(rightKnee, rHip);
@@ -201,7 +217,7 @@ export default function ProceduralMannequin({
       geo.setFromPoints([p1, p2, p3]);
     }
 
-    // Throttle React state update to ~10Hz or integer degree changes to avoid 60Hz React re-renders
+    // Throttle React state update to ~10Hz or integer degree changes
     const now = performance.now();
     if (now - lastUpdateRef.current > 100 || Math.abs(calculatedAngle - lastAngleRef.current) >= 1.0) {
       lastUpdateRef.current = now;
@@ -216,109 +232,237 @@ export default function ProceduralMannequin({
 
   return (
     <group ref={rootGroupRef}>
-      {/* 1. Ground Plane Stationary Feet (Strictly clamped at y = 0.0, zero translation) */}
-      {/* Left Foot */}
-      <mesh
-        position={[-halfW, ANKLE_Y / 2, 0.04]}
-        material={materials.footMaterial}
-      >
-        <boxGeometry args={[0.09, ANKLE_Y, 0.22]} />
-      </mesh>
-      {/* Right Foot */}
-      <mesh
-        position={[halfW, ANKLE_Y / 2, 0.04]}
-        material={materials.footMaterial}
-      >
-        <boxGeometry args={[0.09, ANKLE_Y, 0.22]} />
-      </mesh>
+      {/* =========================================================================
+          1. STATIONARY ATHLETIC FOOTWEAR (Ground Plane Clamped at y = 0.0)
+          ========================================================================= */}
+      {/* Left Shoe */}
+      <group position={[-halfW, 0, 0.03]}>
+        {/* Sole */}
+        <mesh position={[0, 0.015, 0.01]} material={materials.shoeSole}>
+          <boxGeometry args={[0.096, 0.03, 0.24]} />
+        </mesh>
+        {/* Trainer Upper */}
+        <mesh position={[0, 0.045, -0.01]} material={materials.shoes}>
+          <boxGeometry args={[0.090, 0.05, 0.18]} />
+        </mesh>
+        {/* Forefoot Toe Box */}
+        <mesh position={[0, 0.035, 0.07]} material={materials.shoes}>
+          <cylinderGeometry args={[0.042, 0.045, 0.08, 16]} />
+        </mesh>
+      </group>
 
-      {/* 2. Pelvis Group (Moves dynamically with hip trajectory) */}
+      {/* Right Shoe */}
+      <group position={[halfW, 0, 0.03]}>
+        <mesh position={[0, 0.015, 0.01]} material={materials.shoeSole}>
+          <boxGeometry args={[0.096, 0.03, 0.24]} />
+        </mesh>
+        <mesh position={[0, 0.045, -0.01]} material={materials.shoes}>
+          <boxGeometry args={[0.090, 0.05, 0.18]} />
+        </mesh>
+        <mesh position={[0, 0.035, 0.07]} material={materials.shoes}>
+          <cylinderGeometry args={[0.042, 0.045, 0.08, 16]} />
+        </mesh>
+      </group>
+
+      {/* =========================================================================
+          2. PELVIS & GLUTES GROUP (Moves dynamically with hip trajectory)
+          ========================================================================= */}
       <group ref={pelvisGroupRef} position={[0, Y_HIP_STAND, Z_HIP_STAND]}>
-        {/* Pelvic Core Box */}
-        <mesh position={[0, 0, 0]} material={materials.pelvisMaterial}>
-          <cylinderGeometry args={[HIP_WIDTH / 2.2, HIP_WIDTH / 2.4, 0.12, 16]} />
+        {/* High-Waist Athletic Leggings Band */}
+        <mesh position={[0, 0.07, -0.005]} material={materials.waistband}>
+          <cylinderGeometry args={[0.112, 0.124, 0.05, 24]} />
         </mesh>
 
-        {/* 3. Torso & Spine Group (Pivots at hip to lean forward during squat) */}
+        {/* Central Pelvic Girdle */}
+        <mesh position={[0, 0.01, -0.01]} material={materials.leggings}>
+          <cylinderGeometry args={[0.132, 0.142, 0.13, 24]} />
+        </mesh>
+
+        {/* Sculpted Athletic Gluteal Curves (Left & Right Hamstring/Glute Tie-in) */}
+        <mesh position={[-halfW * 0.72, -0.01, -0.055]} material={materials.leggings}>
+          <sphereGeometry args={[0.082, 20, 20]} />
+        </mesh>
+        <mesh position={[halfW * 0.72, -0.01, -0.055]} material={materials.leggings}>
+          <sphereGeometry args={[0.082, 20, 20]} />
+        </mesh>
+
+        {/* =========================================================================
+            3. TORSO, SPORTS TOP, ARMS & HEAD (Pivots at hip for forward lean)
+            ========================================================================= */}
         <group ref={torsoGroupRef} position={[0, 0.06, 0]}>
-          {/* Lower Lumbar Spine */}
-          <mesh position={[0, 0.1, 0]} material={materials.carbonTorso}>
-            <cylinderGeometry args={[0.07, 0.08, 0.18, 16]} />
-          </mesh>
-          {/* Ribcage / Thorax */}
-          <mesh position={[0, 0.26, 0]} material={materials.graphiteBody}>
-            <cylinderGeometry args={[0.13, 0.09, 0.22, 16]} />
-          </mesh>
-          {/* Clavicle / Shoulder Yoke */}
-          <mesh position={[0, 0.38, 0]} material={materials.graphiteBody}>
-            <boxGeometry args={[0.34, 0.06, 0.12]} />
-          </mesh>
-          {/* Cervical Neck */}
-          <mesh position={[0, 0.44, 0]} material={materials.carbonTorso}>
-            <cylinderGeometry args={[0.045, 0.05, 0.08, 12]} />
-          </mesh>
-          {/* Cranium / Head */}
-          <mesh position={[0, 0.54, 0]} material={materials.graphiteBody}>
-            <sphereGeometry args={[0.085, 20, 20]} />
+          {/* Tapered Athletic Waist (Exposed skin contour above leggings) */}
+          <mesh position={[0, 0.06, 0]} material={materials.skin}>
+            <cylinderGeometry args={[0.092, 0.106, 0.09, 24]} />
           </mesh>
 
-          {/* Athletic Guard Counterbalance Arms */}
-          {/* Left Upper Arm & Forearm */}
-          <mesh position={[-0.19, 0.28, 0.08]} rotation={[0.6, 0, 0.1]} material={materials.graphiteBody}>
-            <capsuleGeometry args={[0.035, 0.22, 8, 12]} />
+          {/* Fitted Athletic Sports Top (Performance Carbon) */}
+          <mesh position={[0, 0.155, 0]} material={materials.sportsTop}>
+            <cylinderGeometry args={[0.124, 0.094, 0.12, 24]} />
           </mesh>
-          {/* Right Upper Arm & Forearm */}
-          <mesh position={[0.19, 0.28, 0.08]} rotation={[0.6, 0, -0.1]} material={materials.graphiteBody}>
-            <capsuleGeometry args={[0.035, 0.22, 8, 12]} />
+
+          {/* Anatomical Athletic Bust Contour (Integrated cleanly into sports bra) */}
+          <mesh position={[-0.055, 0.165, 0.062]} material={materials.sportsTop}>
+            <sphereGeometry args={[0.056, 18, 18]} />
+          </mesh>
+          <mesh position={[0.055, 0.165, 0.062]} material={materials.sportsTop}>
+            <sphereGeometry args={[0.056, 18, 18]} />
+          </mesh>
+
+          {/* Upper Chest & Clavicle Arch */}
+          <mesh position={[0, 0.235, 0]} material={materials.sportsTop}>
+            <cylinderGeometry args={[0.128, 0.124, 0.06, 24]} />
+          </mesh>
+
+          {/* Athletic Deltoid Shoulders (Rounded caps replacing rectangular box) */}
+          <mesh position={[-0.175, 0.255, 0]} material={materials.skin}>
+            <sphereGeometry args={[0.046, 18, 18]} />
+          </mesh>
+          <mesh position={[0.175, 0.255, 0]} material={materials.skin}>
+            <sphereGeometry args={[0.046, 18, 18]} />
+          </mesh>
+
+          {/* Cervical Neck */}
+          <mesh position={[0, 0.315, 0]} material={materials.skin}>
+            <cylinderGeometry args={[0.038, 0.046, 0.08, 16]} />
+          </mesh>
+
+          {/* Athletic Cranium / Head */}
+          <mesh position={[0, 0.415, 0]} material={materials.skin}>
+            <sphereGeometry args={[0.076, 24, 24]} />
+          </mesh>
+
+          {/* Sleek Athletic Hair & High Ponytail */}
+          <mesh position={[0, 0.435, -0.018]} material={materials.hair}>
+            <sphereGeometry args={[0.079, 20, 20]} />
+          </mesh>
+          {/* Ponytail Tie */}
+          <mesh position={[0, 0.455, -0.085]} material={materials.hair}>
+            <sphereGeometry args={[0.034, 16, 16]} />
+          </mesh>
+          {/* Trailing Ponytail Plume */}
+          <mesh position={[0, 0.385, -0.11]} rotation={[-0.4, 0, 0]} material={materials.hair}>
+            <capsuleGeometry args={[0.022, 0.12, 8, 12]} />
+          </mesh>
+
+          {/* Athletic Arms (Relaxed front counterbalancing guard posture) */}
+          {/* Left Upper Arm */}
+          <mesh position={[-0.185, 0.185, 0.05]} rotation={[0.60, 0.15, 0.22]} material={materials.skin}>
+            <capsuleGeometry args={[0.029, 0.17, 8, 12]} />
+          </mesh>
+          {/* Left Forearm */}
+          <mesh position={[-0.10, 0.10, 0.18]} rotation={[1.20, -0.42, 0.60]} material={materials.skin}>
+            <capsuleGeometry args={[0.024, 0.16, 8, 12]} />
+          </mesh>
+
+          {/* Right Upper Arm */}
+          <mesh position={[0.185, 0.185, 0.05]} rotation={[0.60, -0.15, -0.22]} material={materials.skin}>
+            <capsuleGeometry args={[0.029, 0.17, 8, 12]} />
+          </mesh>
+          {/* Right Forearm */}
+          <mesh position={[0.10, 0.10, 0.18]} rotation={[1.20, 0.42, -0.60]} material={materials.skin}>
+            <capsuleGeometry args={[0.024, 0.16, 8, 12]} />
+          </mesh>
+
+          {/* Clapsed Hands */}
+          <mesh position={[-0.03, 0.09, 0.23]} material={materials.skin}>
+            <sphereGeometry args={[0.024, 12, 12]} />
+          </mesh>
+          <mesh position={[0.03, 0.09, 0.23]} material={materials.skin}>
+            <sphereGeometry args={[0.024, 12, 12]} />
           </mesh>
         </group>
       </group>
 
-      {/* 4. Connected Leg Segments (Oriented directly between joint coordinates) */}
-      {/* Left Thigh (Femur) */}
-      <mesh ref={leftThighRef} material={materials.graphiteBody}>
-        <cylinderGeometry args={[0.052, 0.045, L1_THIGH, 16]} />
-      </mesh>
-      {/* Left Shank (Tibia) */}
-      <mesh ref={leftShankRef} material={materials.graphiteBody}>
-        <cylinderGeometry args={[0.042, 0.035, L2_SHANK, 16]} />
-      </mesh>
+      {/* =========================================================================
+          4. CONTOURED THIGH GROUPS (L1 = 0.44m, Hip to Knee Vector)
+          Local space: -Y is hip end, +Y is knee end.
+          ========================================================================= */}
+      {/* Left Thigh Group */}
+      <group ref={leftThighGroupRef}>
+        {/* Tapered Femur Core Leggings (radiusBottom at hip = 0.068m, radiusTop at knee = 0.046m) */}
+        <mesh position={[0, 0, 0]} material={materials.leggings}>
+          <cylinderGeometry args={[0.046, 0.068, L1_THIGH, 24]} />
+        </mesh>
+        {/* Anterior Quad Sweep Bulge (+Z anterior) */}
+        <mesh position={[0, -0.05, 0.022]} material={materials.leggings}>
+          <capsuleGeometry args={[0.040, 0.20, 8, 16]} />
+        </mesh>
+        {/* Posterior Hamstring Curve (-Z posterior) */}
+        <mesh position={[0, -0.07, -0.024]} material={materials.leggings}>
+          <capsuleGeometry args={[0.038, 0.18, 8, 16]} />
+        </mesh>
+      </group>
 
-      {/* Right Thigh (Femur) */}
-      <mesh ref={rightThighRef} material={materials.graphiteBody}>
-        <cylinderGeometry args={[0.052, 0.045, L1_THIGH, 16]} />
-      </mesh>
-      {/* Right Shank (Tibia) */}
-      <mesh ref={rightShankRef} material={materials.graphiteBody}>
-        <cylinderGeometry args={[0.042, 0.035, L2_SHANK, 16]} />
-      </mesh>
+      {/* Right Thigh Group */}
+      <group ref={rightThighGroupRef}>
+        <mesh position={[0, 0, 0]} material={materials.leggings}>
+          <cylinderGeometry args={[0.046, 0.068, L1_THIGH, 24]} />
+        </mesh>
+        <mesh position={[0, -0.05, 0.022]} material={materials.leggings}>
+          <capsuleGeometry args={[0.040, 0.20, 8, 16]} />
+        </mesh>
+        <mesh position={[0, -0.07, -0.024]} material={materials.leggings}>
+          <capsuleGeometry args={[0.038, 0.18, 8, 16]} />
+        </mesh>
+      </group>
 
-      {/* 5. Signal-Rose (#FF4D6D) Biomechanical Joint Beacons */}
-      {/* Hip Nodes */}
+      {/* =========================================================================
+          5. CONTOURED SHANK GROUPS (L2 = 0.42m, Knee to Ankle Vector)
+          Local space: -Y is knee end, +Y is ankle end.
+          ========================================================================= */}
+      {/* Left Shank Group */}
+      <group ref={leftShankGroupRef}>
+        {/* Tapered Tibia Core Leggings (radiusBottom at knee = 0.046m, radiusTop at ankle = 0.034m) */}
+        <mesh position={[0, 0, 0]} material={materials.leggings}>
+          <cylinderGeometry args={[0.034, 0.046, L2_SHANK, 24]} />
+        </mesh>
+        {/* Posterior Calf (Gastrocnemius) Curve (-Z posterior, upper shank) */}
+        <mesh position={[0, -0.06, -0.020]} material={materials.leggings}>
+          <capsuleGeometry args={[0.038, 0.16, 8, 16]} />
+        </mesh>
+      </group>
+
+      {/* Right Shank Group */}
+      <group ref={rightShankGroupRef}>
+        <mesh position={[0, 0, 0]} material={materials.leggings}>
+          <cylinderGeometry args={[0.034, 0.046, L2_SHANK, 24]} />
+        </mesh>
+        <mesh position={[0, -0.06, -0.020]} material={materials.leggings}>
+          <capsuleGeometry args={[0.038, 0.16, 8, 16]} />
+        </mesh>
+      </group>
+
+      {/* =========================================================================
+          6. SIGNAL-ROSE (#FF4D6D) BIOMECHANICAL JOINT BEACONS
+          Exact mathematical coordinate pivots: Hip, Knee, Ankle
+          ========================================================================= */}
+      {/* Hip Joint Spheres */}
       <mesh ref={leftHipSphereRef} material={materials.signalRoseJoint}>
-        <sphereGeometry args={[0.038, 16, 16]} />
+        <sphereGeometry args={[0.034, 16, 16]} />
       </mesh>
       <mesh ref={rightHipSphereRef} material={materials.signalRoseJoint}>
+        <sphereGeometry args={[0.034, 16, 16]} />
+      </mesh>
+
+      {/* Knee Joint Spheres */}
+      <mesh ref={leftKneeSphereRef} material={materials.signalRoseJoint}>
+        <sphereGeometry args={[0.038, 16, 16]} />
+      </mesh>
+      <mesh ref={rightKneeSphereRef} material={materials.signalRoseJoint}>
         <sphereGeometry args={[0.038, 16, 16]} />
       </mesh>
 
-      {/* Knee Nodes */}
-      <mesh ref={leftKneeSphereRef} material={materials.signalRoseJoint}>
-        <sphereGeometry args={[0.042, 16, 16]} />
-      </mesh>
-      <mesh ref={rightKneeSphereRef} material={materials.signalRoseJoint}>
-        <sphereGeometry args={[0.042, 16, 16]} />
-      </mesh>
-
-      {/* Ankle Nodes */}
+      {/* Ankle Joint Spheres */}
       <mesh ref={leftAnkleSphereRef} material={materials.signalRoseJoint}>
-        <sphereGeometry args={[0.032, 16, 16]} />
+        <sphereGeometry args={[0.030, 16, 16]} />
       </mesh>
       <mesh ref={rightAnkleSphereRef} material={materials.signalRoseJoint}>
-        <sphereGeometry args={[0.032, 16, 16]} />
+        <sphereGeometry args={[0.030, 16, 16]} />
       </mesh>
 
-      {/* 6. Dynamic Sagittal Angle Arc Line on Right Knee */}
+      {/* =========================================================================
+          7. DYNAMIC SAGITTAL ANGLE ARC LINE (Right Knee Interior Angle)
+          ========================================================================= */}
       <primitive
         object={
           new THREE.Line(

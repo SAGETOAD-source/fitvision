@@ -129,15 +129,17 @@ export default function MotionLabCanvas({
       >
         {/* Studio Lighting Setup */}
         {/* Soft Neutral Key Light */}
-        <directionalLight position={[3.2, 4.8, 3.6]} intensity={1.5} color="#F8F9FA" />
+        <directionalLight position={[3.5, 5.0, 3.5]} intensity={2.2} color="#FFFFFF" />
+        {/* Dedicated Front-Left Studio Fill Light (prevents dark side shadow crushing) */}
+        <directionalLight position={[-3.2, 3.2, 3.0]} intensity={1.1} color="#D4D8E2" />
         {/* Restrained Burgundy / Signal-Rose Contour Rim Light */}
-        <directionalLight position={[-3.2, 3.8, -3.2]} intensity={1.2} color="#851630" />
-        {/* Secondary Lateral Contour Fill */}
-        <directionalLight position={[-2.5, 1.5, 2.5]} intensity={0.4} color="#383B46" />
+        <directionalLight position={[-3.5, 4.0, -3.5]} intensity={1.8} color="#D8385A" />
+        {/* Secondary Lateral Contour */}
+        <directionalLight position={[3.0, 2.0, -2.5]} intensity={0.6} color="#464A58" />
         {/* Hemisphere Ambient Ground/Sky Balance */}
-        <hemisphereLight args={['#32333D', '#121214', 0.65]} />
+        <hemisphereLight args={['#505466', '#1A1B22', 0.85]} />
         {/* Ambient Base Fill */}
-        <ambientLight intensity={0.25} color="#202026" />
+        <ambientLight intensity={0.35} color="#2A2B34" />
 
         {/* Studio Ground Reference Disc */}
         <group position={[0, -0.001, 0]}>

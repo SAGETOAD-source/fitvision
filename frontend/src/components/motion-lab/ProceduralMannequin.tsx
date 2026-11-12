@@ -68,22 +68,22 @@ export default function ProceduralMannequin({
   // Shared Materials
   const materials = useMemo(() => {
     return {
-      // Matte athletic graphite/slate finish (strictly non-metallic, roughness 0.75)
+      // Matte athletic technical slate finish (strictly non-metallic, elevated brightness)
       graphiteBody: new THREE.MeshStandardMaterial({
-        color: '#2C2D35',
-        roughness: 0.75,
+        color: '#666A78',
+        roughness: 0.72,
         metalness: 0.0,
       }),
-      // Slightly deeper matte carbon for torso & spine
+      // Matte deeper carbon for torso & spine (clear visual separation from limbs)
       carbonTorso: new THREE.MeshStandardMaterial({
-        color: '#24252C',
-        roughness: 0.78,
+        color: '#565A68',
+        roughness: 0.76,
         metalness: 0.0,
       }),
       // Articulated pelvis/hip connector tone
       pelvisMaterial: new THREE.MeshStandardMaterial({
-        color: '#363842',
-        roughness: 0.72,
+        color: '#4A4E5C',
+        roughness: 0.74,
         metalness: 0.0,
       }),
       // Signal-Rose joint node beacons
@@ -97,7 +97,7 @@ export default function ProceduralMannequin({
       }),
       // Muted foot sole
       footMaterial: new THREE.MeshStandardMaterial({
-        color: '#222329',
+        color: '#3A3E4A',
         roughness: 0.82,
         metalness: 0.0,
       }),

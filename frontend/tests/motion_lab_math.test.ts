@@ -115,7 +115,7 @@ describe('joint_math - solveTwoSegmentPlanarIK Singularity & Reach', () => {
     expect(angle).toBeCloseTo(180.0, 4);
   });
 
-  it('explicitly rejects over-extension (D = 0.90m) with valid: false and safe finite output', () => {
+  it('explicitly rejects over-extension (D = 0.90m) with valid: false, finite coordinates, and true geometric distances', () => {
     const D = 0.90; // Over-extension beyond 0.86m
     const yh = ya + D;
     const zh = za;
@@ -125,11 +125,21 @@ describe('joint_math - solveTwoSegmentPlanarIK Singularity & Reach', () => {
     expect(ik.isSingular).toBe(true);
     expect(Number.isFinite(ik.kneeY)).toBe(true);
     expect(Number.isFinite(ik.kneeZ)).toBe(true);
-    expect(ik.actualThighLength).toBeCloseTo(L1, 4);
-    expect(ik.actualShankLength).toBeCloseTo(L2, 4);
+    expect(Number.isFinite(ik.actualThighLength)).toBe(true);
+    expect(Number.isFinite(ik.actualShankLength)).toBe(true);
+
+    // Returned lengths must equal true geometric Euclidean distances from returned coordinates
+    const trueThighDistance = Math.hypot(yh - ik.kneeY, zh - ik.kneeZ);
+    const trueShankDistance = Math.hypot(ik.kneeY - ya, ik.kneeZ - za);
+    expect(ik.actualThighLength).toBeCloseTo(trueThighDistance, 6);
+    expect(ik.actualShankLength).toBeCloseTo(trueShankDistance, 6);
+
+    // Specifically: clamped knee at ya + L2 = 0.50m yields 0.48m thigh distance and 0.42m shank distance
+    expect(ik.actualThighLength).toBeCloseTo(0.48, 4);
+    expect(ik.actualShankLength).toBeCloseTo(0.42, 4);
   });
 
-  it('explicitly rejects under-extension collapse (D = 0.01m) with valid: false and safe finite output', () => {
+  it('explicitly rejects under-extension collapse (D = 0.01m) with valid: false, finite coordinates, and true geometric distances', () => {
     const D = 0.01; // Below minReach |L1 - L2| = 0.02m
     const yh = ya + D;
     const zh = za;
@@ -139,6 +149,18 @@ describe('joint_math - solveTwoSegmentPlanarIK Singularity & Reach', () => {
     expect(ik.isSingular).toBe(true);
     expect(Number.isFinite(ik.kneeY)).toBe(true);
     expect(Number.isFinite(ik.kneeZ)).toBe(true);
+    expect(Number.isFinite(ik.actualThighLength)).toBe(true);
+    expect(Number.isFinite(ik.actualShankLength)).toBe(true);
+
+    // Returned lengths must equal true geometric Euclidean distances from returned coordinates
+    const trueThighDistance = Math.hypot(yh - ik.kneeY, zh - ik.kneeZ);
+    const trueShankDistance = Math.hypot(ik.kneeY - ya, ik.kneeZ - za);
+    expect(ik.actualThighLength).toBeCloseTo(trueThighDistance, 6);
+    expect(ik.actualShankLength).toBeCloseTo(trueShankDistance, 6);
+
+    // Clamped knee at ya + L2 = 0.50m yields |0.09 - 0.50| = 0.41m thigh distance and 0.42m shank distance
+    expect(ik.actualThighLength).toBeCloseTo(0.41, 4);
+    expect(ik.actualShankLength).toBeCloseTo(0.42, 4);
   });
 });
 

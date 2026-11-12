@@ -174,11 +174,13 @@ export function solveTwoSegmentPlanarIK(
   if (D > maxReach + eps) {
     const uy = dy / D;
     const uz = dz / D;
+    const kneeY = ya + L2 * uy;
+    const kneeZ = za + L2 * uz;
     return {
-      kneeY: ya + L2 * uy,
-      kneeZ: za + L2 * uz,
-      actualThighLength: L1,
-      actualShankLength: L2,
+      kneeY,
+      kneeZ,
+      actualThighLength: Math.sqrt((yh - kneeY) ** 2 + (zh - kneeZ) ** 2),
+      actualShankLength: Math.sqrt((kneeY - ya) ** 2 + (kneeZ - za) ** 2),
       valid: false,
       isSingular: true,
     };
@@ -188,11 +190,13 @@ export function solveTwoSegmentPlanarIK(
   if (D < minReach - eps) {
     const uy = D > eps ? dy / D : 1;
     const uz = D > eps ? dz / D : 0;
+    const kneeY = ya + L2 * uy;
+    const kneeZ = za + L2 * uz;
     return {
-      kneeY: ya + L2 * uy,
-      kneeZ: za + L2 * uz,
-      actualThighLength: L1,
-      actualShankLength: L2,
+      kneeY,
+      kneeZ,
+      actualThighLength: Math.sqrt((yh - kneeY) ** 2 + (zh - kneeZ) ** 2),
+      actualShankLength: Math.sqrt((kneeY - ya) ** 2 + (kneeZ - za) ** 2),
       valid: false,
       isSingular: true,
     };

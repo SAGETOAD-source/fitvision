@@ -7,7 +7,7 @@
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Montserrat:ital,wght@0,700;0,800;1,700;1,800&amp;family=Playfair+Display:ital,wght@1,400;1,600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Montserrat:ital,wght@0,700;0,800;1,700;1,800&amp;family=Lora:ital,wght@1,400;1,500;1,600&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <!-- Tailwind Script -->
@@ -94,7 +94,7 @@
             "label-lg": ["Inter", "sans-serif"],
             "label-md": ["Inter", "sans-serif"],
             "label-sm": ["Inter", "sans-serif"],
-            "editorial": ["Playfair Display", "serif"]
+            "editorial": ["Lora", "serif"]
           },
           "fontSize": {
             "headline-lg": ["36px", { "lineHeight": "42px", "letterSpacing": "-0.025em", "fontWeight": "800" }],
@@ -136,15 +136,13 @@
 <!-- 1. Header / Top Navigation (Shared Component Anchor) -->
 <header class="sticky top-0 z-50 flex items-center justify-between w-full max-w-[390px] mx-auto px-margin py-space-sm bg-background/90 dark:bg-background/90 backdrop-blur-md border-b border-outline-variant/30">
 <div class="flex items-center gap-2">
-<img alt="FitVision Logo" class="w-8 h-8 rounded-full border border-[#FF4D6D]/40 object-cover p-0.5 bg-[#0B0B0C]" src="https://lh3.googleusercontent.com/aida/ALJJyrCs_5s-Tt95oCQeZ3PD5O7L_oTAUYrKpRJbpEprurOd51HtHlX_jMcoBr9etIS8eOadHJJzItL1JgCssTzAfuzIF-i4swnbTh1lUrR72xde88LVTSfsyuzrX7iQN8Em7NHgoMZecQJxYKCrOHRoIzBHICOtxxQbA1RYiEqKhF-t4fxZFmTunxnAvFA2j0gOUgusQvLEGka-yKc_a9sc8ddnXYVk10zjhHmFHnDfnuJafla6pIHSUWrXOn8"/>
-<div class="flex items-center gap-1.5">
-<span class="material-symbols-outlined text-primary text-xl" data-icon="fitness_center">fitness_center</span>
-<span class="font-headline-sm text-headline-sm tracking-tight font-extrabold text-on-surface uppercase">FitVision</span>
+<span class="font-headline-sm text-lg tracking-wider font-extrabold text-white uppercase">
+FITVISION<span class="text-[#FF4D6D] text-xs align-super ml-0.5 font-mono">®</span>
+</span>
 </div>
-</div>
-<button class="px-4 py-2 rounded-full bg-primary-container text-white font-label-md text-label-md active:scale-95 transition-transform duration-150 shadow-sm border border-secondary/20">
-        Start Free
-      </button>
+<a href="#get-started" class="px-4 py-1.5 rounded-full bg-primary-container text-white font-label-md text-xs font-bold tracking-wider uppercase active:scale-95 transition-transform duration-150 shadow-sm border border-[#FF4D6D]/30 inline-flex items-center justify-center">
+        GET STARTED
+      </a>
 </header>
 <!-- Main Content Canvas -->
 <main class="flex-1 flex flex-col">
@@ -155,48 +153,56 @@
 <span class="w-2 h-2 rounded-full bg-[#FF4D6D] hud-pip-pulse"></span>
 <span class="text-white text-label-sm font-label-sm tracking-wider uppercase">Your video never leaves your device</span>
 </div>
-<!-- Headline with Editorial Serif Accent -->
-<h1 class="font-headline-xl-mobile text-headline-xl-mobile text-white leading-tight font-extrabold tracking-tight">
-          Master Every Rep with <span class="font-editorial italic font-normal text-white">Intelligent</span> Vision
-        </h1>
+<!-- Approved Headline Hierarchy -->
+<h1 class="flex flex-col tracking-tight text-white">
+<span class="font-headline-xl-mobile text-3xl font-extrabold uppercase tracking-tight text-white">
+          YOUR BODY.
+        </span>
+<span class="font-headline-xl-mobile text-3xl font-extrabold uppercase tracking-tight text-white mt-0.5">
+          YOUR DATA.
+        </span>
+<span class="font-editorial italic text-2xl text-white/90 font-normal mt-1 uppercase tracking-tight">
+          YOUR EVOLUTION.
+        </span>
+</h1>
 <p class="font-body-md text-body-md text-on-surface-variant font-normal leading-relaxed">
-          Real-time joint tracking and live rep counting directly in your browser. Powered by 100% on-device edge AI.
-        </p>
+        Train with intelligence. Improve with every repetition. Real-time joint tracking and live rep counting directly in your browser.
+      </p>
 <!-- CTA Pill Button -->
-<a class="w-full h-[52px] rounded-full bg-primary-container text-white font-headline-sm text-headline-sm flex items-center justify-center gap-2 active:scale-98 transition-all shadow-lg hover:brightness-110" href="#camera-view">
-<span>Start Free Workout</span>
-<span class="material-symbols-outlined text-white text-xl" data-icon="arrow_forward">arrow_forward</span>
+<a class="w-full h-[52px] rounded-full bg-primary-container text-white font-headline-sm text-base font-bold uppercase tracking-wider flex items-center justify-center gap-2 active:scale-98 transition-all shadow-lg hover:brightness-110 border border-[#FF4D6D]/20" href="#camera-view">
+<span>START TRAINING</span>
+<span class="text-base leading-none">↗</span>
 </a>
-<!-- Live AI Camera HUD Card -->
+<!-- Live AI Camera HUD Card (Illustrative Preview) -->
 <div class="relative rounded-3xl overflow-hidden border border-[#1A1A1E] bg-[#0B0B0C] mt-2 shadow-2xl" id="camera-view">
 <!-- Athlete Hero Visual -->
 <div class="relative w-full aspect-[4/3] bg-black">
-<img alt="Athlete in motion with AI skeleton" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChwaeqx6GAMYk-v74d4mho5I7AqrMeF-E13q5iBzfW-lQHr09ki4KwKYG7vzXgah92y2lW3-MKn1Pq44D9a8nyJUu47rgeB39k3-g9XODnYLiI4rAeOS_h1AZ_CLqVRBSILfWnvrcGu1ivj2DIFhZtXTN-QXm4xchD9gcop55meMu6u5AmcGqJNxyIIrQPXX3RAOzX6TnnXtrJUd06XtCZ2MMqcbn5zerQCjkQRS186IKO7wfHJA2_6geKem80ruJzkX2DdyvteI8"/>
+<img alt="Athlete in motion with AI skeleton" class="w-full h-full object-cover" src="hero-athlete.png"/>
 <!-- Vignette Overlay -->
 <div class="absolute inset-0 bg-gradient-to-t from-[#0B0B0C] via-transparent to-black/60 pointer-events-none"></div>
 <!-- HUD Overlays -->
 <!-- Top Status Pip -->
 <div class="absolute top-3 left-3 flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10">
 <span class="w-1.5 h-1.5 rounded-full bg-[#FF4D6D] hud-pip-pulse"></span>
-<span class="text-white font-label-sm text-label-sm uppercase tracking-wider">CAMERA ACTIVE (LOCAL ONLY)</span>
+<span class="text-white font-label-sm text-[10px] uppercase tracking-wider font-semibold">ILLUSTRATIVE WORKOUT PREVIEW</span>
 </div>
-<div class="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 text-white font-label-sm text-label-sm">
-              60 FPS
-            </div>
+<div class="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 text-[#FF4D6D] font-label-sm text-[10px] tracking-wider uppercase font-semibold">
+            PREVIEW
+          </div>
 <!-- Skeletal Telemetry Joint Markers (Simulated browser HUD) -->
 <div class="absolute top-[32%] left-[48%] w-3 h-3 -ml-1.5 -mt-1.5 rounded-full bg-[#FF4D6D] border-2 border-white hud-glow"></div>
 <div class="absolute top-[28%] left-[58%] w-3 h-3 -ml-1.5 -mt-1.5 rounded-full bg-[#FF4D6D] border-2 border-white hud-glow"></div>
 <div class="absolute top-[48%] left-[46%] w-3 h-3 -ml-1.5 -mt-1.5 rounded-full bg-[#a1cde5] border-2 border-white"></div>
 <div class="absolute top-[60%] left-[58%] w-3 h-3 -ml-1.5 -mt-1.5 rounded-full bg-[#FF4D6D] border-2 border-white hud-glow"></div>
-<!-- Bottom Floating Live Stats within Frame -->
+<!-- Bottom Floating Live Stats within Frame (Illustrative) -->
 <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none">
 <div class="bg-black/85 backdrop-blur-md border border-[#1A1A1E] rounded-2xl px-3 py-1.5 flex items-center gap-2">
-<span class="text-[#D1D5DB] font-label-sm text-label-sm uppercase">Reps</span>
+<span class="text-[#D1D5DB] font-label-sm text-label-sm uppercase">Reps (Preview)</span>
 <span class="font-headline-sm text-headline-sm text-white font-extrabold">14</span>
 </div>
 <div class="bg-black/85 backdrop-blur-md border border-[#1A1A1E] rounded-2xl px-3 py-1.5 flex items-center gap-2">
 <span class="w-2 h-2 rounded-full bg-[#FF4D6D]"></span>
-<span class="text-white font-label-sm text-label-sm font-semibold">Form: 98% (Optimal)</span>
+<span class="text-white font-label-sm text-label-sm font-semibold">Form: Good Depth (Preview)</span>
 </div>
 </div>
 </div>
@@ -221,8 +227,8 @@
 <div>
 <span class="text-[#FF4D6D] font-label-sm text-label-sm uppercase tracking-widest font-bold">Client-Side Architecture</span>
 <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-white font-extrabold mt-1">
-            Three Steps to <span class="font-editorial italic font-normal text-white">Flawless</span> Form
-          </h2>
+          Three Steps to <span class="font-editorial italic font-normal text-white">Better</span> Form
+        </h2>
 </div>
 <div class="flex flex-col gap-3.5">
 <!-- Step 1 Card -->
@@ -231,8 +237,8 @@
 <span class="w-7 h-7 rounded-full bg-[#FF4D6D] text-white font-headline-sm text-label-md flex items-center justify-center font-bold">01</span>
 <span class="material-symbols-outlined text-outline text-lg" data-icon="smartphone">smartphone</span>
 </div>
-<h3 class="font-headline-sm text-headline-sm text-white font-bold">Frame Your Camera</h3>
-<p class="font-body-sm text-body-sm text-on-surface-variant">Place your phone against a water bottle or wall. No sensors or wearables needed.</p>
+<h3 class="font-headline-sm text-headline-sm text-white font-bold">Set Up Your Camera</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Prop your phone a few paces away so your full body is framed. No sensors or wearables needed.</p>
 </div>
 <!-- Step 2 Card -->
 <div class="p-4 rounded-3xl bg-black border border-[#1A1A1E] flex flex-col gap-2 relative">
@@ -240,8 +246,8 @@
 <span class="w-7 h-7 rounded-full bg-[#FF4D6D] text-white font-headline-sm text-label-md flex items-center justify-center font-bold">02</span>
 <span class="material-symbols-outlined text-[#FF4D6D] text-lg" data-icon="polyline">polyline</span>
 </div>
-<h3 class="font-headline-sm text-headline-sm text-white font-bold">AI Counts Reps &amp; Checks Depth</h3>
-<p class="font-body-sm text-body-sm text-on-surface-variant">Browser vision tracks 33 skeletal keypoints locally at 60 FPS, validating full range of motion.</p>
+<h3 class="font-headline-sm text-headline-sm text-white font-bold">Move Naturally</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">FitVision tracks 33 body landmarks and calculates joint angles in real time as you complete each rep.</p>
 </div>
 <!-- Step 3 Card -->
 <div class="p-4 rounded-3xl bg-black border border-[#1A1A1E] flex flex-col gap-2 relative">
@@ -249,18 +255,18 @@
 <span class="w-7 h-7 rounded-full bg-[#FF4D6D] text-white font-headline-sm text-label-md flex items-center justify-center font-bold">03</span>
 <span class="material-symbols-outlined text-outline text-lg" data-icon="speed">speed</span>
 </div>
-<h3 class="font-headline-sm text-headline-sm text-white font-bold">Review Instant Form Feedback</h3>
-<p class="font-body-sm text-body-sm text-on-surface-variant">Get visual cues when your knees cave or spine arches, with zero latency.</p>
+<h3 class="font-headline-sm text-headline-sm text-white font-bold">Get Instant Feedback</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">See verified repetition counts, confirm target depth, and receive corrective visual cues directly on screen.</p>
 </div>
 </div>
 </section>
 <!-- 5. Section 3: Supported Exercises -->
 <section class="px-margin py-8 flex flex-col gap-6 bg-black">
 <div>
-<span class="text-[#FF4D6D] font-label-sm text-label-sm uppercase tracking-widest font-bold">Telemetry Engine</span>
+<span class="text-[#FF4D6D] font-label-sm text-label-sm uppercase tracking-widest font-bold">Movement Library</span>
 <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-white font-extrabold mt-1">
-            Trained on <span class="font-editorial italic font-normal text-white">Essential</span> Movements
-          </h2>
+          Supported <span class="font-editorial italic font-normal text-white">Exercises</span>
+        </h2>
 </div>
 <!-- 2x3 Grid of Exercises -->
 <div class="grid grid-cols-2 gap-3">
@@ -268,79 +274,85 @@
 <div class="p-3.5 rounded-3xl bg-[#0B0B0C] border border-[#1A1A1E] flex flex-col justify-between gap-3">
 <div>
 <div class="flex items-center justify-between mb-2">
-<span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Quads • Glutes</span>
+<span class="text-[10px] font-semibold text-[#FF4D6D] uppercase tracking-wider">Quads • Glutes</span>
 <span class="material-symbols-outlined text-[#FF4D6D] text-base" data-icon="accessibility_new">accessibility_new</span>
 </div>
 <h3 class="font-headline-sm text-base text-white font-bold">Squat</h3>
+<p class="text-[11px] text-white/80 mt-1">Parallel depth check</p>
 </div>
-<div class="px-2 py-1 rounded-full bg-black/60 border border-[#FF4D6D]/40 text-[#FF4D6D] font-label-sm text-[11px] font-medium leading-none">
-              Depth: 90° validated
-            </div>
+<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white/70 font-label-sm text-[10px] font-medium leading-none">
+          Knee Tracking
+        </div>
 </div>
 <!-- Exercise 2: Push-up -->
 <div class="p-3.5 rounded-3xl bg-[#0B0B0C] border border-[#1A1A1E] flex flex-col justify-between gap-3">
 <div>
 <div class="flex items-center justify-between mb-2">
-<span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Chest • Core</span>
+<span class="text-[10px] font-semibold text-[#FF4D6D] uppercase tracking-wider">Chest • Core</span>
 <span class="material-symbols-outlined text-[#FF4D6D] text-base" data-icon="fitness_center">fitness_center</span>
 </div>
 <h3 class="font-headline-sm text-base text-white font-bold">Push-up</h3>
+<p class="text-[11px] text-white/80 mt-1">Full chest lockout</p>
 </div>
-<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white font-label-sm text-[11px] font-medium leading-none">
-              Chest lock: Active
-            </div>
+<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white/70 font-label-sm text-[10px] font-medium leading-none">
+          Spine Alignment
+        </div>
 </div>
 <!-- Exercise 3: Sit-up -->
 <div class="p-3.5 rounded-3xl bg-[#0B0B0C] border border-[#1A1A1E] flex flex-col justify-between gap-3">
 <div>
 <div class="flex items-center justify-between mb-2">
-<span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Abdominals</span>
+<span class="text-[10px] font-semibold text-[#FF4D6D] uppercase tracking-wider">Abdominals</span>
 <span class="material-symbols-outlined text-[#FF4D6D] text-base" data-icon="self_improvement">self_improvement</span>
 </div>
 <h3 class="font-headline-sm text-base text-white font-bold">Sit-up</h3>
+<p class="text-[11px] text-white/80 mt-1">Controlled trunk rise</p>
 </div>
-<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white font-label-sm text-[11px] font-medium leading-none">
-              Cadence: 1.8s/rep
-            </div>
+<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white/70 font-label-sm text-[10px] font-medium leading-none">
+          Trunk Flexion
+        </div>
 </div>
 <!-- Exercise 4: Pull-up -->
 <div class="p-3.5 rounded-3xl bg-[#0B0B0C] border border-[#1A1A1E] flex flex-col justify-between gap-3">
 <div>
 <div class="flex items-center justify-between mb-2">
-<span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Lats • Biceps</span>
+<span class="text-[10px] font-semibold text-[#FF4D6D] uppercase tracking-wider">Lats • Biceps</span>
 <span class="material-symbols-outlined text-[#FF4D6D] text-base" data-icon="sports_gymnastics">sports_gymnastics</span>
 </div>
 <h3 class="font-headline-sm text-base text-white font-bold">Pull-up</h3>
+<p class="text-[11px] text-white/80 mt-1">Chin over bar</p>
 </div>
-<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white font-label-sm text-[11px] font-medium leading-none">
-              Chin clearance: Tracked
-            </div>
+<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white/70 font-label-sm text-[10px] font-medium leading-none">
+          Dead-Hang Return
+        </div>
 </div>
 <!-- Exercise 5: Jumping Jack -->
 <div class="p-3.5 rounded-3xl bg-[#0B0B0C] border border-[#1A1A1E] flex flex-col justify-between gap-3">
 <div>
 <div class="flex items-center justify-between mb-2">
-<span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Full Body</span>
+<span class="text-[10px] font-semibold text-[#FF4D6D] uppercase tracking-wider">Full Body</span>
 <span class="material-symbols-outlined text-[#FF4D6D] text-base" data-icon="directions_run">directions_run</span>
 </div>
 <h3 class="font-headline-sm text-base text-white font-bold">Jumping Jack</h3>
+<p class="text-[11px] text-white/80 mt-1">Wide arm sweep</p>
 </div>
-<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white font-label-sm text-[11px] font-medium leading-none">
-              Arm sweep: 180°
-            </div>
+<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white/70 font-label-sm text-[10px] font-medium leading-none">
+          Lateral Stride
+        </div>
 </div>
 <!-- Exercise 6: Lat Pulldown -->
 <div class="p-3.5 rounded-3xl bg-[#0B0B0C] border border-[#1A1A1E] flex flex-col justify-between gap-3">
 <div>
 <div class="flex items-center justify-between mb-2">
-<span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Upper Back</span>
+<span class="text-[10px] font-semibold text-[#FF4D6D] uppercase tracking-wider">Upper Back</span>
 <span class="material-symbols-outlined text-[#FF4D6D] text-base" data-icon="exercise">exercise</span>
 </div>
 <h3 class="font-headline-sm text-base text-white font-bold">Lat Pulldown</h3>
+<p class="text-[11px] text-white/80 mt-1">Elbow tuck &amp; squeeze</p>
 </div>
-<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white font-label-sm text-[11px] font-medium leading-none">
-              Elbow tuck: Monitored
-            </div>
+<div class="px-2 py-1 rounded-full bg-black/60 border border-[#1A1A1E] text-white/70 font-label-sm text-[10px] font-medium leading-none">
+          Torso Stability
+        </div>
 </div>
 </div>
 </section>
@@ -351,26 +363,27 @@
 <span class="material-symbols-outlined text-white text-2xl" data-icon="lock">lock</span>
 </div>
 <h2 class="font-headline-md text-headline-md text-white font-bold leading-tight">
-            Ready to Train in Private?
-          </h2>
+          Ready to Train in Private?
+        </h2>
 <p class="font-body-sm text-body-sm text-white/90">
-            No account required. Instant camera launch.
-          </p>
-<button class="mt-2 w-full h-12 rounded-full bg-white text-primary-container font-headline-sm text-label-lg font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-md">
-<span>Launch Live Camera</span>
+          Create your account, customize your plan, and start your private workout session.
+        </p>
+<a href="#signup" class="mt-2 w-full h-12 rounded-full bg-white text-primary-container font-headline-sm text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-md">
+<span>START TRAINING ↗</span>
 <span class="material-symbols-outlined text-primary-container text-lg" data-icon="videocam">videocam</span>
-</button>
+</a>
 </div>
 </section>
 </main>
 <!-- 7. Footer (Shared Component Anchor) -->
 <footer class="flex flex-col items-center text-center w-full max-w-[390px] mx-auto px-margin py-space-xl space-y-space-md bg-surface-container-lowest border-t border-outline-variant/30">
 <div class="flex items-center gap-2">
-<img alt="FitVision Logo" class="w-6 h-6 rounded-full border border-outline-variant/30 object-cover" src="https://lh3.googleusercontent.com/aida/ALJJyrCs_5s-Tt95oCQeZ3PD5O7L_oTAUYrKpRJbpEprurOd51HtHlX_jMcoBr9etIS8eOadHJJzItL1JgCssTzAfuzIF-i4swnbTh1lUrR72xde88LVTSfsyuzrX7iQN8Em7NHgoMZecQJxYKCrOHRoIzBHICOtxxQbA1RYiEqKhF-t4fxZFmTunxnAvFA2j0gOUgusQvLEGka-yKc_a9sc8ddnXYVk10zjhHmFHnDfnuJafla6pIHSUWrXOn8"/>
-<span class="font-headline-sm text-headline-sm font-bold text-on-surface">FitVision</span>
+<span class="font-headline-sm text-base tracking-wider font-extrabold text-white uppercase">
+FITVISION<span class="text-[#FF4D6D] text-xs align-super ml-0.5 font-mono">®</span>
+</span>
 </div>
 <p class="font-body-sm text-body-sm text-outline max-w-[300px]">
-        © 2025 FitVision. Zero video uploads. 100% on-device client-side inference.
+        © 2025 FitVision. Zero video uploads. Your video never leaves your device.
       </p>
 <div class="flex items-center gap-4 text-label-sm font-label-sm text-outline">
 <a class="hover:text-primary transition-colors duration-150" href="#privacy">Privacy Protocol</a>

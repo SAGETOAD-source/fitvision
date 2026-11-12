@@ -3,8 +3,8 @@
 > Every AI agent: read this first. Update it at the end of every session (see AGENTS.md section 9).
 > Progress percentages are rough estimates, not measurements. Update honestly.
 
-**Last updated:** 2026-11-11 | **Session #:** 14
-**Updated by:** Antigravity (Gemini 3.8 Flash) — fix/rate-limit-proxy-key branch
+**Last updated:** 2026-11-12 | **Session #:** 15
+**Updated by:** Antigravity (Gemini 3.8 Flash) — design/hero-01-review branch
 **Repo:** https://github.com/SAGETOAD-source/fitvision (branch `main`)
 **Owner:** Krishnendu | **Dev environment:** Windows, Antigravity IDE
 
@@ -301,6 +301,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 | 12 | 2026-11-11 | Claude (Sonnet 5.5) | Hygiene + auth hardening on chore/hygiene-auth-hardening (merged to main): minimal root requirements (numpy<2 for mediapipe), .gitignore, untracked 19 log CSVs, 5/min auth rate limit, signup IntegrityError -> 409 with rollback, 72-byte password guard, production startup guard (default JWT secret / CORS `*`), request_id filter on log handler, limiter reset in test fixture, 12 new tests. Pytest 102 passed + 1 skipped before, 114 passed + 1 skipped after; Vitest 46 pass; squat.mp4 CLI run gives 6 reps on a fresh Python 3.12 venv. Skipped from plan: EmailStr/email-validator (email normalization already existed, see #10). | requirements.txt, .gitignore, Backend/app/config.py, Backend/app/models/schemas.py, Backend/app/auth/security.py, Backend/app/routers/auth.py, Backend/app/main.py, Backend/app/logging_config.py, Backend/tests/conftest.py, Backend/tests/test_auth_hardening.py, PROJECT_STATE.md |
 | 13 | 2026-11-11 | Antigravity (Gemini 3.8 Flash) | Fixed rate limiter counter leak into independent TestClient instances in Backend/tests/test_postgres_smoke.py by converting limiter.reset() in Backend/tests/conftest.py into an autouse=True fixture (_reset_rate_limiter). Pytest: 117 passed (0 failed). | Backend/tests/conftest.py, PROJECT_STATE.md |
 | 14 | 2026-11-11 | Antigravity (Gemini 3.8 Flash) | Fixed Known issue #27: added trusted_proxy_count setting to config.py and .env.example, replaced key_func in rate_limit.py with get_client_ip reading parts[-n] from X-Forwarded-For when n > 0 with fallback to socket IP. Added 6 unit/integration tests in test_rate_limit_proxy.py. Pytest: 123 passed (0 failed). | Backend/app/config.py, Backend/app/rate_limit.py, Backend/.env.example, Backend/tests/test_rate_limit_proxy.py, PROJECT_STATE.md |
+| 15 | 2026-11-12 | Antigravity (Gemini 3.8 Flash) | Refined FitVision landing page design system across design/hero-01.html, design/landing-desktop.html, design/landing-mobile.html: exact uppercase headline (YOUR BODY. YOUR DATA. YOUR EVOLUTION.) with Lora Italic, unified brand mark FITVISION® and CTAs (START TRAINING ↗, GET STARTED, LOG IN, EXPLORE THE EXPERIENCE), updated HUD status badge with #FF4D6D rose pip on dark surface, labeled ILLUSTRATIVE WORKOUT PREVIEW, 5-stage horizontal architecture pipeline on desktop verified at 1024px/1280px/1440px with zero overflow, audited marketing copy/claims, switched to local hero-athlete.png asset, and captured review screenshots (hero-01-review.png, landing-desktop-review.png, landing-mobile-review.png). | design/hero-01.html, design/landing-desktop.html, design/landing-mobile.html, design/*-review.png, PROJECT_STATE.md |
 
 ---
 
@@ -310,7 +311,10 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 You are continuing work on FitVision (repo: SAGETOAD-source/fitvision).
 1. Read AGENTS.md and PROJECT_STATE.md in the repo root before anything else.
 2. Follow AGENTS.md strictly: send a Change Plan (files to modify/create, nothing else touched) and wait for approval before editing.
-3. Current state: ML pipeline done for 6 exercises; FastAPI backend has complete /v1 API suite (123 tests pass) with hardened auth (5/min rate limit, signup race -> 409, 72-byte password limit, production startup guard), rate limiter test isolation fixture (autouse=True) in conftest.py, and proxy-aware client IP extraction (TRUSTED_PROXY_COUNT, parts[-n] from X-Forwarded-For) on branch fix/rate-limit-proxy-key; Milestone 0 (M0) parity prototype and Mobile-First Live Workout screen complete on branch feat/mobile-workout-screen: Next.js 14, TypeScript, Tailwind, @mediapipe/tasks-vision, in-browser RF tree evaluation with 100% golden test parity, TS RepCounter port, decoupled pure reducer (`workout_reducer.ts`), custom hook (`useWorkoutEngine.ts`), render-only full-screen live workout screen (`WorkoutScreen.tsx`, `/workout`), 2-meter HUD, dynamic green/amber feedback line, stopped state with final reps display, and robust states for loading, permission denied, and body visibility. Full test suites pass: 46 Vitest tests + 123 Pytest tests. Do NOT push to main without explicit user instruction. Before deploy: set exact CORS origins (#12).
+3. Current state:
+   - ML pipeline done for 6 exercises; FastAPI backend has complete /v1 API suite (123 tests pass) with hardened auth and proxy-aware rate limiting.
+   - Frontend: M0 Parity Prototype and Mobile-First Live Workout screen complete (/workout). 46 Vitest tests + 123 Pytest tests pass.
+   - Design: Landing page designs refined and verified across hero-01.html, landing-desktop.html, and landing-mobile.html with consistent headline (YOUR BODY. YOUR DATA. YOUR EVOLUTION.), typography (Montserrat + Lora Italic + Inter), brand wordmark (FITVISION®), CTAs, privacy messaging ("Your video never leaves your device"), 5-stage pipeline, and local asset hero-athlete.png. Review screenshots generated in design/*-review.png.
 4. Next recommended task: Milestone 1 (M1) - Auth + Onboarding: Signup, login, route guard, profile screen (goal & focus selection) per FRONTEND_SPEC.md.
-5. At the end, update PROJECT_STATE.md fully and show me the complete file.
+5. At the end, update PROJECT_STATE.md fully.
 ```

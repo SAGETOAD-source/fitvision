@@ -11,8 +11,8 @@ export default function TechPipelineSection() {
     {
       num: '02',
       title: 'MediaPipe Pose',
-      tech: '33 Landmarks',
-      detail: 'On-device vision model extracts 3D skeletal landmark coordinates.',
+      tech: 'WebAssembly Model',
+      detail: 'Downloaded vision runtime extracts 3D landmark coordinates in-browser.',
     },
     {
       num: '03',
@@ -23,8 +23,8 @@ export default function TechPipelineSection() {
     {
       num: '04',
       title: 'Classifier',
-      tech: 'Random Forest',
-      detail: 'Trained decision tree walker evaluates feature vectors to predict state.',
+      tech: 'TypeScript Decision Trees',
+      detail: 'In-browser decision tree walker evaluates angle vectors to classify state.',
     },
     {
       num: '05',
@@ -132,7 +132,7 @@ export default function TechPipelineSection() {
                 Client-Side Execution
               </div>
               <div className="text-xs text-neutral-400 font-sans leading-relaxed">
-                Pose landmark models and random forest classifiers execute on user hardware via WebAssembly.
+                MediaPipe WebAssembly pose detection and TypeScript decision tree classifiers execute on client hardware directly in the browser.
               </div>
             </div>
           </div>
@@ -173,3 +173,4 @@ export default function TechPipelineSection() {
     </section>
   );
 }
+

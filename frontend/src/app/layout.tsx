@@ -1,6 +1,11 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Montserrat, Lora } from "next/font/google";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 const inter = Inter({
   subsets: ["latin"],
@@ -45,5 +50,6 @@ export default function RootLayout({
     </html>
   );
 }
+
 
 

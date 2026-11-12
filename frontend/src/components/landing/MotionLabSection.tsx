@@ -1,12 +1,54 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import MotionLabClient from '@/components/motion-lab/MotionLabClient';
+import dynamic from 'next/dynamic';
+import StaticFallback from '@/components/motion-lab/StaticFallback';
+
+// Dynamically import MotionLabClient with ssr: false so neither Three.js
+// nor MotionLabClient code is bundled into the initial static payload
+const MotionLabClient = dynamic(
+  () => import('@/components/motion-lab/MotionLabClient'),
+  {
+    ssr: false,
+    loading: () => <StaticFallback message="Initializing 3D Biomechanics..." />,
+  }
+);
 
 export default function MotionLabSection() {
+  const [isNearViewport, setIsNearViewport] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      setIsNearViewport(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsNearViewport(true);
+          observer.disconnect(); // One-shot trigger: disconnects immediately! Zero duplicate observers!
+        }
+      },
+      { rootMargin: '250px' }
+    );
+
+    observer.observe(el);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20" id="motion-lab">
+    <section
+      ref={containerRef}
+      className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20"
+      id="motion-lab"
+    >
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-10 gap-4">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FF4D6D]/10 border border-[#FF4D6D]/30 mb-3">
@@ -32,10 +74,19 @@ export default function MotionLabSection() {
         </div>
       </div>
 
-      {/* Embedded Motion Lab Client Stage */}
+      {/* Embedded Motion Lab Client Stage: Genuinely deferred until within 250px of viewport */}
       <div className="rounded-3xl bg-[#0B0B0C] card-border p-4 sm:p-6 lg:p-8">
-        <MotionLabClient />
+        {isNearViewport ? (
+          <MotionLabClient />
+        ) : (
+          <StaticFallback
+            message="Interactive 3D Biomechanics Lab (Scroll into view to load WebGL)"
+            onActivate={() => setIsNearViewport(true)}
+          />
+        )}
       </div>
     </section>
   );
 }
+
+

@@ -20,6 +20,7 @@ import HeroSection from '../src/components/landing/HeroSection';
 import PrivacySection from '../src/components/landing/PrivacySection';
 import WorkflowSection from '../src/components/landing/WorkflowSection';
 import ExercisesSection from '../src/components/landing/ExercisesSection';
+import MotionLabSection from '../src/components/landing/MotionLabSection';
 import TechPipelineSection from '../src/components/landing/TechPipelineSection';
 import CtaSection from '../src/components/landing/CtaSection';
 import LandingFooter from '../src/components/landing/LandingFooter';
@@ -63,7 +64,7 @@ describe('Landing Page: HeroSection', () => {
 });
 
 describe('Landing Page: PrivacySection', () => {
-  it('strictly distinguishes client-side camera processing from backend workout sync', () => {
+  it('strictly distinguishes local camera processing from asset downloads and omits unsupported profile sync claims', () => {
     const html = renderToString(React.createElement(PrivacySection));
 
     // Must guarantee local camera frames
@@ -71,11 +72,15 @@ describe('Landing Page: PrivacySection', () => {
     expect(html).toContain('In-Browser Camera Processing');
     expect(html).toContain('No Video Frames Transmitted');
 
-    // Must clearly state workout summary sync to avoid misleading "zero data sent" claims
-    expect(html).toContain('Workout Summary Sync');
-    expect(html).toContain('total repetition counts');
+    // Must clearly state local model evaluation
+    expect(html).toContain('Local Model Evaluation');
+    expect(html).toContain('without sending video to backend inference servers');
 
-    // Must NOT claim "zero data sent to server"
+    // Must NOT claim workout summaries synchronize to user profiles (persistence not yet implemented)
+    expect(html).not.toContain('Workout Summary Sync');
+    expect(html).not.toContain('synchronized to your account profile');
+
+    // Must NOT claim "zero data sent to server" or "air-gapped"
     expect(html).not.toContain('zero data sent to server');
     expect(html).not.toContain('Zero data sent to server');
   });
@@ -125,7 +130,7 @@ describe('Landing Page: ExercisesSection', () => {
 });
 
 describe('Landing Page: TechPipelineSection', () => {
-  it('renders the exact 5-stage sequential architecture pipeline', () => {
+  it('renders the exact 5-stage sequential architecture pipeline with accurate classifier type', () => {
     const html = renderToString(React.createElement(TechPipelineSection));
 
     expect(html).toContain('01');
@@ -134,18 +139,21 @@ describe('Landing Page: TechPipelineSection', () => {
 
     expect(html).toContain('02');
     expect(html).toContain('MediaPipe Pose');
-    expect(html).toContain('33 Landmarks');
+    expect(html).toContain('WebAssembly Model');
 
     expect(html).toContain('03');
     expect(html).toContain('Joint Angles');
 
     expect(html).toContain('04');
     expect(html).toContain('Classifier');
-    expect(html).toContain('Random Forest');
+    expect(html).toContain('TypeScript Decision Trees');
 
     expect(html).toContain('05');
     expect(html).toContain('Rep Counter');
     expect(html).toContain('Debounced Logic');
+
+    // Must NOT describe Random Forest classifier as WebAssembly
+    expect(html).not.toContain('random forest classifiers execute on user hardware via WebAssembly');
   });
 
   it('does NOT contain unverified marketing claims (FPS, latency, 99% accuracy)', () => {
@@ -157,6 +165,18 @@ describe('Landing Page: TechPipelineSection', () => {
     expect(html).not.toContain('< 5ms');
     expect(html).not.toContain('99% accuracy');
     expect(html).not.toContain('Runs on Safari, Chrome, Edge');
+  });
+});
+
+describe('Landing Page: MotionLabSection', () => {
+  it('renders 2D StaticFallback before approaching viewport with accessible activation button', () => {
+    const html = renderToString(React.createElement(MotionLabSection));
+
+    // Must render StaticFallback before proximity trigger
+    expect(html).toContain('Procedural Kinematic Mannequin');
+    expect(html).toContain('Interactive 3D Biomechanics Lab (Scroll into view to load WebGL)');
+    expect(html).toContain('Activate 3D Simulation');
+    expect(html).toContain('/motion-lab');
   });
 });
 
@@ -196,3 +216,4 @@ describe('Landing Page: LandingNavbar', () => {
     expect(html).toContain('/workout?exercise=squat');
   });
 });
+

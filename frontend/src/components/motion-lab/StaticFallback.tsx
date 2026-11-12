@@ -3,11 +3,13 @@ import React from 'react';
 interface StaticFallbackProps {
   message?: string;
   isError?: boolean;
+  onActivate?: () => void;
 }
 
 export default function StaticFallback({
   message = '2D Biomechanical Demonstration Fallback',
   isError = false,
+  onActivate,
 }: StaticFallbackProps) {
   return (
     <div
@@ -130,6 +132,15 @@ export default function StaticFallback({
         <p className="font-mono text-xs text-white/90 font-medium">
           {message}
         </p>
+        {onActivate && (
+          <button
+            type="button"
+            onClick={onActivate}
+            className="my-1 px-4 py-1.5 rounded-full bg-[#1A1A1E] hover:bg-[#6D001A] text-white text-[11px] font-mono font-bold tracking-wider uppercase border border-[#FF4D6D]/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D]"
+          >
+            Activate 3D Simulation
+          </button>
+        )}
         <p className="font-mono text-[9px] tracking-widest text-[#FF4D6D] uppercase">
           ILLUSTRATIVE 3D DEMONSTRATION • NOT LIVE CAMERA TRACKING • NOT A FORM STANDARD
         </p>

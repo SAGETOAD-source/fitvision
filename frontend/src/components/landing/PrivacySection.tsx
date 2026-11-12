@@ -36,7 +36,7 @@ export default function PrivacySection() {
               </span>
             </div>
             <p className="text-sm text-neutral-300 leading-relaxed pt-2">
-              FitVision is architected around on-device computer vision. We strictly separate camera processing from account data synchronization.
+              FitVision is architected around on-device computer vision. Camera frames are evaluated strictly in local browser memory and are never transmitted to any server.
             </p>
           </div>
 
@@ -54,7 +54,7 @@ export default function PrivacySection() {
                   In-Browser Camera Processing
                 </div>
                 <p className="text-xs sm:text-sm text-[#DEBFBF] leading-relaxed">
-                  Camera frames are processed entirely inside your local browser session using WebAssembly pose models. No video stream, raw pixel buffer, or camera recording is ever uploaded or transmitted across the network.
+                  Camera frames are processed strictly in local browser memory. No camera feed, raw pixel buffer, or video recording is ever uploaded or transmitted across the network.
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-[#1A1A1E] text-[11px] font-mono text-[#FF4D6D] font-semibold">
@@ -62,23 +62,23 @@ export default function PrivacySection() {
               </div>
             </div>
 
-            {/* Card 2: Workout Summary Sync */}
+            {/* Card 2: Local Model Evaluation & Asset Delivery */}
             <div className="p-6 rounded-2xl bg-[#131314] card-border flex flex-col justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-3 text-white font-headline text-lg font-bold">
                   <span className="w-8 h-8 rounded-lg bg-[#201F20] flex items-center justify-center text-[#FF4D6D]">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                   </span>
-                  Workout Summary Sync
+                  Local Model Evaluation
                 </div>
                 <p className="text-xs sm:text-sm text-[#DEBFBF] leading-relaxed">
-                  Only verified session metadata—such as total repetition counts, completed exercise identifiers, and workout duration—is synchronized to your account profile to track personal progress and streaks.
+                  The application downloads static web assets and the MediaPipe runtime to run locally on your machine. Pose detection and rep analysis execute entirely in-browser without sending video to backend inference servers.
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-[#1A1A1E] text-[11px] font-mono text-white/70">
-                ✓ Numeric Summary Only
+                ✓ Local Client Inference
               </div>
             </div>
           </div>
@@ -87,3 +87,4 @@ export default function PrivacySection() {
     </section>
   );
 }
+

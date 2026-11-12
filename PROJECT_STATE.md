@@ -3,8 +3,8 @@
 > Every AI agent: read this first. Update it at the end of every session (see AGENTS.md section 9).
 > Progress percentages are rough estimates, not measurements. Update honestly.
 
-**Last updated:** 2026-11-12 | **Session #:** 21
-**Updated by:** Antigravity (Gemini 3.8 Flash) — feat/motion-lab-prototype branch
+**Last updated:** 2026-11-12 | **Session #:** 22
+**Updated by:** Antigravity (Gemini 3.8 Flash) — feat/product-landing-page branch
 **Repo:** https://github.com/SAGETOAD-source/fitvision (branch `main`)
 **Owner:** Krishnendu | **Dev environment:** Windows, Antigravity IDE
 
@@ -85,9 +85,9 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 | Backend production hardening | ~70% | Uniform RequestValidationError handling without NaN/inf crash; email normalization; DB secrets masked; single worker Dockerfile; production startup guard (default JWT secret / CORS `*`); handler-level request_id log filter. |
 | Database | ~80% | Dual SQLite & Neon PostgreSQL supported; psycopg[binary]==3.3.7, Alembic migrations (0001 initial, 0002 TIMESTAMPTZ), connection pooling with pre-ping/recycle. |
 | Auth | ~85% | Core works; email normalization, duplicate-signup race -> 409, 72-byte password limit, 5/min rate limit on signup/login done; token strategy, login timing leak, proxy-aware rate-limit key pending. |
-| Frontend | ~25% | M0 Parity Prototype + Mobile-first live workout screen (/workout) with pure reducer, useWorkoutEngine hook, pose overlay, 2m HUD, and error/loading states (46 Vitest tests passing). |
+| Frontend | ~35% | Production Landing Page at `/` (athletic hero, privacy guarantee, 3-step workflow, 6 verified exercise links, lazy-loaded Motion Lab integration, 5-stage architecture pipeline, CTAs to `/workout?exercise=squat`), M0 Parity Prototype, live workout screen (/workout); 74 Vitest tests passing. |
 | Deployment / CI | ~20% | Dockerfile packages app, alembic.ini, and migrations; Neon Postgres connected. |
-| **Overall** | **~62%** | Rough guess. |
+| **Overall** | **~65%** | Rough guess. |
 
 ---
 
@@ -148,6 +148,22 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 - [x] Hygiene + auth hardening batch (session 12): minimal root requirements.txt, .gitignore (.pytest_cache/, .venv/), untracked 19 log CSVs, 5/min rate limit on auth endpoints via settings, signup race IntegrityError -> 409 with rollback, 72-byte UTF-8 password limit, production startup guard, request_id filter on root log handler, 12 new tests in `test_auth_hardening.py` (merged to `main`).
 - [x] Rate limiter test isolation fix (session 13): converted `limiter.reset()` in `Backend/tests/conftest.py` into an `autouse=True` fixture `_reset_rate_limiter` so independent TestClient instances (e.g. in `test_postgres_smoke.py`) do not inherit rate limit counters from earlier tests; 117 tests pass.
 - [x] Proxy-aware rate limiter key (session 14): added `TRUSTED_PROXY_COUNT` setting in `Backend/app/config.py` and `get_client_ip` key_func in `Backend/app/rate_limit.py` to safely extract `parts[-n]` from `X-Forwarded-For` when `n > 0` (falls back to socket IP if missing/too short); prevents IP spoofing and avoids shared limits behind Render/Railway; 6 new tests in `test_rate_limit_proxy.py`; 123 tests pass.
+- [x] Production Product Landing Page (session 22):
+  - Created isolated task branch `feat/product-landing-page` from `feat/motion-lab-prototype`.
+  - Replaced temporary root route with full modular production landing page (`frontend/src/app/page.tsx`).
+  - Configured `Montserrat`, `Inter`, and `Lora` fonts via `next/font/google` and brand design tokens in `tailwind.config.ts` and `globals.css`.
+  - Copied approved asset `design/hero-athlete.png` to `frontend/public/images/hero-athlete.png`.
+  - Implemented `LandingNavbar.tsx` (sticky backdrop-blur bar with `FITVISION®` mark, navigation anchors, mobile menu toggle, and workout CTA).
+  - Implemented `HeroSection.tsx` (athletic campaign hero, status pill, exact headline `YOUR BODY. / YOUR DATA. / YOUR EVOLUTION.` with Lora serif italic, dual CTAs linking to `/workout?exercise=squat` and `#workflow`, telemetry chips, and HUD visual showcase with `hero-athlete.png`).
+  - Implemented `PrivacySection.tsx` (client-side privacy guarantee, distinguishing local on-device camera processing from backend workout session sync under "NO VIDEO FRAMES TRANSMITTED").
+  - Implemented `WorkflowSection.tsx` (3-step workflow: Camera setup -> Natural movement -> Instant feedback).
+  - Implemented `ExercisesSection.tsx` (6 supported exercise bento cards using verified `VALID_EXERCISE_KEYS` with direct `/workout?exercise=<key>` links).
+  - Implemented `MotionLabSection.tsx` (section embedding existing `MotionLabClient`, reusing its dynamic loading, WebGL detection, and IntersectionObserver frameloop gating with zero duplicate lifecycles).
+  - Implemented `TechPipelineSection.tsx` (exact 5-stage architecture pipeline: Camera -> MediaPipe Pose -> Joint Angles -> Classifier -> Rep Counter, with zero unverified performance/latency metrics).
+  - Implemented `CtaSection.tsx` (high-contrast conversion banner leading directly to `/workout?exercise=squat`).
+  - Implemented `LandingFooter.tsx` (brand mark, documentation links, and copyright `© 2026 FitVision`).
+  - Added 13 automated contract and unit tests in `frontend/tests/landing_page.test.ts` (all 74 Vitest tests pass; 123 backend pytest tests pass; Next.js build succeeds).
+  - Verified responsive desktop (1440px) and mobile (390px) layouts with zero horizontal scroll overflow (`scrollWidth <= innerWidth`), verified tab key focus navigation and prefers-reduced-motion, and captured review screenshots (`design/landing-page-desktop.png` and `design/landing-page-mobile.png`).
 
 ## 5. In progress
 
@@ -308,6 +324,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 | 19 | 2026-11-12 | Antigravity (Gemini 3.8 Flash) | Reconciled standing hip height from 0.92m to 0.9331m producing near-extended, non-singular 165.5° interior knee angle with 5.4cm forward knee flexion and 6.9mm extension headroom; preserved 68.9° bottom parallel depth; verified C0/C1 continuity, no branch flipping, and absence of NaNs across 100 trajectory steps; verified live HUD dynamic evaluation (165° lockout -> 69° depth); captured fresh standing profile screenshot (design/motion-lab-preview.png). 57 Vitest tests and 123 Pytest tests pass; Next.js production build succeeds. | frontend/src/components/motion-lab/ProceduralMannequin.tsx, frontend/tests/motion_lab_math.test.ts, design/motion-lab-preview.png, PROJECT_STATE.md |
 | 20 | 2026-11-12 | Antigravity (Gemini 3.8 Flash) | Milestone 2 Refinements: Refined studio lighting (neutral key + restrained burgundy rim #851630) and matte non-metallic materials (metalness: 0, roughness 0.72–0.82); decoupled OrbitControls pointer drag from camera preset lerp via 'start' interaction listener; removed hardcoded initial angle state in favor of nullable initial placeholder ('—°'); expanded joint_math unit tests to verify C1 velocity continuity across 5 phase boundaries (finite-difference tolerance < 0.005 m/s, < 0.5°/s), exact singular collinear configuration (D = 0.86m, 180°), near-singular reach (D = 0.8599m, 178.25°), and unreachable over/under-extensions; captured multi-angle review screenshots. 61 Vitest tests + 123 Pytest tests pass; Next.js production build succeeds. | frontend/src/components/motion-lab/*, frontend/tests/motion_lab_math.test.ts, design/motion-lab-*.png, PROJECT_STATE.md |
 | 21 | 2026-11-12 | Antigravity (Gemini 3.8 Flash) | Milestone 2.1 Refinements: Substantially elevated matte non-metallic mannequin material brightness (#666A78 technical slate, #565A68 torso, #4A4E5C pelvis, metalness: 0, roughness 0.72–0.82) and rebalanced studio lighting (key 2.2, dedicated front-left fill 1.0, contour rim 1.8, hemisphere 0.85); corrected unreachable IK metadata to compute true geometric Euclidean distances from clamped coordinates; updated unit tests verifying both unreachable cases independently; captured fresh high-visibility review screenshots (motion-lab-*.png). All 61 Vitest tests pass; Next.js production build succeeds. | frontend/src/components/motion-lab/*, frontend/tests/motion_lab_math.test.ts, design/motion-lab-*.png, PROJECT_STATE.md |
+| 22 | 2026-11-12 | Antigravity (Gemini 3.8 Flash) | Production Product Landing Page: Created isolated branch `feat/product-landing-page`; implemented modular root route (`frontend/src/app/page.tsx`) with Montserrat/Inter/Lora Google fonts, LandingNavbar, HeroSection (athletic campaign aesthetic, exact headline `YOUR BODY. / YOUR DATA. / YOUR EVOLUTION.` with Lora serif italic, dual CTAs to `/workout?exercise=squat` and `#workflow`, telemetry chips, HUD showcase with `hero-athlete.png`), PrivacySection (strict on-device camera processing vs account session sync under "NO VIDEO FRAMES TRANSMITTED"), WorkflowSection (3-step), ExercisesSection (6 bento cards mapped to verified `VALID_EXERCISE_KEYS` with direct `/workout?exercise=<key>` routes), MotionLabSection (embedded existing `MotionLabClient` with zero duplicate lifecycles and frameloop viewport gating), TechPipelineSection (5-stage architecture pipeline without unverified performance claims), CtaSection, and LandingFooter (copyright © 2026). Added 13 unit/contract tests in `landing_page.test.ts` (all 74 Vitest tests pass, 123 pytest tests pass, Next.js build succeeds); verified zero horizontal overflow on desktop (1440px) and mobile (390px), tab focus navigation, and captured review screenshots (`design/landing-page-desktop.png`, `design/landing-page-mobile.png`). | frontend/src/app/*, frontend/src/components/landing/*, frontend/tailwind.config.ts, frontend/public/images/hero-athlete.png, frontend/tests/landing_page.test.ts, design/landing-page-*.png, PROJECT_STATE.md |
 
 ---
 
@@ -319,9 +336,9 @@ You are continuing work on FitVision (repo: SAGETOAD-source/fitvision).
 2. Follow AGENTS.md strictly: send a Change Plan (files to modify/create, nothing else touched) and wait for approval before editing.
 3. Current state:
    - ML pipeline done for 6 exercises; FastAPI backend has complete /v1 API suite (123 tests pass) with hardened auth and proxy-aware rate limiting.
-   - Frontend: M0 Parity Prototype and Mobile-First Live Workout screen complete (/workout). 61 Vitest tests + 123 Pytest tests pass. Next.js production build succeeds.
-   - Design: Landing page designs refined across hero-01.html, landing-desktop.html, and landing-mobile.html. Review screenshots generated in design/*-review.png.
-   - Motion Lab: Isolated procedural 3D squat demonstrator prototype complete and verified on branch feat/motion-lab-prototype at route /motion-lab. Milestone 2.1 completed: substantially elevated matte non-metallic materials (#666A78 technical slate, metalness 0, roughness 0.72-0.82), rebalanced studio lighting (key 2.2, dedicated front-left fill 1.0, contour rim 1.8, hemisphere 0.85), true geometric distance calculation in unreachable IK branches, decoupled OrbitControls with instant manual drag takeover, nullable initial angle ('—°' placeholder), C1 velocity continuity across 5 phase boundaries (< 0.005 m/s tolerance), exact singular collinear 180° handling, and high-visibility multi-angle captures (motion-lab-profile-stand.png, motion-lab-iso-bottom.png, motion-lab-front.png, motion-lab-mobile.png). Three.js/R3F are strictly isolated from /workout.
-4. Next recommended task: Conduct real-device mobile performance measurements, or proceed to Milestone 1 (M1) - Auth + Onboarding: Signup, login, route guard, profile screen (goal & focus selection) per FRONTEND_SPEC.md/PROJECT_STATE.md contracts.
+   - Frontend: Production Landing Page at `/` is complete and verified on branch `feat/product-landing-page`. Includes cinematic athletic hero (`YOUR BODY. YOUR DATA. YOUR EVOLUTION.`), privacy-first architecture guarantees ("NO VIDEO FRAMES TRANSMITTED"), 3-step workflow, 6 supported exercise cards with verified `/workout?exercise=<key>` links, lazy-loaded interactive Motion Lab demonstrator (reusing existing MotionLabClient with viewport frameloop gating), 5-stage architecture pipeline (Camera -> MediaPipe Pose -> Joint Angles -> Classifier -> Rep Counter), bottom conversion CTA, and copyright © 2026.
+   - Verified responsive desktop (1440px) and mobile (390px) layouts with zero horizontal scroll overflow (`scrollWidth <= innerWidth`), verified keyboard tab navigation with visible focus states, and captured review screenshots in `design/landing-page-desktop.png` and `design/landing-page-mobile.png`.
+   - All 74 frontend Vitest tests pass; 123 backend Pytest tests pass; Next.js 14 production build succeeds with exit code 0.
+4. Next recommended task: Proceed to Milestone 1 (M1) - Auth + Onboarding: Signup, login, route guard, profile screen (body goal: slim/muscular/bulk & focus area selection) wired to FastAPI `/v1/auth` and `/v1/profile` endpoints.
 5. At the end, update PROJECT_STATE.md fully.
 ```

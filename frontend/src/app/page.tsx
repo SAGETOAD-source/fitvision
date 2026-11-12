@@ -1,29 +1,53 @@
-import Link from "next/link";
+import React from 'react';
+import type { Metadata } from 'next';
+import LandingNavbar from '@/components/landing/LandingNavbar';
+import HeroSection from '@/components/landing/HeroSection';
+import PrivacySection from '@/components/landing/PrivacySection';
+import WorkflowSection from '@/components/landing/WorkflowSection';
+import ExercisesSection from '@/components/landing/ExercisesSection';
+import MotionLabSection from '@/components/landing/MotionLabSection';
+import TechPipelineSection from '@/components/landing/TechPipelineSection';
+import CtaSection from '@/components/landing/CtaSection';
+import LandingFooter from '@/components/landing/LandingFooter';
 
-export default function Home() {
+export const metadata: Metadata = {
+  title: 'FitVision — Intelligent Real-Time Athletic Vision',
+  description:
+    'Train with intelligence. Real-time computer vision fitness coaching directly in your browser with private, on-device pose tracking.',
+};
+
+export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8 text-center">
-      <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl text-emerald-400 mb-4">
-        FitVision AI Coach
-      </h1>
-      <p className="max-w-xl text-lg text-slate-300 mb-8">
-        Privacy-first browser-based rep counter & form feedback engine powered by MediaPipe and Random Forest.
-      </p>
-      <div className="flex flex-col sm:flex-row gap-4">
-        <Link
-          href="/workout?exercise=squat"
-          className="px-6 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold rounded-xl shadow-lg transition"
-        >
-          Start Live Workout
-        </Link>
-        <Link
-          href="/m0"
-          className="px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl border border-slate-700 transition"
-        >
-          M0 Parity Benchmark
-        </Link>
-      </div>
-    </main>
+    <div className="min-h-screen bg-black text-white antialiased flex flex-col selection:bg-[#6D001A] selection:text-white">
+      {/* Sticky Top App Bar */}
+      <LandingNavbar />
+
+      {/* Main Viewport Container */}
+      <main className="flex-1 flex flex-col gap-6 sm:gap-10">
+        {/* 1. Cinematic Athletic Hero */}
+        <HeroSection />
+
+        {/* 2. Privacy-First Assurance */}
+        <PrivacySection />
+
+        {/* 3. 3-Step Workout Workflow */}
+        <WorkflowSection />
+
+        {/* 4. Supported Movement Library (6 Exercises) */}
+        <ExercisesSection />
+
+        {/* 5. Interactive Procedural Motion Lab (Lazy-loaded 3D Mannequin) */}
+        <MotionLabSection />
+
+        {/* 6. Technology & Engine Pipeline */}
+        <TechPipelineSection />
+
+        {/* 7. Bottom Conversion Banner */}
+        <CtaSection />
+      </main>
+
+      {/* Product Footer */}
+      <LandingFooter />
+    </div>
   );
 }
-

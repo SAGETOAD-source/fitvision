@@ -52,13 +52,25 @@ describe('Landing Page: HeroSection', () => {
     expect(html).toContain('START TRAINING');
   });
 
+  it('renders the approved subhead without unverified coaching claims', () => {
+    const html = renderToString(React.createElement(HeroSection));
+
+    expect(html).toContain(
+      'Real-time computer vision rep counting and movement feedback directly in your browser.'
+    );
+  });
+
   it('renders the athletic hero image and HUD telemetry previews', () => {
     const html = renderToString(React.createElement(HeroSection));
 
     expect(html).toContain('hero-athlete.png');
-    expect(html).toContain('LIVE CAMERA (LOCAL ONLY)');
+    expect(html).toContain('WORKOUT HUD · SIMULATED');
+    expect(html).not.toContain('LIVE CAMERA');
     expect(html).toContain('ILLUSTRATIVE PREVIEW');
     expect(html).toContain('88°');
+    expect(html).toContain('MOVEMENT STATE');
+    expect(html).toContain('SQUAT · DESCENT');
+    expect(html).toContain('&quot;Good depth!&quot;');
     expect(html).toContain('12');
     expect(html).toContain('NO VIDEO FRAMES TRANSMITTED');
   });

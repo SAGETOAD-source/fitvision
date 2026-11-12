@@ -31,7 +31,7 @@ export default function HeroSection() {
 
           {/* Subhead */}
           <p className="text-base sm:text-lg text-neutral-300 leading-relaxed max-w-xl font-sans">
-            Train with intelligence. Improve with every repetition. Real-time computer vision fitness coaching directly in your browser with private, on-device pose tracking.
+            Real-time computer vision rep counting and movement feedback directly in your browser.
           </p>
 
           {/* Dual CTAs */}
@@ -82,9 +82,8 @@ export default function HeroSection() {
               {/* Top Telemetry Status Bar */}
               <div className="absolute top-4 inset-x-4 flex items-center justify-between pointer-events-none">
                 <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md card-border">
-                  <span className="w-2 h-2 rounded-full bg-[#FF4D6D] animate-pulse" />
                   <span className="text-[10px] sm:text-xs font-mono font-bold text-white tracking-wider">
-                    LIVE CAMERA (LOCAL ONLY)
+                    WORKOUT HUD · SIMULATED
                   </span>
                 </div>
                 <div className="px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md card-border text-[10px] sm:text-xs font-mono font-semibold text-[#FF4D6D] tracking-wider uppercase">
@@ -98,8 +97,8 @@ export default function HeroSection() {
                   88°
                 </div>
                 <div>
-                  <div className="text-[10px] font-mono text-[#DEBFBF] font-medium">Joint Angle (Illustrative)</div>
-                  <div className="text-xs text-white font-bold">Good Squat Depth</div>
+                  <div className="text-[10px] font-mono text-[#DEBFBF] font-medium uppercase tracking-wider">MOVEMENT STATE</div>
+                  <div className="text-xs text-white font-bold font-mono tracking-wide">SQUAT · DESCENT</div>
                 </div>
               </div>
 
@@ -114,15 +113,15 @@ export default function HeroSection() {
                 <div className="text-[10px] font-mono text-[#FF4D6D] font-bold mt-1">REP COUNT</div>
               </div>
 
-              {/* Form Quality Badge */}
+              {/* Verified Squat Feedback Cue Badge */}
               <div className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 bg-black/85 backdrop-blur-md card-border rounded-full px-4 py-2 flex items-center gap-2.5 pointer-events-none">
                 <span className="w-2 h-2 rounded-full bg-[#FF4D6D] ring-2 ring-[#FF4D6D]/30" />
-                <span className="text-xs text-white font-semibold">Form: Good Depth (Preview)</span>
+                <span className="text-xs text-white font-semibold">Feedback: &quot;Good depth!&quot; (Simulated)</span>
               </div>
             </div>
 
             {/* Bottom Telemetry Strip */}
-            <div className="px-5 py-3 sm:py-4 bg-[#0B0B0C] border-t border-[#1A1A1E] flex items-center justify-between">
+            <div className="px-5 py-3 sm:py-4 bg-[#0B0B0C] border-t border-[#1A1A1E] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 sm:gap-4">
               <div className="flex items-center gap-2 text-[#DEBFBF] text-xs font-mono">
                 <svg className="w-4 h-4 text-[#FF4D6D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />

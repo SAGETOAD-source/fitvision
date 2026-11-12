@@ -11,10 +11,14 @@ export default function StaticFallback({
   isError = false,
   onActivate,
 }: StaticFallbackProps) {
+  const statusText = isError
+    ? 'STATIC SCHEMATIC (NO WEBGL)'
+    : onActivate
+    ? '2D BIOMECHANICAL PREVIEW'
+    : 'INITIALIZING 3D CANVAS';
+
   return (
     <div
-      role="img"
-      aria-label="2D anatomical schematic showing squat descent trajectory and joint angle"
       className="relative w-full h-full min-h-[460px] rounded-3xl bg-[#0B0B0C] border border-[#1A1A1E] flex flex-col items-center justify-between p-6 sm:p-8 select-none overflow-hidden"
     >
       {/* Top Status Header */}
@@ -22,11 +26,11 @@ export default function StaticFallback({
         <div className="flex items-center gap-2">
           <span
             className={`w-2 h-2 rounded-full ${
-              isError ? 'bg-[#FF4D6D]' : 'bg-[#FF4D6D] animate-pulse'
+              isError || onActivate ? 'bg-[#FF4D6D]' : 'bg-[#FF4D6D] animate-pulse'
             }`}
           />
           <span className="font-mono text-xs font-semibold tracking-widest uppercase text-white/80">
-            {isError ? 'STATIC SCHEMATIC (NO WEBGL)' : 'INITIALIZING 3D CANVAS'}
+            {statusText}
           </span>
         </div>
         <span className="font-mono text-[10px] tracking-wider uppercase text-neutral-400 bg-[#161618] border border-[#1A1A1E] px-2.5 py-1 rounded-full">
@@ -37,11 +41,14 @@ export default function StaticFallback({
       {/* Center 2D SVG Anatomical Kinematic Diagram */}
       <div className="relative w-full max-w-md aspect-[4/3] my-auto flex items-center justify-center">
         <svg
+          role="img"
+          aria-label="2D anatomical schematic showing squat descent trajectory and joint angle"
           viewBox="0 0 400 300"
           className="w-full h-full text-white"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
+          <title>2D Anatomical Squat Kinematic Schematic</title>
           {/* Ground Line */}
           <line
             x1="40"
@@ -136,7 +143,8 @@ export default function StaticFallback({
           <button
             type="button"
             onClick={onActivate}
-            className="my-1 px-4 py-1.5 rounded-full bg-[#1A1A1E] hover:bg-[#6D001A] text-white text-[11px] font-mono font-bold tracking-wider uppercase border border-[#FF4D6D]/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D]"
+            className="my-1 px-5 py-2 rounded-full bg-[#1A1A1E] hover:bg-[#6D001A] text-white text-xs font-mono font-bold tracking-wider uppercase border border-[#FF4D6D]/40 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0B0C] shadow-sm cursor-pointer"
+            aria-label="Activate interactive 3D simulation"
           >
             Activate 3D Simulation
           </button>

@@ -11,7 +11,7 @@
  * 7. Accessibility and semantic structure (landmark elements, alt text, focus rings)
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { VALID_EXERCISE_KEYS } from '../src/lib/workout_reducer';
@@ -25,6 +25,7 @@ import TechPipelineSection from '../src/components/landing/TechPipelineSection';
 import CtaSection from '../src/components/landing/CtaSection';
 import LandingFooter from '../src/components/landing/LandingFooter';
 import LandingNavbar from '../src/components/landing/LandingNavbar';
+import StaticFallback from '../src/components/motion-lab/StaticFallback';
 
 describe('Landing Page: HeroSection', () => {
   it('renders the exact approved uppercase headline hierarchy with Lora serif accent', () => {
@@ -168,7 +169,7 @@ describe('Landing Page: TechPipelineSection', () => {
   });
 });
 
-describe('Landing Page: MotionLabSection', () => {
+describe('Landing Page: MotionLabSection & StaticFallback', () => {
   it('renders 2D StaticFallback before approaching viewport with accessible activation button', () => {
     const html = renderToString(React.createElement(MotionLabSection));
 
@@ -177,6 +178,43 @@ describe('Landing Page: MotionLabSection', () => {
     expect(html).toContain('Interactive 3D Biomechanics Lab (Scroll into view to load WebGL)');
     expect(html).toContain('Activate 3D Simulation');
     expect(html).toContain('/motion-lab');
+  });
+
+  it('keeps outer fallback container as a normal div without role="img" and scopes role="img" to the SVG', () => {
+    const html = renderToString(React.createElement(StaticFallback, { onActivate: () => {} }));
+
+    // Outer div must NOT have role="img"
+    expect(html).not.toMatch(/<div[^>]*role="img"/);
+
+    // SVG must have role="img", aria-label, and title
+    expect(html).toMatch(/<svg[^>]*role="img"/);
+    expect(html).toContain('aria-label="2D anatomical schematic showing squat descent trajectory and joint angle"');
+    expect(html).toContain('<title>2D Anatomical Squat Kinematic Schematic</title>');
+
+    // Status label must accurately say 2D BIOMECHANICAL PREVIEW before active load
+    expect(html).toContain('2D BIOMECHANICAL PREVIEW');
+    expect(html).not.toContain('INITIALIZING 3D CANVAS');
+  });
+
+  it('shows INITIALIZING 3D CANVAS only when active loading without onActivate callback', () => {
+    const html = renderToString(React.createElement(StaticFallback, { message: 'Initializing 3D Canvas...' }));
+    expect(html).toContain('INITIALIZING 3D CANVAS');
+    expect(html).not.toContain('2D BIOMECHANICAL PREVIEW');
+  });
+
+  it('provides an operable, keyboard-focusable activation button with explicit aria-label', () => {
+    const onActivate = vi.fn();
+    const element = React.createElement(StaticFallback, { onActivate });
+    const html = renderToString(element);
+
+    expect(html).toContain('aria-label="Activate interactive 3D simulation"');
+    expect(html).toContain('focus-visible:ring-2');
+    expect(html).toContain('focus-visible:ring-[#FF4D6D]');
+
+    // Verify button is operable by invoking its callback
+    expect(element.props.onActivate).toBe(onActivate);
+    element.props.onActivate();
+    expect(onActivate).toHaveBeenCalledTimes(1);
   });
 });
 

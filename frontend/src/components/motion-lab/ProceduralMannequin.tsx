@@ -15,7 +15,8 @@ const HIP_WIDTH = 0.28; // Distance between left and right hip pivots
 const ANKLE_Y = 0.08;   // Ankle pivot height above ground
 const ANKLE_Z = 0.0;    // Ankle pivot Z position (clamped in world space)
 
-const Y_HIP_STAND = 0.92;
+// Standing hip height reconciled to 0.9331m producing near-extended 165.5° knee angle
+const Y_HIP_STAND = 0.9331;
 const Z_HIP_STAND = 0.0;
 const Y_HIP_BOTTOM = 0.54;
 const Z_HIP_BOTTOM = -0.16;

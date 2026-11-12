@@ -64,10 +64,34 @@ describe('joint_math - calculateInteriorKneeAngle', () => {
 });
 
 describe('joint_math - solveTwoSegmentPlanarIK', () => {
-  const L1 = 0.44; // Thigh length
-  const L2 = 0.42; // Shank length
+  const L1 = 0.44; // Thigh length (m)
+  const L2 = 0.42; // Shank length (m)
 
-  it('solves standing posture with forward knee flexion and invariant segment lengths', () => {
+  it('solves reconciled standing posture (yh = 0.9331m) with 165.5° knee angle and forward flexion', () => {
+    const yh = 0.9331;
+    const zh = 0.0;
+    const ya = 0.08;
+    const za = 0.0;
+
+    const ik = solveTwoSegmentPlanarIK(yh, zh, ya, za, L1, L2);
+    expect(ik.valid).toBe(true);
+    expect(ik.actualThighLength).toBeCloseTo(L1, 4);
+    expect(ik.actualShankLength).toBeCloseTo(L2, 4);
+
+    // Actual coordinates: knee forward offset ~5.43 cm
+    expect(ik.kneeY).toBeCloseTo(0.4965, 3);
+    expect(ik.kneeZ).toBeCloseTo(0.0543, 3);
+    expect(ik.kneeZ).toBeGreaterThan(za);
+
+    const angle = calculateInteriorKneeAngle(
+      [0, yh, zh],
+      [0, ik.kneeY, ik.kneeZ],
+      [0, ya, za]
+    );
+    expect(angle).toBeCloseTo(165.5, 1);
+  });
+
+  it('documents historical posture (yh = 0.92m) yielding 155.2° knee angle', () => {
     const yh = 0.92;
     const zh = 0.0;
     const ya = 0.08;
@@ -77,18 +101,16 @@ describe('joint_math - solveTwoSegmentPlanarIK', () => {
     expect(ik.valid).toBe(true);
     expect(ik.actualThighLength).toBeCloseTo(L1, 4);
     expect(ik.actualShankLength).toBeCloseTo(L2, 4);
-    expect(ik.kneeZ).toBeGreaterThan(za); // Forward knee flexion (+z)
 
     const angle = calculateInteriorKneeAngle(
       [0, yh, zh],
       [0, ik.kneeY, ik.kneeZ],
       [0, ya, za]
     );
-    expect(angle).toBeGreaterThan(150);
-    expect(angle).toBeLessThan(175);
+    expect(angle).toBeCloseTo(155.2, 1);
   });
 
-  it('solves squat bottom depth with forward knee flexion and invariant segment lengths', () => {
+  it('solves squat bottom depth (yh = 0.54m, zh = -0.16m) preserving 68.9° angle', () => {
     const yh = 0.54;
     const zh = -0.16;
     const ya = 0.08;
@@ -98,7 +120,7 @@ describe('joint_math - solveTwoSegmentPlanarIK', () => {
     expect(ik.valid).toBe(true);
     expect(ik.actualThighLength).toBeCloseTo(L1, 4);
     expect(ik.actualShankLength).toBeCloseTo(L2, 4);
-    expect(ik.kneeZ).toBeGreaterThan(0.2); // Forward knee travel
+    expect(ik.kneeZ).toBeGreaterThan(0.2); // Forward knee travel ~0.26m
 
     const angle = calculateInteriorKneeAngle(
       [0, yh, zh],
@@ -108,23 +130,54 @@ describe('joint_math - solveTwoSegmentPlanarIK', () => {
     expect(angle).toBeCloseTo(68.9, 1);
   });
 
-  it('prevents knee flipping throughout a continuous trajectory', () => {
-    const steps = 20;
+  it('preserves numerical stability and prevents NaN or branch flips near extension boundary', () => {
+    // Exactly at maximum reach D = L1 + L2 = 0.86m (yh = 0.94m)
+    const ikAtMax = solveTwoSegmentPlanarIK(0.94, 0.0, 0.08, 0.0, L1, L2);
+    expect(Number.isNaN(ikAtMax.kneeY)).toBe(false);
+    expect(Number.isNaN(ikAtMax.kneeZ)).toBe(false);
+    expect(ikAtMax.actualThighLength).toBeCloseTo(L1, 3);
+    expect(ikAtMax.actualShankLength).toBeCloseTo(L2, 3);
+
+    // Over-extension boundary (beyond physical reach D > 0.86m)
+    const ikOver = solveTwoSegmentPlanarIK(0.95, 0.0, 0.08, 0.0, L1, L2);
+    expect(ikOver.valid).toBe(false);
+    expect(Number.isNaN(ikOver.kneeY)).toBe(false);
+    expect(Number.isNaN(ikOver.kneeZ)).toBe(false);
+  });
+
+  it('prevents knee flipping and ensures C0/C1 continuity throughout complete trajectory', () => {
+    const steps = 100;
     let prevKneeZ = -1;
+    let prevAngle = -1;
 
     for (let i = 0; i <= steps; i++) {
       const t = i / steps;
-      // Interpolate hip from standing (0.92, 0.0) to bottom (0.54, -0.16)
-      const yh = 0.92 - t * (0.92 - 0.54);
+      // Interpolate hip from standing (0.9331, 0.0) to bottom (0.54, -0.16)
+      const yh = 0.9331 - t * (0.9331 - 0.54);
       const zh = 0.0 - t * 0.16;
 
       const ik = solveTwoSegmentPlanarIK(yh, zh, 0.08, 0.0, L1, L2);
-      expect(ik.kneeZ).toBeGreaterThan(0); // Always forward
+      expect(Number.isNaN(ik.kneeY)).toBe(false);
+      expect(Number.isNaN(ik.kneeZ)).toBe(false);
+      expect(ik.kneeZ).toBeGreaterThan(0); // Knee strictly in forward (+z) branch
+
+      const angle = calculateInteriorKneeAngle(
+        [0, yh, zh],
+        [0, ik.kneeY, ik.kneeZ],
+        [0, 0.08, 0.0]
+      );
+      expect(Number.isNaN(angle)).toBe(false);
+      expect(angle).toBeGreaterThanOrEqual(68.8);
+      expect(angle).toBeLessThanOrEqual(165.6);
+
       if (i > 0) {
-        // Knee position changes smoothly
-        expect(Math.abs(ik.kneeZ - prevKneeZ)).toBeLessThan(0.05);
+        // Continuous, smooth trajectory without step discontinuities or jumps
+        expect(Math.abs(ik.kneeZ - prevKneeZ)).toBeLessThan(0.015);
+        // Near extension (theta ~ 165.5°), d(theta)/dD = D/(L1*L2*sin(theta)) is steeper (~3.68° max at 1% step)
+        expect(Math.abs(angle - prevAngle)).toBeLessThan(4.0);
       }
       prevKneeZ = ik.kneeZ;
+      prevAngle = angle;
     }
   });
 });

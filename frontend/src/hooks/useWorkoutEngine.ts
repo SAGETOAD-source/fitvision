@@ -29,20 +29,123 @@ export interface WakeLockSentinelLike {
   release: () => Promise<void> | void;
 }
 
+export interface PoseLandmarkerLike {
+  close: () => void;
+  detectForVideo: (video: HTMLVideoElement, timestamp: number) => { landmarks: NormalizedLandmark[][] };
+}
+
+/**
+ * RunToken is a local cancellation token for a single initializeEngine run.
+ * It is created fresh for each run and checked after every await.
+ * The cleanup function can cancel it externally.
+ */
+export interface RunToken {
+  cancelled: boolean;
+  cancel: () => void;
+}
+
+/**
+ * Creates a new RunToken for a single initializeEngine run.
+ * The token is checked after every await; if cancelled, the run aborts silently.
+ */
+export function createRunToken(): RunToken {
+  const token: RunToken = { cancelled: false, cancel: () => { token.cancelled = true; } };
+  return token;
+}
+
+/**
+ * Error thrown when a run is cancelled. Caught and ignored silently.
+ */
+export class CancellationError extends Error {
+  constructor(message?: string) {
+    super(message || "Run cancelled");
+    this.name = "CancellationError";
+  }
+}
+
+/**
+ * Checks if a run token is cancelled and throws CancellationError if so.
+ * Used after every await to abort silently.
+ */
+export function checkCancelled(token: RunToken): void {
+  if (token.cancelled) {
+    throw new CancellationError("Run cancelled");
+  }
+}
+
+/**
+ * Checks if an error is a CancellationError OR a browser AbortError (DOMException).
+ * This handles both our internal cancellation and the browser's video.play() AbortError.
+ */
+export function isCancellationError(err: unknown): boolean {
+  return (
+    err instanceof CancellationError ||
+    (err instanceof DOMException && err.name === "AbortError")
+  );
+}
+
+/**
+ * Pure helper for running an async step with cancellation check.
+ * Returns { cancelled: true } if cancelled, otherwise { cancelled: false, value }.
+ * This allows tests to run with fake promises without browser APIs.
+ */
+export async function runGuardedStep<T>(
+  token: RunToken,
+  step: () => Promise<T>
+): Promise<{ cancelled: boolean; value?: T }> {
+  try {
+    checkCancelled(token);
+    const value = await step();
+    checkCancelled(token);
+    return { cancelled: false, value };
+  } catch (err) {
+    if (isCancellationError(err)) {
+      return { cancelled: true };
+    }
+    throw err;
+  }
+}
+
+export interface MediaStreamTrackLike {
+  stop: () => void;
+}
+
+export interface MediaStreamLike {
+  getTracks: () => MediaStreamTrackLike[];
+}
+
+export interface WakeLockSentinelLike {
+  release: () => Promise<void> | void;
+}
+
+export interface PoseLandmarkerLike {
+  close: () => void;
+  detectForVideo: (video: HTMLVideoElement, timestamp: number) => { landmarks: NormalizedLandmark[][] };
+}
+
 /**
  * Pure cleanup function for workout engine resources.
  * Accepts resources and cancelAnimationFrame function as arguments so tests
  * can pass fakes and run the real cleanup function in any environment.
+ * Also sets video.srcObject = null and pauses the video.
+ * Closes the PoseLandmarker if provided.
+ * 
+ * Signature: (stream, animFrameId, wakeLock, cancelAnimFrameFn, video?, landmarker?)
+ * - Original 4-arg signature maintained for backward compatibility with tests
+ * - Optional 5th video parameter for video cleanup
+ * - Optional 6th landmarker parameter for landmarker cleanup
  */
 export function cleanupWorkoutEngine(
-  stream: MediaStreamLike | null,
+  stream: MediaStream | null,
   animFrameId: number | null,
   wakeLock: WakeLockSentinelLike | null,
   cancelAnimFrameFn: (id: number) => void = (id) => {
     if (typeof cancelAnimationFrame === "function") {
       cancelAnimationFrame(id);
     }
-  }
+  },
+  video?: HTMLVideoElement | null,
+  landmarker?: PoseLandmarkerLike | null
 ): void {
   if (animFrameId !== null && typeof cancelAnimFrameFn === "function") {
     cancelAnimFrameFn(animFrameId);
@@ -68,6 +171,27 @@ export function cleanupWorkoutEngine(
       wakeLock.release();
     } catch {
       // Ignored if wake lock was already released
+    }
+  }
+
+  // Close PoseLandmarker (6th parameter)
+  if (landmarker && typeof landmarker.close === "function") {
+    try {
+      landmarker.close();
+    } catch {
+      // Ignored
+    }
+  }
+
+  // Video cleanup (optional 5th parameter for backward compatibility)
+  if (video) {
+    try {
+      video.srcObject = null;
+      if (typeof video.pause === "function") {
+        video.pause();
+      }
+    } catch {
+      // Ignored
     }
   }
 }
@@ -97,7 +221,7 @@ export function useWorkoutEngine({
   const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
   const landmarkerRef = useRef<PoseLandmarker | null>(null);
 
-  // Request screen Wake Lock to keep display awake during workout
+  // Request screen Wake Lock
   const requestWakeLock = useCallback(async () => {
     if (typeof navigator !== "undefined" && "wakeLock" in navigator) {
       try {
@@ -114,12 +238,11 @@ export function useWorkoutEngine({
     cleanupWorkoutEngine(
       streamRef.current,
       animFrameIdRef.current,
-      wakeLockRef.current
+      wakeLockRef.current,
+      undefined,
+      videoRef.current,
+      landmarkerRef.current
     );
-    animFrameIdRef.current = null;
-    streamRef.current = null;
-    wakeLockRef.current = null;
-
     dispatch({ type: "STOP" });
 
     if (onStop) {
@@ -134,22 +257,33 @@ export function useWorkoutEngine({
 
   // Initialize engine: config, model, landmarker, camera
   const initializeEngine = useCallback(async () => {
+    // Create a LOCAL run token for this run. Checked after every await.
+    const token = createRunToken();
+    
     dispatch({ type: "INIT_START", exerciseKey: safeExercise });
 
     try {
-      // 1. Fetch config
+      // 1. Fetch config via /api/exercises, falling back to /exercises_snapshot.json
       let cfg: ExerciseConfig;
-      try {
-        const resp = await fetch("http://localhost:8000/v1/exercises");
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const data = await resp.json();
-        cfg = data.exercises[safeExercise];
-      } catch {
-        const snapResp = await fetch("/exercises_snapshot.json");
-        const data = await snapResp.json();
-        cfg = data.exercises[safeExercise];
-      }
-
+      const configResult = await runGuardedStep(token, async () => {
+        try {
+          const resp = await fetch("/api/exercises");
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const data = await resp.json();
+          if (data?.exercises?.[safeExercise]) {
+            return data.exercises[safeExercise];
+          }
+          throw new Error("Exercise not found in API response");
+        } catch {
+          const snapResp = await fetch("/exercises_snapshot.json");
+          const data = await snapResp.json();
+          return data.exercises[safeExercise];
+        }
+      });
+      
+      if (configResult.cancelled) return;
+      cfg = configResult.value!;
+      
       if (!cfg) {
         throw new Error(`Exercise '${safeExercise}' configuration not found.`);
       }
@@ -157,43 +291,79 @@ export function useWorkoutEngine({
       repCounterRef.current = new RepCounter(safeExercise, cfg);
 
       // 2. Load model
-      const modelResp = await fetch(`/models/${safeExercise}.json`);
-      if (!modelResp.ok) {
-        throw new Error(`Failed to load model /models/${safeExercise}.json`);
-      }
-      const modelData: ModelData = await modelResp.json();
+      const modelResult = await runGuardedStep(token, async () => {
+        const modelResp = await fetch(`/models/${safeExercise}.json`);
+        if (!modelResp.ok) {
+          throw new Error(`Failed to load model /models/${safeExercise}.json`);
+        }
+        return modelResp.json();
+      });
+      
+      if (modelResult.cancelled) return;
+      const modelData: ModelData = modelResult.value!;
 
       dispatch({ type: "CONFIG_LOADED", config: cfg, model: modelData });
 
       // 3. MediaPipe PoseLandmarker
-      const vision = await FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm"
-      );
-      const marker = await PoseLandmarker.createFromOptions(vision, {
-        baseOptions: {
-          modelAssetPath:
-            "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-          delegate: "GPU",
-        },
-        runningMode: "VIDEO",
-        numPoses: 1,
+      const landmarkerResult = await runGuardedStep(token, async () => {
+        const vision = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm"
+        );
+        const marker = await PoseLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath:
+              "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+            delegate: "GPU",
+          },
+          runningMode: "VIDEO",
+          numPoses: 1,
+        });
+        return marker;
       });
+      
+      if (landmarkerResult.cancelled) return;
+      const marker = landmarkerResult.value!;
       landmarkerRef.current = marker;
 
+      // CHECK TOKEN RIGHT AFTER LANDMARKER CREATION
+      // If cancelled, close the landmarker immediately
+      checkCancelled(token);
+
       // 4. Request camera stream
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "user",
-          width: { ideal: 720 },
-          height: { ideal: 1280 },
-        },
-        audio: false,
+      const streamResult = await runGuardedStep(token, async () => {
+        return navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "user",
+            width: { ideal: 720 },
+            height: { ideal: 1280 },
+          },
+          audio: false,
+        });
       });
+      
+      if (streamResult.cancelled) return;
+      const stream = streamResult.value!;
+
+      // If component unmounted or stop was called while getUserMedia was pending
+      checkCancelled(token);
+      if (token.cancelled) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        try {
+          await videoRef.current.play();
+        } catch (playErr) {
+          // Ignore AbortError (both our CancellationError and browser DOMException) if the run was cancelled
+          if (isCancellationError(playErr)) {
+            return;
+          }
+          throw playErr;
+        }
       }
 
       await requestWakeLock();
@@ -251,19 +421,24 @@ export function useWorkoutEngine({
 
       animFrameIdRef.current = requestAnimationFrame(runLoop);
     } catch (err: any) {
-      console.error("useWorkoutEngine init failure:", err);
-      if (
-        err.name === "NotAllowedError" ||
-        err.name === "PermissionDeniedError" ||
-        err.message?.includes("Permission denied")
-      ) {
-        dispatch({ type: "PERMISSION_DENIED" });
-      } else {
-        dispatch({
-          type: "ERROR",
-          message: err.message || "Failed to initialize workout engine.",
-        });
+      // Check if cancelled before dispatching error
+      // This catches both our CancellationError and browser AbortError
+      if (!isCancellationError(err)) {
+        console.error("useWorkoutEngine init failure:", err);
+        if (
+          err.name === "NotAllowedError" ||
+          err.name === "PermissionDeniedError" ||
+          err.message?.includes("Permission denied")
+        ) {
+          dispatch({ type: "PERMISSION_DENIED" });
+        } else {
+          dispatch({
+            type: "ERROR",
+            message: err.message || "Failed to initialize workout engine.",
+          });
+        }
       }
+      // If cancelled, err is ignored silently - no dispatch
     }
   }, [safeExercise, videoRef, canvasRef, requestWakeLock]);
 
@@ -274,11 +449,15 @@ export function useWorkoutEngine({
       cleanupWorkoutEngine(
         streamRef.current,
         animFrameIdRef.current,
-        wakeLockRef.current
+        wakeLockRef.current,
+        undefined,
+        videoRef.current,
+        landmarkerRef.current
       );
       animFrameIdRef.current = null;
       streamRef.current = null;
       wakeLockRef.current = null;
+      landmarkerRef.current = null;
     };
   }, [initializeEngine]);
 
@@ -346,6 +525,6 @@ export function drawPoseSkeleton(
       ctx.fill();
     }
   }
+
   ctx.restore();
 }
-

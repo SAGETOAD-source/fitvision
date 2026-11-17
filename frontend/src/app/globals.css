@@ -3,14 +3,155 @@
 @tailwind utilities;
 
 :root {
-  --background: #0f172a;
-  --foreground: #f8fafc;
+  /* Primitive color tokens */
+  --fv-bg: #0B0B0C;
+  --fv-bg-elevated: #131316;
+  --fv-fg: #FFFFFF;
+  --fv-fg-muted: #A1A1AA;
+  --fv-burgundy: #6D001A;
+  --fv-burgundy-hover: #7A001D;
+  --fv-rose: #FF4D6D;
+  --fv-rose-muted: #FF4D6D99;
+  --fv-border: #1F1F23;
+  --fv-border-focus: #FF4D6D;
+
+  /* Typography tokens */
+  --font-display: 'Outfit', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+
+  /* Radius tokens */
+  --radius-cta: 4px;
+  --radius-card: 12px;
+
+  /* Duration tokens (ms) */
+  --duration-wipe: 250ms;
+  --duration-progress: 6000ms;
+  --duration-nudge: 150ms;
+  --duration-crossfade: 300ms;
+  --duration-press: 50ms;
+  --duration-marquee: 30000ms;
+
+  /* Easing tokens */
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Progress line height */
+  --progress-line-h: 2px;
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  min-height: 100vh;
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-wipe: 0ms;
+    --duration-progress: 0ms;
+    --duration-nudge: 0ms;
+    --duration-crossfade: 0ms;
+    --duration-marquee: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
+@layer base {
+  html {
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    color: var(--fv-fg);
+    background: var(--fv-bg);
+    min-height: 100vh;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  :focus-visible {
+    outline: none;
+    ring: 2px solid var(--fv-border-focus);
+    ring-offset: 2px;
+    ring-offset-color: var(--fv-bg);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-paused {
+    animation-play-state: paused;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  /* Marquee component styles */
+  .marquee-container {
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .marquee-track {
+    display: flex;
+    will-change: transform;
+    animation: marquee var(--duration-marquee) linear infinite;
+  }
+
+  .marquee-content {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .marquee-item {
+    padding: 0 1rem;
+    color: var(--fv-rose);
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.875rem;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Pause on hover/focus */
+  .marquee-container[data-pause-on-hover="true"]:hover .marquee-track,
+  .marquee-container[data-pause-on-hover="true"]:focus-within .marquee-track {
+    animation-play-state: paused;
+  }
+
+  /* Reduced motion: static layout */
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track {
+      animation: none;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .marquee-content {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  }
+
+  /* Kit demo gradient fallback */
+  .kit-image-gradient {
+    background: linear-gradient(135deg, var(--fv-burgundy) 0%, var(--fv-rose) 100%);
+  }
+}

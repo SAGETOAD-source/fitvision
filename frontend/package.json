@@ -10,20 +10,27 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "@mediapipe/tasks-vision": "^0.10.18",
+    "@types/three": "^0.187.0",
+    "gsap": "^3.15.1",
+    "lucide-react": "^1.74.0",
     "next": "^14.2.18",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "three": "^0.187.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^20.17.6",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.20",
+    "jsdom": "^31.0.1",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",
     "typescript": "^5.6.3",
     "vitest": "^2.1.5"
   }
 }
-

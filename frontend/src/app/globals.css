@@ -76,10 +76,8 @@
   }
 
   :focus-visible {
-    outline: none;
-    ring: 2px solid var(--fv-border-focus);
-    ring-offset: 2px;
-    ring-offset-color: var(--fv-bg);
+    outline: 2px solid var(--fv-border-focus);
+    outline-offset: 2px;
   }
 }
 

@@ -41,7 +41,7 @@ export function Marquee({
       aria-live="off"
       data-pause-on-hover={pauseOnHover}
     >
-      <div className="marquee-track" style={{ animationDuration: `${duration}ms` }} aria-hidden="true">
+      <div className="marquee-track" style={{ animationDuration: `${duration}ms` }}>
         {/* First set - visible to screen readers */}
         <div className="marquee-content" role="list" aria-label={ariaLabel}>
           {displayItems.map((item, index) => (

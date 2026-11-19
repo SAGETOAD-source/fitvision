@@ -9,10 +9,18 @@ function WorkoutContent() {
   const router = useRouter();
   const exercise = searchParams.get("exercise") || "squat";
 
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 2) {
+      router.back();
+    } else {
+      router.push("/exercises");
+    }
+  };
+
   return (
     <WorkoutScreen
       exerciseKey={exercise}
-      onBack={() => router.push("/")}
+      onBack={handleBack}
     />
   );
 }

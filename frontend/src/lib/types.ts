@@ -69,3 +69,95 @@ export interface LandmarkPoint {
   y: number;
 }
 
+// --- Auth Schemas (matching Backend/app/models/schemas.py) ---
+
+export interface UserPublic {
+  id: number;
+  email: string;
+  created_at: string;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface SignupCredentials {
+  email: string;
+  password: string;
+}
+
+// --- Profile & Onboarding ---
+
+export type BodyGoal = "slim" | "muscular" | "bulk";
+export type FocusArea = "legs" | "upper_body" | "core";
+
+export interface ProfileResponse {
+  body_goal: BodyGoal | null;
+  focus_area: FocusArea | null;
+  onboarding_completed: boolean;
+}
+
+export interface UpdateProfileRequest {
+  body_goal: BodyGoal;
+  focus_area?: FocusArea | null;
+}
+
+// --- Routines ---
+
+export interface RoutineExercise {
+  exercise: string;
+  sets: number;
+  reps: number;
+}
+
+export interface RoutineResponse {
+  goal: string;
+  focus: string | null;
+  exercises: RoutineExercise[];
+}
+
+// --- Workouts & History ---
+
+export interface CreateWorkoutRequest {
+  exercise: string;
+  rep_count: number;
+  started_at: string;
+  ended_at: string;
+}
+
+export interface WorkoutResponse {
+  id: number;
+  session_id: string;
+  exercise: string;
+  rep_count: number;
+  started_at: string;
+  ended_at: string;
+}
+
+export interface WorkoutListResponse {
+  workouts: WorkoutResponse[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+// --- Statistics ---
+
+export interface DailyReps {
+  date: string;
+  reps: number;
+}
+
+export interface StatsResponse {
+  total_workouts: number;
+  total_reps: number;
+  reps_per_exercise: Record<string, number>;
+  current_streak_days: number;
+  reps_last_7_days: DailyReps[];
+}

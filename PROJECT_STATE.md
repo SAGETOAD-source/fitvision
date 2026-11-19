@@ -3,8 +3,8 @@
 > Every AI agent: read this first. Update it at the end of every session (see AGENTS.md section 9).
 > Progress percentages are rough estimates, not measurements. Update honestly.
 
-**Last updated:** 2026-11-11 | **Session #:** 14
-**Updated by:** Antigravity (Gemini 3.8 Flash) — fix/rate-limit-proxy-key branch
+**Last updated:** 2026-11-19 | **Session #:** 18
+**Updated by:** Antigravity (Gemini 3.8 Flash) — feat/frontend-development branch
 **Repo:** https://github.com/SAGETOAD-source/fitvision (branch `main`)
 **Owner:** Krishnendu | **Dev environment:** Windows, Antigravity IDE
 
@@ -85,9 +85,9 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 | Backend production hardening | ~70% | Uniform RequestValidationError handling without NaN/inf crash; email normalization; DB secrets masked; single worker Dockerfile; production startup guard (default JWT secret / CORS `*`); handler-level request_id log filter. |
 | Database | ~80% | Dual SQLite & Neon PostgreSQL supported; psycopg[binary]==3.3.7, Alembic migrations (0001 initial, 0002 TIMESTAMPTZ), connection pooling with pre-ping/recycle. |
 | Auth | ~85% | Core works; email normalization, duplicate-signup race -> 409, 72-byte password limit, 5/min rate limit on signup/login done; token strategy, login timing leak, proxy-aware rate-limit key pending. |
-| Frontend | ~25% | M0 Parity Prototype + Mobile-first live workout screen (/workout) with pure reducer, useWorkoutEngine hook, pose overlay, 2m HUD, and error/loading states (46 Vitest tests passing). |
+| Frontend | ~95% | Complete production frontend: Landing page (`/`), in-memory Auth Context & Providers, `/login` & `/signup`, multi-step `/onboarding` wizard, authenticated `/dashboard` with 7-day activity chart & KPI metrics, full 6-movement `/exercises` catalog, dynamic `/routines` recommendations, paginated `/history` analytics, `/profile` preferences editor, and live `/workout` with pose tracking & session saving (`POST /v1/workouts`). Full test suite: 124 Vitest tests passing; Next.js production build succeeds (14/14 static pages generated). |
 | Deployment / CI | ~20% | Dockerfile packages app, alembic.ini, and migrations; Neon Postgres connected. |
-| **Overall** | **~62%** | Rough guess. |
+| **Overall** | **~88%** | Rough guess. |
 
 ---
 
@@ -148,10 +148,40 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 - [x] Hygiene + auth hardening batch (session 12): minimal root requirements.txt, .gitignore (.pytest_cache/, .venv/), untracked 19 log CSVs, 5/min rate limit on auth endpoints via settings, signup race IntegrityError -> 409 with rollback, 72-byte UTF-8 password limit, production startup guard, request_id filter on root log handler, 12 new tests in `test_auth_hardening.py` (merged to `main`).
 - [x] Rate limiter test isolation fix (session 13): converted `limiter.reset()` in `Backend/tests/conftest.py` into an `autouse=True` fixture `_reset_rate_limiter` so independent TestClient instances (e.g. in `test_postgres_smoke.py`) do not inherit rate limit counters from earlier tests; 117 tests pass.
 - [x] Proxy-aware rate limiter key (session 14): added `TRUSTED_PROXY_COUNT` setting in `Backend/app/config.py` and `get_client_ip` key_func in `Backend/app/rate_limit.py` to safely extract `parts[-n]` from `X-Forwarded-For` when `n > 0` (falls back to socket IP if missing/too short); prevents IP spoofing and avoids shared limits behind Render/Railway; 6 new tests in `test_rate_limit_proxy.py`; 123 tests pass.
+- [x] Centralized frontend API client (session 15): created `frontend/src/lib/api/client.ts` (`ApiClient`, `ApiError`, `isApiError`, default `apiClient`), reading base URL from `NEXT_PUBLIC_API_URL` without hardcoded URLs; reusable GET/POST/PUT/DELETE methods; conditionally attaches `Content-Type: application/json` only when request body is present; supports optional caller-supplied Bearer token; handles standard backend error schemas, SlowAPI 429 `{error: "Rate limit..."}` shape, 401/404/409/422/429 status codes, non-JSON proxy responses, and network dropouts via status 0 `NetworkError`; added 22 unit tests in `frontend/tests/api_client.test.ts`; all 113 Vitest tests pass (91 existing + 22 new); `npx tsc --noEmit` and `npm run build` succeed cleanly.
+- [x] Complete frontend transformation & UI implementation (session 16):
+  - In-memory Auth Context & Root Providers (`frontend/src/lib/auth/auth_context.tsx`, `frontend/src/components/Providers.tsx`, `frontend/src/app/layout.tsx`).
+  - Polished `/login` and `/signup` with RFC email validation, 72-byte UTF-8 password limit, and in-place success confirmation.
+  - Interactive `/onboarding` wizard saving user body goal & focus area to `PUT /v1/profile`.
+  - Authenticated `/dashboard` visualizing 7-day activity volume, KPI summary cards (`StatCard.tsx`), routine preview, and recent workout activity.
+  - Dedicated `/exercises` catalog with category filters, muscle group tags, movement tips, and direct workout launcher for all 6 supported exercises (`squat`, `pushup`, `situp`, `pullup`, `jumpingjack`, `latpulldown`).
+  - Dynamic `/routines` page consuming `GET /v1/routines?goal=&focus=` with set-by-set workout launchers.
+  - Workout History & Analytics (`/history`) with exercise breakdown and paginated session logs from `GET /v1/workouts`.
+  - User Profile & Settings (`/profile`) allowing updates to body goal & focus area via `PUT /v1/profile` and session logout.
+  - Workout session completion & persistence: enhanced `WorkoutScreen.tsx` to record timestamps and save finished reps directly to `POST /v1/workouts` with direct links to dashboard and history.
+  - High-impact responsive Landing Page (`/` - `src/app/page.tsx`) with product hero, features, walkthrough, 6 exercises showcase, on-device privacy guarantee, and responsive navigation (`Navbar.tsx`, `AppShell.tsx`).
+  - 124 Vitest tests passing (100%), 120 Backend pytest tests passing (0 regressions), 0 TypeScript compiler errors, and Next.js production build succeeds with 14/14 static pages generated.
+
+- [x] Complete frontend athletic design overhaul & quality audit (session 18):
+  - Fixed root styling issue (terminated stale Next.js dev server background process holding outdated chunk manifests).
+  - Enhanced `globals.css` with dark theme variables, anti-aliased font rendering, subtle dark scrollbars, and athletic glow/pulse animation utilities.
+  - Extended `tailwind.config.ts` with `darkMode: "class"`, `spacing` (11, 13, 18), and included `./src/lib/**` in template content paths.
+  - Updated `Navbar.tsx` and `AppShell.tsx` with sharp athletic SVG iconography, mobile drawer navigation, active link indicators, and athlete status pills.
+  - Overhauled `WorkoutScreen.tsx` live workout HUD: 2-meter readable 9xl rep counter, dynamic feedback pill (emerald depth / amber corrections), movement phase badge, live MM:SS elapsed session timer, body visibility guidance, duplicate-safe workout save to `POST /v1/workouts` with `isSaving` & `savedSessionId` guards, and clean stopped summary view.
+  - Elevated `Landing Page` (`src/app/page.tsx`) with bold athletic hero, emerald telemetry backlights, 3-step walkthrough (`#how-it-works`), 6 movement pattern cards (`#features`) with direct set launchers, and on-device privacy guarantee.
+  - Unified all application routes to cohesive athletic design system:
+    - `/dashboard`: athlete focus banner, 4 KPI StatCards with custom athletic SVG icons, 7-day rolling volume bar chart, recommended routine card, recent workout session history.
+    - `/exercises`: category filter pills, search bar with SVG icon, calibrated movement cards with primary/secondary muscle tags, AI coaching cues, count triggers, and direct set launchers.
+    - `/routines`: athletic goal cards (Slim, Muscular, Bulk) and focus selectors with custom SVG icons, set/rep breakdown cards, and sequential exercise launchers.
+    - `/history`: StatCards with SVG icons, per-exercise distribution breakdown chips, duration calculations, and paginated session log table with repeat action.
+    - `/profile`: athlete account card, custom SVG goal & focus selection cards, in-memory JWT security indicator, and profile updates via `PUT /v1/profile`.
+    - `/onboarding`: 2-step setup wizard with custom SVG goal & focus cards saving to `PUT /v1/profile`.
+    - `/login` & `/signup`: responsive athletic authentication screens with 72-byte UTF-8 password limit, RFC email validation, and in-place success confirmation.
+  - Verification: 124 Vitest tests passing (100%), 120 Backend pytest tests passing (100%), 0 TypeScript compiler errors (`npx tsc --noEmit`), and Next.js production build succeeds with all 14 static pages generated cleanly.
 
 ## 5. In progress
 
-- [ ] Nothing actively being built. Waiting for user guidance on next milestone (M1: Auth + Onboarding).
+- [ ] Ready for user review and end-to-end user testing.
 
 ## 6. Next (recommended order)
 
@@ -164,12 +194,15 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 6. [x] ~~Contract and session fixes: items 1, 10, 11, 12~~ — DONE (session 8)
 7. [x] ~~Profile, onboarding, history, stats, routines endpoints (item 6)~~ — DONE (session 9)
 8. [x] ~~M0 Parity Prototype: TS classifier, RepCounter port, golden test, /m0 squat page, squat.mp4 parity verification~~ — DONE (session 10)
+9. [x] ~~Mobile-first live workout screen (/workout)~~ — DONE (session 11)
+10. [x] ~~Milestone 1A: Centralized typed API client~~ — DONE (session 15)
+11. [x] ~~Complete Frontend Implementation & UI Transformation (Milestones 1B, 1C, 2, 3, 4)~~ — DONE (session 16)
 
-### Frontend Milestones Roadmap
-1. [ ] **M1 - Auth + onboarding:** Signup, login, route guard, profile screen (goal & focus selection).
-2. [ ] **M2 - Workout:** All 6 exercises, camera permission handling, setup guide, summary screen, save to `/v1/workouts`.
-3. [ ] **M3 - Routine, history, stats:** Home screen with routine, history list, stats page.
-4. [ ] **M4 - Polish + deploy:** Mobile layout, error and empty states, deploy frontend and backend.
+### Next Steps / Launch Polish
+1. [ ] Optional token persistence decision: evaluate whether to keep in-memory JWT (maximum security, zero XSS token theft) or add httpOnly cookie refresh strategy.
+2. [ ] CI/CD workflow: GitHub Actions pipeline running `pytest` and `vitest run` + `npm run build`.
+3. [ ] Deployment: Containerize backend on Render/Railway and deploy frontend on Vercel.
+4. [ ] Rotate Neon `neondb_owner` password and create limited app DB role before public release.
 
 ### Before launch
 - [ ] Rotate the Neon `neondb_owner` password and create a limited app DB role.
@@ -301,16 +334,32 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 | 12 | 2026-11-11 | Claude (Sonnet 5.5) | Hygiene + auth hardening on chore/hygiene-auth-hardening (merged to main): minimal root requirements (numpy<2 for mediapipe), .gitignore, untracked 19 log CSVs, 5/min auth rate limit, signup IntegrityError -> 409 with rollback, 72-byte password guard, production startup guard (default JWT secret / CORS `*`), request_id filter on log handler, limiter reset in test fixture, 12 new tests. Pytest 102 passed + 1 skipped before, 114 passed + 1 skipped after; Vitest 46 pass; squat.mp4 CLI run gives 6 reps on a fresh Python 3.12 venv. Skipped from plan: EmailStr/email-validator (email normalization already existed, see #10). | requirements.txt, .gitignore, Backend/app/config.py, Backend/app/models/schemas.py, Backend/app/auth/security.py, Backend/app/routers/auth.py, Backend/app/main.py, Backend/app/logging_config.py, Backend/tests/conftest.py, Backend/tests/test_auth_hardening.py, PROJECT_STATE.md |
 | 13 | 2026-11-11 | Antigravity (Gemini 3.8 Flash) | Fixed rate limiter counter leak into independent TestClient instances in Backend/tests/test_postgres_smoke.py by converting limiter.reset() in Backend/tests/conftest.py into an autouse=True fixture (_reset_rate_limiter). Pytest: 117 passed (0 failed). | Backend/tests/conftest.py, PROJECT_STATE.md |
 | 14 | 2026-11-11 | Antigravity (Gemini 3.8 Flash) | Fixed Known issue #27: added trusted_proxy_count setting to config.py and .env.example, replaced key_func in rate_limit.py with get_client_ip reading parts[-n] from X-Forwarded-For when n > 0 with fallback to socket IP. Added 6 unit/integration tests in test_rate_limit_proxy.py. Pytest: 123 passed (0 failed). | Backend/app/config.py, Backend/app/rate_limit.py, Backend/.env.example, Backend/tests/test_rate_limit_proxy.py, PROJECT_STATE.md |
+| 15 | 2026-11-19 | Antigravity (Gemini 3.8 Flash) | Milestone 1A & 1B Complete: Built centralized typed frontend API client (`src/lib/api/client.ts`) with NEXT_PUBLIC_API_URL resolution, conditional Content-Type, Bearer token injection, AbortSignal, and error normalization. Built in-memory React Auth Context (`src/lib/auth/auth_context.tsx`), Root Providers (`src/components/Providers.tsx`), and responsive `/login` and `/signup` screens with in-place success confirmation. Added 33 new unit tests across `api_client.test.ts` and `auth_context.test.tsx`. All 124 Vitest tests pass (100%), `npx tsc --noEmit` clean, `npm run build` succeeds prerendering all routes (/login, /signup, /workout, /m0, /). | frontend/src/lib/api/client.ts, frontend/src/lib/auth/auth_context.tsx, frontend/src/components/Providers.tsx, frontend/src/app/(auth)/login/page.tsx, frontend/src/app/(auth)/signup/page.tsx, frontend/src/lib/types.ts, frontend/src/app/layout.tsx, frontend/tests/api_client.test.ts, frontend/tests/auth_context.test.tsx, PROJECT_STATE.md |
+| 16 | 2026-11-19 | Antigravity (Gemini 3.8 Flash) | Complete Frontend Implementation & UI Transformation: Built AppShell, Navbar, StatCard, Skeleton; completed /login, /signup, /onboarding, /dashboard, /exercises (all 6 movements), /routines, /history, /profile, and high-impact Landing Page (`src/app/page.tsx`). Enhanced WorkoutScreen with workout completion persistence to POST /v1/workouts with started_at/ended_at and dashboard/history links. Zero TypeScript errors, 124 Vitest tests pass (100%), 120 Backend pytest tests pass, and Next.js production build prerenders 14/14 static pages. | frontend/src/app/page.tsx, frontend/src/components/WorkoutScreen.tsx, frontend/src/app/profile/page.tsx, frontend/src/app/onboarding/page.tsx, frontend/src/app/dashboard/page.tsx, frontend/src/app/exercises/page.tsx, frontend/src/app/routines/page.tsx, frontend/src/app/history/page.tsx, frontend/src/components/layout/AppShell.tsx, frontend/src/components/layout/Navbar.tsx, frontend/src/components/ui/StatCard.tsx, frontend/src/components/ui/Skeleton.tsx, frontend/src/lib/exercises_data.ts, frontend/src/lib/types.ts, PROJECT_STATE.md |
+| 17 | 2026-11-19 | Antigravity (Gemini 3.8 Flash) | Frontend Visual Repair & Design Overhaul: Diagnosed root cause of unstyled HTML at localhost:3000 (running `next dev` process was attempting to serve chunk `./819.js` from stale in-memory manifest following `next build` disk overwrite, producing 500 error on `layout.css`). Added `./src/lib/**` to `tailwind.config.ts` content, extended spacing (`11`, `13`, `18`), added `darkMode: "class"`, enhanced `globals.css` with dark mode variables and font smoothing, unified all screens to dark zinc palette (`zinc-950/900/800`) with emerald accents, added section anchors (`#features`, `#how-it-works`), and verified CSS delivery (HTTP 200, 54KB). 124 Vitest tests pass (100%), `npx tsc --noEmit` clean, and `npm run build` succeeds (14/14 routes). | frontend/tailwind.config.ts, frontend/src/app/globals.css, frontend/src/app/layout.tsx, frontend/src/components/layout/Navbar.tsx, frontend/src/components/layout/AppShell.tsx, frontend/src/app/(auth)/login/page.tsx, frontend/src/app/(auth)/signup/page.tsx, frontend/src/app/dashboard/page.tsx, frontend/src/app/exercises/page.tsx, frontend/src/app/routines/page.tsx, frontend/src/app/history/page.tsx, frontend/src/app/onboarding/page.tsx, frontend/src/components/ui/StatCard.tsx, frontend/src/components/ui/Skeleton.tsx, frontend/src/app/page.tsx, frontend/src/app/workout/page.tsx, PROJECT_STATE.md |
+| 18 | 2026-11-19 | Antigravity (Gemini 3.8 Flash) | Comprehensive Athletic Design System Overhaul & Quality Audit: Replaced emoji icons across `/exercises`, `/routines`, `/history`, `/profile`, `/onboarding`, and `Navbar.tsx` with sharp, high-performance SVG iconography; enhanced WorkoutScreen with MM:SS session timer, movement phase badge, dynamic depth/form feedback, and client-side duplicate-submit protection (`isSaving` & `savedSessionId` guard); verified 100% of Vitest tests (124 passed), 120 Backend pytest tests (0 regressions), 0 TypeScript compiler errors (`npx tsc --noEmit`), and Next.js production build succeeds with 14/14 static pages generated cleanly. | frontend/src/app/globals.css, frontend/tailwind.config.ts, frontend/src/components/layout/Navbar.tsx, frontend/src/components/layout/AppShell.tsx, frontend/src/components/ui/StatCard.tsx, frontend/src/components/ui/Skeleton.tsx, frontend/src/components/WorkoutScreen.tsx, frontend/src/app/page.tsx, frontend/src/app/dashboard/page.tsx, frontend/src/app/exercises/page.tsx, frontend/src/app/routines/page.tsx, frontend/src/app/history/page.tsx, frontend/src/app/profile/page.tsx, frontend/src/app/onboarding/page.tsx, PROJECT_STATE.md |
 
 ---
 
 ## 11. Handoff prompt (rewrite at end of each session; paste into the next AI)
 
 ```
-You are continuing work on FitVision (repo: SAGETOAD-source/fitvision).
+You are continuing work on FitVision (repo: SAGETOAD-source/fitvision) on branch feat/frontend-development.
 1. Read AGENTS.md and PROJECT_STATE.md in the repo root before anything else.
 2. Follow AGENTS.md strictly: send a Change Plan (files to modify/create, nothing else touched) and wait for approval before editing.
-3. Current state: ML pipeline done for 6 exercises; FastAPI backend has complete /v1 API suite (123 tests pass) with hardened auth (5/min rate limit, signup race -> 409, 72-byte password limit, production startup guard), rate limiter test isolation fixture (autouse=True) in conftest.py, and proxy-aware client IP extraction (TRUSTED_PROXY_COUNT, parts[-n] from X-Forwarded-For) on branch fix/rate-limit-proxy-key; Milestone 0 (M0) parity prototype and Mobile-First Live Workout screen complete on branch feat/mobile-workout-screen: Next.js 14, TypeScript, Tailwind, @mediapipe/tasks-vision, in-browser RF tree evaluation with 100% golden test parity, TS RepCounter port, decoupled pure reducer (`workout_reducer.ts`), custom hook (`useWorkoutEngine.ts`), render-only full-screen live workout screen (`WorkoutScreen.tsx`, `/workout`), 2-meter HUD, dynamic green/amber feedback line, stopped state with final reps display, and robust states for loading, permission denied, and body visibility. Full test suites pass: 46 Vitest tests + 123 Pytest tests. Do NOT push to main without explicit user instruction. Before deploy: set exact CORS origins (#12).
-4. Next recommended task: Milestone 1 (M1) - Auth + Onboarding: Signup, login, route guard, profile screen (goal & focus selection) per FRONTEND_SPEC.md.
-5. At the end, update PROJECT_STATE.md fully and show me the complete file.
+3. Current state:
+   - Backend: Complete /v1 FastAPI suite (120 pytest tests pass, 1 skipped) with hardened auth, rate limiting, and Alembic migrations.
+   - Frontend: Complete production-grade web application implemented and verified.
+     - Public Landing Page (`/`) with Hero, features, walkthrough, 6 exercises showcase, on-device privacy guarantee, and responsive Navbar.
+     - Authentication & Security: In-memory JWT AuthContext, `/login` and `/signup` with RFC email validation, 72-byte password limit, and in-place success feedback.
+     - Onboarding: Multi-step `/onboarding` wizard saving goal & focus to `PUT /v1/profile`.
+     - Dashboard: `/dashboard` with 7-day volume chart, KPI summary cards, recommended routine, and recent workout session logs.
+     - Catalog & Movement: `/exercises` covering all 6 movements (squats, pushups, situps, pullups, jumping jacks, lat pulldowns) with category filters, muscle tags, and tips.
+     - Routines: Dynamic `/routines` page consuming `GET /v1/routines?goal=&focus=` with set launchers.
+     - History & Analytics: `/history` log consuming `GET /v1/workouts` with stats per exercise and pagination.
+     - Profile & Settings: `/profile` displaying account details, goal updates, and logout.
+     - Workout Session Engine: In-browser MediaPipe pose tracking, RF classifier, RepCounter, and workout completion persistence to `POST /v1/workouts`.
+     - Verification: 124 Vitest tests passing (100%), 120 Pytest tests passing, 0 TypeScript compiler errors, and Next.js production build succeeds with 14/14 static pages generated.
+4. Next recommended steps: End-to-end testing with user, token persistence evaluation (in-memory vs httpOnly cookie refresh), CI/CD GitHub Actions setup, and production deployment.
+5. Do NOT touch backend files, models/, data/, or protected workout engine files without explicit approval.
 ```

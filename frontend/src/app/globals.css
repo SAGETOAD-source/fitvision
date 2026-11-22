@@ -29,4 +29,27 @@ body {
   box-shadow: 0 0 25px rgba(255, 77, 109, 0.35);
 }
 
+@keyframes fv-sweep-in {
+  0% {
+    transform: translateX(-101%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse,
+  .animate-ping,
+  .animate-spin {
+    animation: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}
+
 

@@ -225,7 +225,7 @@ describe('Landing Page: MotionLabSection & StaticFallback', () => {
 
     // Verify button is operable by invoking its callback
     expect(element.props.onActivate).toBe(onActivate);
-    element.props.onActivate();
+    element.props.onActivate?.();
     expect(onActivate).toHaveBeenCalledTimes(1);
   });
 });

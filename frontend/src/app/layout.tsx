@@ -1,6 +1,6 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
-import { Inter, Montserrat, Lora } from "next/font/google";
+import { Inter, Montserrat, Lora, Unbounded } from "next/font/google";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -28,6 +28,13 @@ const lora = Lora({
   display: "swap",
 });
 
+const unbounded = Unbounded({
+  subsets: ["latin"],
+  weight: ["700", "800", "900"],
+  variable: "--font-display",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "FitVision — Intelligent Real-Time Athletic Vision",
   description:
@@ -42,7 +49,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${montserrat.variable} ${lora.variable} dark`}
+      className={`${inter.variable} ${montserrat.variable} ${lora.variable} ${unbounded.variable} dark`}
     >
       <body className="antialiased bg-black text-white min-h-screen selection:bg-[#6D001A] selection:text-white">
         {children}

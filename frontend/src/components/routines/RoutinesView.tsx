@@ -331,20 +331,31 @@ export function RoutinesView() {
         )}
       </Card>
 
-      {/* Phase 4 Routine Mode Note Slot */}
+      {/* Active Routine Mode Launcher */}
       <Card
         variant="elevated"
         padding="md"
         data-testid="routine-mode-slot"
-        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-border-subtle"
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-brand"
       >
         <div className="space-y-1">
           <div className="font-mono text-[11px] font-bold uppercase tracking-widest text-accent">
-            Routine Mode — Coming in Phase 4
+            Guided Routine Mode
           </div>
           <p className="text-xs sm:text-sm text-text-muted font-sans leading-relaxed">
-            Guided multi-exercise sessions with in-workout exercise switching are planned for Phase 4. Select START on any exercise card below to launch Live Workout now.
+            Run all exercises in sequence with Next, Previous, Skip, and automatic per-exercise saving when signed in.
           </p>
+        </div>
+        <div className="shrink-0">
+          <Button
+            variant="primary"
+            size="md"
+            href={`/workout?routine=1&goal=${selectedGoal}${
+              selectedFocus ? `&focus=${selectedFocus}` : ""
+            }`}
+          >
+            START FULL ROUTINE
+          </Button>
         </div>
       </Card>
 

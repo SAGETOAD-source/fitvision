@@ -397,7 +397,12 @@ describe("Account Flow: RoutinesView", () => {
     const squatStart = squatCard.querySelector('a[href="/workout?exercise=squat"]');
     expect(squatStart).toBeInTheDocument();
     expect(squatStart).toHaveTextContent("START");
-    expect(screen.getByTestId("routine-mode-slot")).toHaveTextContent(/phase 4/i);
+    const routineSlot = screen.getByTestId("routine-mode-slot");
+    const fullRoutineLink = routineSlot.querySelector(
+      'a[href="/workout?routine=1&goal=slim&focus=legs"]'
+    );
+    expect(fullRoutineLink).toBeInTheDocument();
+    expect(fullRoutineLink).toHaveTextContent(/start full routine/i);
 
     // Switch goal & focus -> triggers fresh /api/routines fetch
     fireEvent.click(screen.getByTestId("routine-goal-bulk"));

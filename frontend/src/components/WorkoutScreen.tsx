@@ -1,15 +1,41 @@
 "use client";
 
-import React, { useRef } from "react";
-import { useWorkoutEngine } from "@/hooks/useWorkoutEngine";
+import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useOptionalAuth } from "@/components/auth/AuthProvider";
+import { Button } from "@/components/ui";
+import { type BodyGoal, type FocusArea } from "@/lib/auth_contracts";
+import { type ValidExerciseKey } from "@/lib/workout_reducer";
+import {
+  createInitialWorkoutSession,
+  getCurrentRoutineItem,
+  getCurrentSetNumber,
+  getPendingSegmentsToSave,
+  workoutSessionReducer,
+  type RoutineQueueItem,
+  type SessionMode,
+  type WorkoutSegment,
+} from "@/lib/workout_session";
+import { WorkoutExerciseRunner } from "@/components/workout/WorkoutExerciseRunner";
+import {
+  DesktopExerciseTabs,
+  ExercisePickerSheet,
+  getExerciseDisplayName,
+} from "@/components/workout/ExercisePicker";
+import { WorkoutSummary } from "@/components/workout/WorkoutSummary";
 
 export interface WorkoutScreenProps {
   exerciseKey?: string;
+  mode?: SessionMode;
+  routineQueue?: RoutineQueueItem[];
+  routineGoal?: BodyGoal | null;
+  routineFocus?: FocusArea | null;
   onBack?: () => void;
+  slowLoadingTimeoutMs?: number;
 }
 
 /**
  * Determines whether feedback text represents positive form ("good") or a warning ("warning").
+ * Exported contract tested by tests/workout_screen.test.ts.
  */
 export function getFeedbackVariant(
   feedback: string | null
@@ -27,188 +53,353 @@ export function getFeedbackVariant(
   return "warning";
 }
 
+function buildWorkoutUrl(
+  mode: SessionMode,
+  activeExercise: ValidExerciseKey,
+  routineGoal: BodyGoal | null,
+  routineFocus: FocusArea | null
+): string {
+  if (mode === "routine" && routineGoal) {
+    const params = new URLSearchParams({
+      routine: "1",
+      goal: routineGoal,
+    });
+    if (routineFocus) {
+      params.set("focus", routineFocus);
+    }
+    params.set("exercise", activeExercise);
+    return `/workout?${params.toString()}`;
+  }
+  return `/workout?exercise=${activeExercise}`;
+}
+
 /**
- * Render-only WorkoutScreen. Consumes state and handlers from useWorkoutEngine.
+ * Session wrapper owning multi-exercise switching, Routine Mode progression,
+ * URL synchronization via history.replaceState, and authenticated segment saving.
+ * Mounts `<WorkoutExerciseRunner key={activeExercise} />` so useWorkoutEngine's
+ * unmount cleanup releases camera, landmarker, and wake lock on every switch.
  */
 export default function WorkoutScreen({
   exerciseKey = "squat",
+  mode = "free",
+  routineQueue = [],
+  routineGoal = null,
+  routineFocus = null,
   onBack,
+  slowLoadingTimeoutMs,
 }: WorkoutScreenProps) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const { user } = useOptionalAuth();
+  const isAuthenticated = Boolean(user);
 
-  const { state, stopWorkout, retry } = useWorkoutEngine({
-    exerciseKey,
-    videoRef,
-    canvasRef,
-  });
+  const [session, dispatch] = useReducer(
+    workoutSessionReducer,
+    {
+      mode,
+      initialExercise: exerciseKey,
+      routineQueue,
+      routineGoal,
+      routineFocus,
+    },
+    createInitialWorkoutSession
+  );
 
-  const feedbackVariant = getFeedbackVariant(state.feedback);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const latestRepsRef = useRef(0);
+  const inFlightSaveIdsRef = useRef<Set<string>>(new Set());
 
-  // 1. State: Stopped / Finished (shows final rep count and exercise name with Back button)
-  if (state.status === "stopped") {
+  // Keep latestRepsRef synced for synchronous capture prior to runner unmount
+  const handleRepsChange = useCallback((reps: number) => {
+    latestRepsRef.current = reps;
+    dispatch({ type: "REPS_UPDATE", reps });
+  }, []);
+
+  // Sync browser URL without reload or remounting this wrapper
+  const prevUrlExerciseRef = useRef<ValidExerciseKey>(session.activeExercise);
+  useEffect(() => {
+    if (prevUrlExerciseRef.current === session.activeExercise) return;
+    prevUrlExerciseRef.current = session.activeExercise;
+    if (typeof window !== "undefined" && window.history?.replaceState) {
+      const nextUrl = buildWorkoutUrl(
+        session.mode,
+        session.activeExercise,
+        session.routineGoal,
+        session.routineFocus
+      );
+      window.history.replaceState(null, "", nextUrl);
+    }
+  }, [
+    session.activeExercise,
+    session.mode,
+    session.routineGoal,
+    session.routineFocus,
+  ]);
+
+  const saveSegment = useCallback(async (segment: WorkoutSegment) => {
+    if (!segment.endedAt || segment.reps <= 0) return;
+    if (inFlightSaveIdsRef.current.has(segment.id)) return;
+
+    inFlightSaveIdsRef.current.add(segment.id);
+    dispatch({ type: "SAVE_START", segmentId: segment.id });
+
+    try {
+      const res = await fetch("/api/workouts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          exercise: segment.exercise,
+          rep_count: segment.reps,
+          started_at: segment.startedAt,
+          ended_at: segment.endedAt,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        dispatch({
+          type: "SAVE_FAIL",
+          segmentId: segment.id,
+          error: data?.detail || "Could not save workout segment.",
+        });
+        return;
+      }
+
+      const workoutId =
+        typeof data?.workout?.id === "number" ? data.workout.id : undefined;
+      dispatch({
+        type: "SAVE_OK",
+        segmentId: segment.id,
+        workoutId,
+      });
+    } catch {
+      dispatch({
+        type: "SAVE_FAIL",
+        segmentId: segment.id,
+        error: "Network error while saving workout segment.",
+      });
+    } finally {
+      inFlightSaveIdsRef.current.delete(segment.id);
+    }
+  }, []);
+
+  // Automatically save closed segments with reps > 0 when logged in
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const pending = getPendingSegmentsToSave(session);
+    for (const seg of pending) {
+      saveSegment(seg);
+    }
+  }, [isAuthenticated, session, saveSegment]);
+
+  const handleSwitchExercise = useCallback((nextExercise: ValidExerciseKey) => {
+    const capturedReps = latestRepsRef.current;
+    latestRepsRef.current = 0;
+    dispatch({
+      type: "SWITCH",
+      exercise: nextExercise,
+      finalReps: capturedReps,
+    });
+  }, []);
+
+  const handleNext = useCallback(() => {
+    const capturedReps = latestRepsRef.current;
+    latestRepsRef.current = 0;
+    dispatch({ type: "NEXT", finalReps: capturedReps });
+  }, []);
+
+  const handlePrevious = useCallback(() => {
+    const capturedReps = latestRepsRef.current;
+    latestRepsRef.current = 0;
+    dispatch({ type: "PREVIOUS", finalReps: capturedReps });
+  }, []);
+
+  const handleSkip = useCallback(() => {
+    const capturedReps = latestRepsRef.current;
+    latestRepsRef.current = 0;
+    dispatch({ type: "SKIP", finalReps: capturedReps });
+  }, []);
+
+  const handleFinishSession = useCallback((finalReps?: number) => {
+    const capturedReps =
+      finalReps !== undefined ? finalReps : latestRepsRef.current;
+    latestRepsRef.current = 0;
+    setPickerOpen(false);
+    dispatch({ type: "END", finalReps: capturedReps });
+  }, []);
+
+  const handleRetrySave = useCallback(
+    (segmentId: string) => {
+      if (!isAuthenticated) return;
+      const seg = session.segments.find((s) => s.id === segmentId);
+      if (seg && seg.saveStatus === "failed") {
+        saveSegment(seg);
+      }
+    },
+    [isAuthenticated, session.segments, saveSegment]
+  );
+
+  // Summary screen (unmounts WorkoutExerciseRunner -> releases camera immediately)
+  if (session.status === "summary") {
+    const currentReturnUrl = buildWorkoutUrl(
+      session.mode,
+      session.activeExercise,
+      session.routineGoal,
+      session.routineFocus
+    );
     return (
-      <main className="h-[100dvh] w-screen bg-black text-white flex flex-col items-center justify-center p-6 text-center select-none font-sans">
-        <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-8 shadow-2xl flex flex-col items-center">
-          <div className="w-16 h-16 rounded-full bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-3xl mb-4">
-            🏁
-          </div>
-          <h1 className="text-2xl font-black text-emerald-400 mb-1 uppercase tracking-tight">
-            Workout Stopped
-          </h1>
-          <p className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-6">
-            {state.config?.display_name || state.exerciseKey.toUpperCase()}
-          </p>
-
-          <div className="w-full bg-zinc-950 border border-zinc-800/80 rounded-2xl py-6 mb-6">
-            <div className="text-6xl font-black font-mono text-white tracking-tighter">
-              {state.repCount}
-            </div>
-            <div className="text-xs font-bold text-zinc-400 uppercase tracking-widest mt-1">
-              Final Reps
-            </div>
-          </div>
-
-          <button
-            onClick={onBack}
-            className="w-full h-14 bg-zinc-800 hover:bg-zinc-700 active:scale-95 text-white font-extrabold text-base rounded-xl border border-zinc-700 transition"
-          >
-            Back
-          </button>
-        </div>
-      </main>
+      <WorkoutSummary
+        session={session}
+        isAuthenticated={isAuthenticated}
+        returnPath={currentReturnUrl}
+        onRetrySave={handleRetrySave}
+        onStartExercise={handleSwitchExercise}
+        onBack={onBack}
+      />
     );
   }
 
-  return (
-    <div className="relative h-[100dvh] w-screen bg-black overflow-hidden select-none flex flex-col justify-between font-sans">
-      {/* Camera Viewport + Skeleton Overlay */}
-      <div className="absolute inset-0 w-full h-full">
-        <video
-          ref={videoRef}
-          playsInline
-          muted
-          autoPlay
-          className="w-full h-full object-cover scale-x-[-1]"
-        />
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-        />
-      </div>
+  const currentRoutineItem = getCurrentRoutineItem(session);
+  const currentSet = getCurrentSetNumber(session);
+  const isRoutine = session.mode === "routine" && currentRoutineItem !== null;
+  const isFirstRoutineItem = session.routineIndex <= 0;
+  const isLastRoutineItem =
+    session.routineIndex >= session.routineQueue.length - 1;
+  const activeDisplayName = getExerciseDisplayName(session.activeExercise);
 
-      {/* Top HUD: 2-meter readable rep counter & dynamic feedback */}
-      <div className="relative z-10 w-full pt-8 pb-4 px-6 flex flex-col items-center text-center pointer-events-none bg-gradient-to-b from-black/80 via-black/40 to-transparent">
-        {/* Minimal Exercise & State Pill */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900/90 border border-zinc-700/80 text-xs font-bold uppercase tracking-widest text-zinc-300 backdrop-blur-md shadow-lg mb-2">
-          <span className="text-emerald-400 font-extrabold">
-            {state.config?.display_name || state.exerciseKey.toUpperCase()}
-          </span>
-          <span className="text-zinc-500">•</span>
-          <span className="text-zinc-200">{state.confirmedState}</span>
-        </div>
-
-        {/* Huge Rep Counter (Readable from 2 meters) */}
-        <div className="text-8xl sm:text-9xl font-black font-mono tracking-tighter text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.9)] leading-none my-1">
-          {state.repCount}
-        </div>
-
-        {/* Short Feedback Line: Green for good, amber for warning */}
-        {state.feedback && (
-          <div
-            className={`mt-2 px-5 py-1.5 rounded-full text-base sm:text-lg font-black tracking-wide uppercase backdrop-blur-md transition-all duration-200 border ${
-              feedbackVariant === "good"
-                ? "bg-emerald-950/85 text-emerald-400 border-emerald-500/60 shadow-[0_0_24px_rgba(16,185,129,0.35)]"
-                : "bg-amber-950/85 text-amber-400 border-amber-500/60 shadow-[0_0_24px_rgba(245,158,11,0.35)]"
-            }`}
-          >
-            {state.feedback}
-          </div>
-        )}
-
-        {/* Live Warning State: Body Not Fully Visible */}
-        {state.status === "body_not_visible" && (
-          <div className="mt-4 px-4 py-2 rounded-xl bg-amber-950/90 border border-amber-500/70 text-amber-300 text-xs sm:text-sm font-bold shadow-2xl backdrop-blur-md animate-pulse flex items-center gap-2">
-            <span className="text-base">⚠️</span>
-            <span>Step back — ensure your full body is visible</span>
-          </div>
-        )}
-      </div>
-
-      {/* Bottom Action Bar: Big Stop Button */}
-      <div className="relative z-10 w-full pb-8 pt-4 px-6 flex justify-center bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+  const topBar = (
+    <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-3 sm:pt-4 pb-1 flex flex-col gap-2.5">
+      <div className="flex items-center justify-between gap-2">
+        {/* Back / Brand */}
         <button
-          onClick={stopWorkout}
-          className="w-full max-w-xs h-16 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-extrabold text-lg uppercase tracking-wider rounded-2xl shadow-[0_8px_30px_rgba(220,38,38,0.5)] border border-red-500 transition-all flex items-center justify-center gap-2"
+          type="button"
+          onClick={() => handleFinishSession()}
+          aria-label="Exit workout to summary"
+          className="px-3 py-2 rounded-xl bg-surface/90 backdrop-blur-md border border-border-subtle hover:border-accent text-xs font-display font-bold uppercase tracking-wider text-white inline-flex items-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer shrink-0"
         >
-          <span className="w-3.5 h-3.5 bg-white rounded-sm inline-block"></span>
-          <span>Stop Workout</span>
+          <svg
+            className="w-3.5 h-3.5 text-accent"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.2}
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M10 3.5L5.5 8L10 12.5"
+            />
+          </svg>
+          <span>Exit</span>
+        </button>
+
+        {/* Desktop Exercise Tabs */}
+        <DesktopExerciseTabs
+          activeExercise={session.activeExercise}
+          onSelect={handleSwitchExercise}
+        />
+
+        {/* Picker Sheet Trigger (mobile bottom sheet / desktop side drawer) */}
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          aria-expanded={pickerOpen}
+          data-testid="open-exercise-picker"
+          className="px-3.5 py-2 rounded-xl bg-surface/90 backdrop-blur-md border border-border-subtle hover:border-accent text-xs font-display font-bold uppercase tracking-wider text-white inline-flex items-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer shrink-0"
+        >
+          <span>Exercises</span>
+          <svg
+            className="w-3.5 h-3.5 text-accent"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.2}
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3.5 6L8 10.5L12.5 6"
+            />
+          </svg>
         </button>
       </div>
 
-      {/* State: Camera Loading */}
-      {state.status === "loading" && (
-        <div className="absolute inset-0 z-50 bg-black/95 backdrop-blur-lg flex flex-col items-center justify-center p-6 text-center text-white">
-          <div className="relative w-20 h-20 mb-6 flex items-center justify-center">
-            <div className="absolute inset-0 rounded-full border-4 border-emerald-500/20 animate-ping"></div>
-            <div className="w-16 h-16 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"></div>
+      {/* Routine Mode Progress Header */}
+      {isRoutine && currentRoutineItem && (
+        <div
+          data-testid="routine-progress-header"
+          className="w-full rounded-2xl bg-surface/90 backdrop-blur-md border border-brand px-4 py-2.5 flex flex-wrap items-center justify-between gap-2"
+        >
+          <div className="flex items-center gap-2.5">
+            <span className="px-2 py-0.5 bg-brand font-mono text-[10px] font-bold uppercase tracking-widest text-white">
+              Routine
+            </span>
+            <span className="font-mono text-xs sm:text-sm font-bold text-white">
+              Exercise {session.routineIndex + 1} of {session.routineQueue.length}, Set{" "}
+              {currentSet} of {currentRoutineItem.targetSets}
+            </span>
           </div>
-          <h2 className="text-xl font-extrabold text-emerald-400 mb-2">
-            Starting Camera & AI
-          </h2>
-          <p className="text-sm text-zinc-400 max-w-xs">
-            Loading MediaPipe Pose and {state.exerciseKey} classifier...
-          </p>
-        </div>
-      )}
-
-      {/* State: Camera Permission Denied */}
-      {state.status === "permission_denied" && (
-        <div className="absolute inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center text-white">
-          <div className="w-20 h-20 rounded-full bg-red-950/80 border border-red-500/50 flex items-center justify-center text-3xl mb-6 shadow-2xl">
-            📷🚫
-          </div>
-          <h2 className="text-2xl font-black text-red-400 mb-2">
-            Camera Access Denied
-          </h2>
-          <p className="text-sm text-zinc-300 max-w-xs mb-4">
-            FitVision processes your video 100% locally on your device. Video never leaves your phone or computer.
-          </p>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-xs text-zinc-400 text-left max-w-xs mb-6 space-y-1">
-            <p className="font-bold text-zinc-200 mb-1">To enable camera:</p>
-            <p>1. Tap the lock/tune icon in your browser address bar.</p>
-            <p>2. Allow "Camera" permission.</p>
-            <p>3. Tap "Try Again" below.</p>
-          </div>
-          <button
-            onClick={retry}
-            className="w-full max-w-xs h-14 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-black font-extrabold text-base rounded-xl shadow-lg transition"
-          >
-            Try Again
-          </button>
-        </div>
-      )}
-
-      {/* State: Error */}
-      {state.status === "error" && (
-        <div className="absolute inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center text-white">
-          <div className="w-16 h-16 rounded-full bg-amber-950/80 border border-amber-500/50 flex items-center justify-center text-2xl mb-4">
-            ⚠️
-          </div>
-          <h2 className="text-xl font-bold text-amber-400 mb-2">
-            Unable to Start Workout
-          </h2>
-          <p className="text-sm text-zinc-400 max-w-xs mb-6 font-mono">
-            {state.errorMessage}
-          </p>
-          <button
-            onClick={retry}
-            className="w-full max-w-xs h-14 bg-zinc-800 hover:bg-zinc-700 active:scale-95 text-white font-bold text-base rounded-xl border border-zinc-700 transition"
-          >
-            Retry
-          </button>
+          <span className="font-mono text-xs text-accent font-bold uppercase tracking-wider">
+            Target: {currentRoutineItem.targetSets} x {currentRoutineItem.targetReps}
+          </span>
         </div>
       )}
     </div>
+  );
+
+  return (
+    <>
+      <WorkoutExerciseRunner
+        key={session.activeExercise}
+        exerciseKey={session.activeExercise}
+        displayName={activeDisplayName}
+        onRepsChange={handleRepsChange}
+        onStopRequested={handleFinishSession}
+        slowLoadingTimeoutMs={slowLoadingTimeoutMs}
+        topBarSlot={topBar}
+        bottomControlsSlot={({ stopWorkout }) => (
+          <div className="max-w-3xl mx-auto flex flex-col gap-3">
+            {isRoutine && (
+              <div
+                data-testid="routine-controls"
+                className="flex flex-wrap items-center justify-center gap-2.5"
+              >
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={isFirstRoutineItem}
+                  onClick={handlePrevious}
+                >
+                  Previous
+                </Button>
+                <Button variant="secondary" size="sm" onClick={handleSkip}>
+                  Skip
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleNext}>
+                  {isLastRoutineItem ? "Complete Routine" : "Next Exercise"}
+                </Button>
+              </div>
+            )}
+
+            <div className="flex justify-center">
+              <Button
+                variant={isRoutine ? "secondary" : "primary"}
+                size="md"
+                onClick={stopWorkout}
+              >
+                {isRoutine ? "Finish Session" : "Stop Workout"}
+              </Button>
+            </div>
+          </div>
+        )}
+      />
+
+      <ExercisePickerSheet
+        activeExercise={session.activeExercise}
+        isOpen={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={handleSwitchExercise}
+      />
+    </>
   );
 }

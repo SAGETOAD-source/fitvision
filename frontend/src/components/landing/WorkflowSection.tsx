@@ -12,8 +12,9 @@ const WORKFLOW_STEPS: ProgressAccordionItem[] = [
     description:
       "Open FitVision on your laptop or prop your phone a few paces back so your full body remains in view. No markers, calibration grids, or specialized hardware required.",
     tag: "Laptop Webcam or Phone",
-    placeholderLabel:
-      "TODO: Approved photo of female athlete positioning device camera at full-body training distance.",
+    imageSrc: "/images/editorial/workflow-setup.png",
+    imageAlt:
+      "Female athlete standing at full-body training distance facing a laptop camera in a dark concrete studio",
   },
   {
     num: "02",
@@ -21,8 +22,9 @@ const WORKFLOW_STEPS: ProgressAccordionItem[] = [
     description:
       "Perform your workout at your normal tempo. FitVision tracks 33 anatomical keypoints and calculates joint flexion angles directly in your browser on every frame.",
     tag: "On-Device Pose Tracking",
-    placeholderLabel:
-      "TODO: Approved photo of female athlete mid-movement with clear side/front visibility.",
+    imageSrc: "/images/editorial/workflow-movement.png",
+    imageAlt:
+      "Female athlete performing a controlled parallel bodyweight squat in a dark performance studio",
   },
   {
     num: "03",
@@ -30,22 +32,23 @@ const WORKFLOW_STEPS: ProgressAccordionItem[] = [
     description:
       "Watch your repetitions register cleanly upon reaching full extension, confirm proper depth, and receive immediate corrective cues when posture needs refinement.",
     tag: "Live 2m HUD & Rep Counter",
-    placeholderLabel:
-      "TODO: Approved photo of female athlete checking rep count and form cues between sets.",
+    imageSrc: "/images/editorial/workflow-feedback.png",
+    imageAlt:
+      "Female athlete tracked with skeletal pose keypoints for instant real-time rep and form feedback",
   },
 ];
 
 export default function WorkflowSection() {
   return (
     <section
-      className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-16 sm:py-24"
+      className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-16 sm:py-24 scroll-mt-28 md:scroll-mt-32"
       id="workflow"
     >
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 sm:mb-16">
         <div className="space-y-3">
-          <SectionLabel>How It Works</SectionLabel>
+          <SectionLabel>Chapter 03 · How It Works</SectionLabel>
           <div>
-            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-white font-black uppercase tracking-tight">
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-white font-black uppercase tracking-tight fv-text-balance">
               How FitVision Works
             </h2>
             <div aria-hidden="true" className="w-14 h-1 bg-brand mt-4" />

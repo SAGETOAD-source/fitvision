@@ -100,7 +100,7 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
       aria-modal="true"
       aria-label="Site navigation menu"
       data-testid="menu-overlay"
-      className="fixed inset-0 z-50 bg-bg-base text-white flex flex-col justify-between overflow-y-auto transition-opacity duration-200 motion-reduce:transition-none"
+      className="fixed inset-0 z-50 bg-bg-base/98 backdrop-blur-md text-white flex flex-col justify-between overflow-y-auto overscroll-contain transition-opacity duration-200 motion-reduce:transition-none"
     >
       {/* Top Overlay Bar */}
       <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 h-20 flex items-center justify-between border-b border-border-subtle shrink-0">
@@ -142,16 +142,20 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
       >
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 list-none m-0 p-0">
           {OVERLAY_LINKS.map((item, index) => (
-            <li key={item.href}>
+            <li
+              key={item.href}
+              className="fv-menu-item"
+              style={{ animationDelay: `${Math.min(index * 55, 360)}ms` }}
+            >
               <Link
                 href={item.href}
                 onClick={onClose}
-                className="group flex items-baseline gap-4 py-2 border-b border-border-subtle hover:border-brand transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="group flex items-baseline gap-4 py-2 border-b border-border-subtle hover:border-brand transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
-                <span className="font-mono text-xs text-accent font-bold">
+                <span className="font-mono text-xs text-accent font-bold fv-tabular">
                   {String(index + 1).padStart(2, "0")}
                 </span>
-                <span className="font-display text-2xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight text-white group-hover:text-accent transition-colors duration-150">
+                <span className="font-display text-2xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight text-white group-hover:text-accent transition-colors duration-200">
                   {item.label}
                 </span>
               </Link>

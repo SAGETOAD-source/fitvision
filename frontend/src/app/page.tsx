@@ -3,14 +3,17 @@ import type { Metadata } from "next";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import HeroSection from "@/components/landing/HeroSection";
 import PrivacySection from "@/components/landing/PrivacySection";
+import TaglineReveal from "@/components/landing/TaglineReveal";
 import WorkflowSection from "@/components/landing/WorkflowSection";
 import ExercisesSection from "@/components/landing/ExercisesSection";
 import MotionLabSection from "@/components/landing/MotionLabSection";
 import TechPipelineSection from "@/components/landing/TechPipelineSection";
+import ReturnLoopSection from "@/components/landing/ReturnLoopSection";
 import CtaSection from "@/components/landing/CtaSection";
 import LandingFooter from "@/components/landing/LandingFooter";
 import { Marquee } from "@/components/ui/Marquee";
 import { BigScrollText } from "@/components/ui/BigScrollText";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 export const metadata: Metadata = {
   title: "FitVision — Intelligent Real-Time Athletic Vision",
@@ -35,34 +38,54 @@ export default function HomePage() {
       {/* Sticky Two-Tier Header + Full-Screen Menu Overlay */}
       <LandingNavbar />
 
-      {/* Main Viewport Container */}
-      <main className="flex-1 flex flex-col">
-        {/* 1. Cinematic Athletic Hero */}
+      {/* Main Storytelling Viewport Container */}
+      <main id="main-content" className="flex-1 flex flex-col">
+        {/* Act 1: Cinematic Athletic Hero */}
         <HeroSection />
 
-        {/* 2. Continuous Product Facts Marquee */}
+        {/* Continuous Product Facts Marquee */}
         <Marquee items={MARQUEE_FACTS} ariaLabel="FitVision product facts" />
 
-        {/* 3. Privacy-First Assurance */}
-        <PrivacySection />
+        {/* Chapter 01: Privacy-First Assurance */}
+        <ScrollReveal>
+          <PrivacySection />
+        </ScrollReveal>
 
-        {/* 4. 3-Step Workout Workflow (Progress Accordion) */}
-        <WorkflowSection />
+        {/* Chapter 02: Scroll-Lit Manifesto Reveal */}
+        <TaglineReveal />
 
-        {/* 5. Decorative Scroll-Linked Display Text */}
+        {/* Chapter 03: 3-Step Workout Workflow (Progress Accordion) */}
+        <ScrollReveal>
+          <WorkflowSection />
+        </ScrollReveal>
+
+        {/* Decorative Scroll-Linked Display Text */}
         <BigScrollText text="TRAIN SMARTER" />
 
-        {/* 6. Supported Movement Library (6 Exercises Bento Grid) */}
-        <ExercisesSection />
+        {/* Chapter 04: Supported Movement Library (6 Exercises Bento Grid) */}
+        <ScrollReveal>
+          <ExercisesSection />
+        </ScrollReveal>
 
-        {/* 7. Interactive Procedural Motion Lab (Lazy-loaded 3D Mannequin) */}
-        <MotionLabSection />
+        {/* Chapter 05: Interactive Procedural Motion Lab (Lazy-loaded 3D Mannequin) */}
+        <ScrollReveal>
+          <MotionLabSection />
+        </ScrollReveal>
 
-        {/* 8. Technology & Engine Pipeline */}
-        <TechPipelineSection />
+        {/* Chapter 06: Technology & Engine Pipeline */}
+        <ScrollReveal>
+          <TechPipelineSection />
+        </ScrollReveal>
 
-        {/* 9. Full-Width Bottom Conversion Band */}
-        <CtaSection />
+        {/* Chapter 07: The Daily Habit & Return Loop */}
+        <ScrollReveal>
+          <ReturnLoopSection />
+        </ScrollReveal>
+
+        {/* Final Act: Full-Width Bottom Conversion Band */}
+        <ScrollReveal>
+          <CtaSection />
+        </ScrollReveal>
       </main>
 
       {/* Product Footer */}

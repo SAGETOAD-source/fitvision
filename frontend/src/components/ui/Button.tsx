@@ -96,9 +96,9 @@ export function Button({
   const isDisabled = disabled || loading;
 
   const sharedInteractiveClasses = [
-    "group relative inline-flex items-stretch select-none",
+    "group relative inline-flex items-stretch select-none touch-manipulation",
     "font-display font-bold uppercase tracking-wider text-white",
-    "transition-transform duration-100 ease-out",
+    "transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]",
     "active:translate-y-[2px] motion-reduce:transition-none motion-reduce:active:translate-y-0",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base",
     isDisabled ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer",

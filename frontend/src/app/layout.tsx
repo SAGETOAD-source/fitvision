@@ -54,6 +54,12 @@ export default function RootLayout({
       className={`${inter.variable} ${montserrat.variable} ${lora.variable} ${unbounded.variable} dark`}
     >
       <body className="antialiased bg-bg-base text-white min-h-screen selection:bg-brand selection:text-white">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:px-4 focus:py-2 focus:bg-brand focus:text-white focus:font-display focus:text-xs focus:font-bold focus:uppercase focus:tracking-wider focus:border focus:border-accent"
+        >
+          Skip to main content
+        </a>
         <AuthProvider>
           <PageTransition />
           {children}

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 export default function HeroSection() {
   return (
     <section
-      className="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-16 sm:pb-24"
+      className="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-14 sm:pb-24 scroll-mt-28 md:scroll-mt-32"
       id="experience"
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
@@ -140,28 +140,28 @@ export default function HeroSection() {
                 - On mobile (<640px): stacked neatly below the 4:3 photo to avoid crowding/overlap at 390px.
                 - On sm+ (>=640px): positioned as floating overlays over the photograph.
               */}
-              <div className="p-3.5 bg-surface border-t border-border-subtle grid grid-cols-2 gap-3 sm:block sm:p-0 sm:bg-transparent sm:border-t-0 sm:absolute sm:inset-0 sm:pointer-events-none">
+              <div className="p-3.5 bg-surface border-t border-border-subtle grid grid-cols-[1.28fr_0.92fr] gap-2.5 sm:block sm:p-0 sm:bg-transparent sm:border-t-0 sm:absolute sm:inset-0 sm:pointer-events-none">
                 {/* Illustrative Knee Angle Node */}
-                <div className="bg-surface-elevated sm:bg-bg-base/85 sm:backdrop-blur-md border border-border-subtle rounded-2xl p-3 flex items-center gap-2.5 sm:gap-3 sm:absolute sm:bottom-20 sm:left-5">
-                  <div className="w-8 h-8 rounded-full border-2 border-accent flex items-center justify-center text-xs font-mono font-bold text-accent shrink-0">
+                <div className="bg-surface-elevated sm:bg-bg-base/85 sm:backdrop-blur-md border border-border-subtle rounded-2xl p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3 sm:absolute sm:bottom-20 sm:left-5">
+                  <div className="w-8 h-8 rounded-full border-2 border-accent flex items-center justify-center text-xs font-mono font-bold text-accent shrink-0 fv-tabular">
                     88°
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[10px] font-mono text-text-muted font-medium uppercase tracking-wider">
+                    <div className="text-[9px] sm:text-[10px] font-mono text-text-muted font-medium uppercase tracking-wider">
                       MOVEMENT STATE
                     </div>
-                    <div className="text-xs text-white font-bold font-mono tracking-wide truncate">
+                    <div className="text-[11px] sm:text-xs text-white font-bold font-mono tracking-wide whitespace-nowrap">
                       SQUAT · DESCENT
                     </div>
                   </div>
                 </div>
 
                 {/* Illustrative Giant 2-Meter Readable Rep Counter Card */}
-                <div className="bg-brand/95 sm:bg-brand/90 sm:backdrop-blur-md border border-accent/40 rounded-2xl px-4 py-2.5 sm:px-5 sm:py-3 text-center shadow-lg sm:absolute sm:top-16 sm:right-5">
-                  <div className="text-[10px] font-mono text-white/80 uppercase tracking-widest font-bold">
+                <div className="bg-brand/95 sm:bg-brand/90 sm:backdrop-blur-md border border-accent/40 rounded-2xl px-3 py-2.5 sm:px-5 sm:py-3 text-center shadow-lg sm:absolute sm:top-16 sm:right-5">
+                  <div className="text-[9px] sm:text-[10px] font-mono text-white/80 uppercase tracking-widest font-bold">
                     Active Set (Preview)
                   </div>
-                  <div className="font-display text-2xl sm:text-4xl text-white font-black leading-none mt-1">
+                  <div className="font-display text-2xl sm:text-4xl text-white font-black leading-none mt-1 fv-tabular">
                     12
                   </div>
                   <div className="text-[10px] font-mono text-accent font-bold mt-1">
@@ -221,6 +221,26 @@ export default function HeroSection() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Subtle Scroll Storytelling Cue (Desktop) */}
+      <div className="hidden lg:flex justify-center mt-12">
+        <a
+          href="#privacy"
+          className="inline-flex items-center gap-2.5 text-[11px] font-mono uppercase tracking-[0.18em] text-text-muted/80 hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <span>Scroll to explore</span>
+          <svg
+            className="w-3.5 h-3.5 text-accent fv-scroll-cue"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 3v10M3.5 8.5L8 13l4.5-4.5" />
+          </svg>
+        </a>
       </div>
     </section>
   );

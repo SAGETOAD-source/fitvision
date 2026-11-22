@@ -48,14 +48,14 @@ export default function MotionLabSection() {
   return (
     <section
       ref={containerRef}
-      className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-16 sm:py-24"
+      className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-16 sm:py-24 scroll-mt-28 md:scroll-mt-32"
       id="motion-lab"
     >
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 gap-6">
         <div className="space-y-3">
-          <SectionLabel>Interactive 3D Prototype</SectionLabel>
+          <SectionLabel>Chapter 05 · Interactive 3D Prototype</SectionLabel>
           <div>
-            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-white font-black uppercase tracking-tight">
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-white font-black uppercase tracking-tight fv-text-balance">
               Procedural Kinematic Mannequin
             </h2>
             <div aria-hidden="true" className="w-14 h-1 bg-brand mt-4" />

@@ -5,7 +5,7 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 export default function PrivacySection() {
   return (
     <section
-      className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-16 sm:py-20"
+      className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-16 sm:py-20 scroll-mt-28 md:scroll-mt-32"
       id="privacy"
     >
       <Card
@@ -25,7 +25,7 @@ export default function PrivacySection() {
             <SectionLabel>Privacy</SectionLabel>
 
             <div>
-              <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl text-white font-black uppercase tracking-tight leading-tight">
+              <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl text-white font-black uppercase tracking-tight leading-tight fv-text-balance">
                 Your video never leaves your device
               </h2>
               <div aria-hidden="true" className="w-14 h-1 bg-brand mt-4" />

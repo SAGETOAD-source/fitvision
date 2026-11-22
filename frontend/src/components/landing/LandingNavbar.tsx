@@ -1,18 +1,62 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { MenuOverlay } from "@/components/layout/MenuOverlay";
 import { useOptionalAuth } from "@/components/auth/AuthProvider";
 
 export default function LandingNavbar() {
+  const [pathname, setPathname] = useState("/");
   const { user, logout } = useOptionalAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const desktopMenuBtnRef = useRef<HTMLButtonElement | null>(null);
   const mobileMenuBtnRef = useRef<HTMLButtonElement | null>(null);
   const activeTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const progressBarRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const syncPath = () => setPathname(window.location.pathname || "/");
+    syncPath();
+    window.addEventListener("popstate", syncPath);
+    return () => window.removeEventListener("popstate", syncPath);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (mq?.matches) return;
+
+    let rafId = 0;
+    const updateProgress = () => {
+      rafId = 0;
+      const bar = progressBarRef.current;
+      if (!bar) return;
+      const maxScroll = Math.max(
+        1,
+        document.documentElement.scrollHeight - window.innerHeight
+      );
+      const ratio = Math.max(0, Math.min(1, window.scrollY / maxScroll));
+      bar.style.transform = `scaleX(${ratio})`;
+    };
+
+    const onScroll = () => {
+      if (!rafId) {
+        rafId = window.requestAnimationFrame(updateProgress);
+      }
+    };
+
+    updateProgress();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, [pathname]);
 
   const openMenu = (source: "desktop" | "mobile") => {
     activeTriggerRef.current =
@@ -42,7 +86,10 @@ export default function LandingNavbar() {
             <div className="flex items-center gap-6">
               <Link
                 href="/routines"
-                className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                aria-current={pathname === "/routines" ? "page" : undefined}
+                className={`transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                  pathname === "/routines" ? "text-white font-bold" : "hover:text-white"
+                }`}
               >
                 Routines
               </Link>
@@ -73,19 +120,34 @@ export default function LandingNavbar() {
                 >
                   <Link
                     href="/dashboard"
-                    className="text-accent hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    aria-current={pathname === "/dashboard" ? "page" : undefined}
+                    className={`transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                      pathname === "/dashboard"
+                        ? "text-white font-bold underline underline-offset-4 decoration-accent"
+                        : "text-accent hover:text-white"
+                    }`}
                   >
                     Dashboard
                   </Link>
                   <Link
                     href="/history"
-                    className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    aria-current={pathname === "/history" ? "page" : undefined}
+                    className={`transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                      pathname === "/history"
+                        ? "text-white font-bold underline underline-offset-4 decoration-accent"
+                        : "hover:text-white"
+                    }`}
                   >
                     History
                   </Link>
                   <Link
                     href="/profile"
-                    className="inline-flex items-center gap-1.5 text-white hover:text-accent transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent max-w-[180px] truncate"
+                    aria-current={pathname === "/profile" ? "page" : undefined}
+                    className={`inline-flex items-center gap-1.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent max-w-[180px] truncate ${
+                      pathname === "/profile"
+                        ? "text-accent font-bold"
+                        : "text-white hover:text-accent"
+                    }`}
                     title={user.email}
                   >
                     <svg
@@ -252,6 +314,18 @@ export default function LandingNavbar() {
               </span>
             </button>
           </div>
+        </div>
+        {/* Reading-progress hairline along sticky header edge */}
+        <div
+          aria-hidden="true"
+          className="h-[2px] w-full bg-transparent overflow-hidden motion-reduce:hidden"
+        >
+          <div
+            ref={progressBarRef}
+            data-testid="navbar-scroll-progress"
+            className="h-full w-full bg-gradient-to-r from-brand via-accent to-accent origin-left will-change-transform"
+            style={{ transform: "scaleX(0)" }}
+          />
         </div>
       </header>
 

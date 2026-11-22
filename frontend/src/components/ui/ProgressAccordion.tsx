@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useReducer, useRef, useCallback, useState } from "react";
+import Image from "next/image";
 
 export interface AccordionState {
   openIndex: number;
@@ -85,7 +86,9 @@ export interface ProgressAccordionItem {
   title: string;
   description: string;
   tag: string;
-  placeholderLabel: string;
+  imageSrc?: string;
+  imageAlt?: string;
+  placeholderLabel?: string;
 }
 
 export interface ProgressAccordionProps {
@@ -220,7 +223,7 @@ export function ProgressAccordion({
         }
       }}
     >
-      {/* Left: Angled / skewed placeholder visual with slanted burgundy accent bar */}
+      {/* Left: Angled / skewed editorial visual with slanted burgundy accent bar */}
       <div className="lg:col-span-5 px-2 sm:px-4">
         <div
           className="relative aspect-[4/3] w-full overflow-hidden"
@@ -233,37 +236,65 @@ export function ProgressAccordion({
           />
           {/* Angled/skewed crop container */}
           <div
-            className="relative w-full h-full bg-gradient-to-br from-surface-elevated via-surface to-bg-base border border-border-subtle flex flex-col justify-between p-6 sm:p-8 pl-10 sm:pl-12"
+            className="relative w-full h-full bg-surface border border-border-subtle flex flex-col justify-between p-6 sm:p-8 pl-10 sm:pl-12 overflow-hidden"
             style={{
               clipPath: "polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)",
             }}
           >
-            {/* Subtle burgundy ambient corner glow */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -right-12 -top-12 w-48 h-48 rounded-full bg-brand/25 blur-3xl"
-            />
+            {items.some((it) => Boolean(it.imageSrc)) ? (
+              <>
+                {items.map((item, idx) =>
+                  item.imageSrc ? (
+                    <Image
+                      key={item.num}
+                      src={item.imageSrc}
+                      alt={item.imageAlt || item.title}
+                      fill
+                      loading="eager"
+                      sizes="(max-width: 1024px) 100vw, 42vw"
+                      aria-hidden={idx !== state.openIndex}
+                      className={`object-cover object-center transition-opacity duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+                        idx === state.openIndex
+                          ? "opacity-100"
+                          : "opacity-0 pointer-events-none"
+                      }`}
+                    />
+                  ) : null
+                )}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-bg-base/90 via-bg-base/30 to-bg-base/55"
+                />
+              </>
+            ) : (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -right-12 -top-12 w-48 h-48 rounded-full bg-brand/25 blur-3xl"
+              />
+            )}
+
             <div className="relative z-10 flex items-center justify-between gap-2">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-widest text-accent">
+              <span className="px-2.5 py-1 bg-bg-base/80 backdrop-blur-sm border border-border-subtle font-mono text-[11px] font-bold uppercase tracking-widest text-accent fv-tabular">
                 STEP {activeItem.num}
               </span>
-              <span className="px-2.5 py-1 bg-bg-base/80 border border-border-subtle font-mono text-[10px] uppercase tracking-wider text-text-muted">
-                TODO: PHOTO
-              </span>
             </div>
 
-            <div className="relative z-10 my-auto py-4">
-              <div className="font-display text-5xl sm:text-6xl font-black text-white/10 select-none leading-none mb-2">
-                {activeItem.num}
+            {!activeItem.imageSrc && (
+              <div className="relative z-10 my-auto py-4">
+                <div className="font-display text-5xl sm:text-6xl font-black text-white/10 select-none leading-none mb-2 fv-tabular">
+                  {activeItem.num}
+                </div>
+                {activeItem.placeholderLabel && (
+                  <p className="font-mono text-xs uppercase tracking-wider text-text-muted leading-relaxed max-w-xs">
+                    {activeItem.placeholderLabel}
+                  </p>
+                )}
               </div>
-              <p className="font-mono text-xs uppercase tracking-wider text-text-muted leading-relaxed max-w-xs">
-                {activeItem.placeholderLabel}
-              </p>
-            </div>
+            )}
 
-            <div className="relative z-10 pt-3 border-t border-border-subtle flex items-center justify-between text-[11px] font-mono text-white">
-              <span>{activeItem.tag}</span>
-              <span className="text-accent uppercase tracking-widest">WOMEN-ONLY ASSET SLOT</span>
+            <div className="relative z-10 pt-3 border-t border-white/15 flex items-center justify-between gap-3 text-[11px] font-mono text-white">
+              <span className="font-semibold uppercase tracking-wider">{activeItem.title}</span>
+              <span className="text-accent uppercase tracking-widest shrink-0">{activeItem.tag}</span>
             </div>
           </div>
         </div>

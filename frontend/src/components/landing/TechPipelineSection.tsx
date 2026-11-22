@@ -38,7 +38,7 @@ export default function TechPipelineSection() {
 
   return (
     <section
-      className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-16 sm:py-24"
+      className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-16 sm:py-24 scroll-mt-28 md:scroll-mt-32"
       id="architecture"
     >
       <Card
@@ -47,9 +47,9 @@ export default function TechPipelineSection() {
         className="p-6 sm:p-10 lg:p-12"
       >
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14 space-y-3">
-          <SectionLabel>System Architecture</SectionLabel>
+          <SectionLabel>Chapter 06 · System Architecture</SectionLabel>
           <div>
-            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-white font-black uppercase tracking-tight">
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl text-white font-black uppercase tracking-tight fv-text-balance">
               The FitVision Pipeline
             </h2>
             <div aria-hidden="true" className="w-14 h-1 bg-brand mx-auto mt-4" />
@@ -60,7 +60,7 @@ export default function TechPipelineSection() {
         </div>
 
         {/* 5-Stage Architecture Pipeline Cards */}
-        <div className="flex flex-col lg:flex-row items-stretch justify-between gap-3 lg:gap-2 w-full">
+        <div className="flex flex-col lg:flex-row items-stretch justify-between gap-3 lg:gap-2.5 w-full">
           {pipeline.map((stage, idx) => {
             const isFinal = idx === pipeline.length - 1;
             return (
@@ -68,20 +68,20 @@ export default function TechPipelineSection() {
                 <Card
                   variant={isFinal ? "default" : "elevated"}
                   padding="sm"
-                  className={`rounded-2xl text-center flex-1 min-w-[150px] w-full lg:w-auto flex flex-col justify-center ${
+                  className={`rounded-2xl text-center flex-1 min-w-0 w-full lg:w-auto flex flex-col justify-center ${
                     isFinal
                       ? "bg-brand border-accent/40 text-white shadow-lg"
                       : "text-white"
                   }`}
                 >
                   <div
-                    className={`text-[11px] font-mono mb-1 ${
+                    className={`text-[11px] font-mono mb-1 fv-tabular ${
                       isFinal ? "text-white/80" : "text-text-muted/70"
                     }`}
                   >
                     {stage.num}
                   </div>
-                  <div className="font-display text-sm sm:text-base font-bold uppercase tracking-tight text-white mb-0.5">
+                  <div className="font-display text-sm font-bold uppercase tracking-tight text-white mb-0.5 fv-text-balance">
                     {stage.title}
                   </div>
                   <div className="text-[10px] font-mono mb-2 text-accent font-semibold">

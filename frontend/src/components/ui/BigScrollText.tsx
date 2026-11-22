@@ -70,7 +70,7 @@ export function BigScrollText({
         className="flex justify-center will-change-transform motion-reduce:transform-none"
         style={{ transform: `translate3d(${offsetPx}px, 0, 0)` }}
       >
-        <span className="font-display font-black uppercase whitespace-nowrap tracking-tighter text-5xl sm:text-8xl lg:text-[136px] leading-none text-white/[0.08]">
+        <span className="font-display font-black uppercase whitespace-nowrap tracking-tighter text-5xl sm:text-8xl lg:text-[136px] leading-none fv-outline-display">
           {text}
         </span>
       </div>

@@ -28,3 +28,6 @@ export type {
 
 export { BigScrollText } from "./BigScrollText";
 export type { BigScrollTextProps } from "./BigScrollText";
+
+export { ScrollReveal } from "./ScrollReveal";
+export type { ScrollRevealProps } from "./ScrollReveal";

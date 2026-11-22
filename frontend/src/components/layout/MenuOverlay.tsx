@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { useOptionalAuth } from "@/components/auth/AuthProvider";
 
 export interface MenuOverlayProps {
   isOpen: boolean;
@@ -26,9 +27,11 @@ const FOCUSABLE_SELECTOR =
  * Full-viewport black navigation overlay opened by the circular header Menu button.
  * - Escape key closes and restores focus to trigger.
  * - Traps keyboard focus while open and focuses the close button on mount.
- * - Carries all site links plus a reserved Account (Login / Sign up) slot for Phase 3.
+ * - Shows Login / Sign up when logged out, or Routines / Onboarding / Log out when logged in.
  */
 export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
+  const { user, logout } = useOptionalAuth();
+  const [loggingOut, setLoggingOut] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -38,7 +41,6 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    // Initial focus inside overlay
     closeButtonRef.current?.focus();
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -75,6 +77,19 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
   }, [isOpen, onClose, triggerRef]);
 
   if (!isOpen) return null;
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logout();
+      onClose();
+      if (typeof window !== "undefined") {
+        window.location.assign("/");
+      }
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   return (
     <div
@@ -143,7 +158,7 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
           ))}
         </ul>
 
-        <div className="mt-10 flex flex-wrap items-center gap-6">
+        <div className="mt-10 flex flex-wrap items-center gap-4">
           <Button
             variant="primary"
             size="lg"
@@ -152,31 +167,100 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
           >
             Start Training
           </Button>
+          {user && (
+            <Button
+              variant="secondary"
+              size="lg"
+              href="/routines"
+              onClick={onClose}
+            >
+              My Routine
+            </Button>
+          )}
         </div>
       </nav>
 
-      {/* Bottom Reserved Account Slot (wired in Phase 3) */}
+      {/* Bottom Account Section */}
       <div
         data-testid="menu-account-slot"
         className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 border-t border-border-subtle flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0"
       >
-        <div className="flex items-center gap-3 text-xs font-mono uppercase tracking-wider text-text-muted">
-          <svg
-            className="w-4 h-4 text-accent shrink-0"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-            />
-          </svg>
-          <span>Account (Log in / Sign up — Phase 3)</span>
-        </div>
+        {user ? (
+          <div className="flex flex-wrap items-center gap-4 text-xs font-mono uppercase tracking-wider">
+            <span className="inline-flex items-center gap-2 text-white normal-case tracking-normal">
+              <svg
+                className="w-4 h-4 text-accent shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+              <span>{user.email}</span>
+            </span>
+            <Link
+              href="/routines"
+              onClick={onClose}
+              className="text-accent hover:text-white underline underline-offset-4 decoration-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              My Routine
+            </Link>
+            <Link
+              href="/onboarding"
+              onClick={onClose}
+              className="text-text-muted hover:text-white underline underline-offset-4 decoration-border-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              Training Setup
+            </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              data-testid="menu-logout-button"
+              className="text-text-muted hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer disabled:opacity-50"
+            >
+              Log out
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-5 text-xs font-mono uppercase tracking-wider">
+            <Link
+              href="/login"
+              onClick={onClose}
+              className="inline-flex items-center gap-2 text-white hover:text-accent underline underline-offset-4 decoration-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <svg
+                className="w-4 h-4 text-accent shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+              <span>Log in</span>
+            </Link>
+            <Link
+              href="/signup"
+              onClick={onClose}
+              className="text-accent hover:text-white underline underline-offset-4 decoration-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              Sign up
+            </Link>
+          </div>
+        )}
+
         <span className="text-xs font-mono text-white/50">
           On-device vision processing. No video frames transmitted.
         </span>

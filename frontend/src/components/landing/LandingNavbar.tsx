@@ -4,9 +4,12 @@ import React, { useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { MenuOverlay } from "@/components/layout/MenuOverlay";
+import { useOptionalAuth } from "@/components/auth/AuthProvider";
 
 export default function LandingNavbar() {
+  const { user, logout } = useOptionalAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const desktopMenuBtnRef = useRef<HTMLButtonElement | null>(null);
   const mobileMenuBtnRef = useRef<HTMLButtonElement | null>(null);
   const activeTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -15,6 +18,18 @@ export default function LandingNavbar() {
     activeTriggerRef.current =
       source === "desktop" ? desktopMenuBtnRef.current : mobileMenuBtnRef.current;
     setMenuOpen(true);
+  };
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logout();
+      if (typeof window !== "undefined") {
+        window.location.assign("/");
+      }
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   return (
@@ -26,47 +41,102 @@ export default function LandingNavbar() {
             <span className="text-white/60">On-Device Pose Tracking</span>
             <div className="flex items-center gap-6">
               <a
-                href="#motion-lab"
+                href="/#motion-lab"
                 className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 Motion Lab
               </a>
               <a
-                href="#architecture"
+                href="/#architecture"
                 className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 Architecture
               </a>
               <a
-                href="#privacy"
+                href="/#privacy"
                 className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 Privacy
               </a>
               <span aria-hidden="true" className="h-3 w-px bg-border-subtle" />
-              <button
-                type="button"
-                onClick={() => openMenu("desktop")}
-                data-testid="navbar-account-slot"
-                className="inline-flex items-center gap-1.5 text-white/80 hover:text-accent transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
-                aria-label="Account options in menu"
-              >
-                <svg
-                  className="w-3.5 h-3.5 text-accent"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  aria-hidden="true"
+
+              {user ? (
+                <div
+                  data-testid="navbar-account-slot"
+                  className="flex items-center gap-4"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-                <span>Account</span>
-              </button>
+                  <Link
+                    href="/routines"
+                    className="inline-flex items-center gap-1.5 text-white hover:text-accent transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent max-w-[200px] truncate"
+                    title={user.email}
+                  >
+                    <svg
+                      className="w-3.5 h-3.5 text-accent shrink-0"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    <span className="truncate normal-case tracking-normal">
+                      {user.email}
+                    </span>
+                  </Link>
+                  <Link
+                    href="/routines"
+                    className="text-accent hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    Routines
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                    data-testid="navbar-logout-button"
+                    className="text-text-muted hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer disabled:opacity-50"
+                  >
+                    Log out
+                  </button>
+                </div>
+              ) : (
+                <div
+                  data-testid="navbar-account-slot"
+                  className="flex items-center gap-4"
+                >
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center gap-1.5 text-white/85 hover:text-accent transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    <svg
+                      className="w-3.5 h-3.5 text-accent shrink-0"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    <span>Log in</span>
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="text-accent hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    Sign up
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -90,19 +160,19 @@ export default function LandingNavbar() {
             aria-label="Main Navigation"
           >
             <a
-              href="#experience"
+              href="/#experience"
               className="hover:text-white transition-colors duration-150 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Experience
             </a>
             <a
-              href="#workflow"
+              href="/#workflow"
               className="hover:text-white transition-colors duration-150 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Workflow
             </a>
             <a
-              href="#exercises"
+              href="/#exercises"
               className="hover:text-white transition-colors duration-150 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Exercises

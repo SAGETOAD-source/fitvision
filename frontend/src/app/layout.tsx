@@ -1,6 +1,7 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Inter, Montserrat, Lora, Unbounded } from "next/font/google";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -51,12 +52,9 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${montserrat.variable} ${lora.variable} ${unbounded.variable} dark`}
     >
-      <body className="antialiased bg-black text-white min-h-screen selection:bg-[#6D001A] selection:text-white">
-        {children}
+      <body className="antialiased bg-bg-base text-white min-h-screen selection:bg-brand selection:text-white">
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
 }
-
-
-

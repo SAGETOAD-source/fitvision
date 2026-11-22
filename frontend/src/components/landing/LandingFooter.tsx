@@ -1,8 +1,14 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { useOptionalAuth } from "@/components/auth/AuthProvider";
 
 export default function LandingFooter() {
+  const { user } = useOptionalAuth();
+  const accountHref = user ? "/routines" : "/login";
+
   return (
     <footer className="bg-surface border-t border-border-subtle pt-14 pb-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -32,7 +38,7 @@ export default function LandingFooter() {
             <ul className="space-y-2.5 text-xs font-mono text-text-muted list-none m-0 p-0">
               <li>
                 <a
-                  href="#experience"
+                  href="/#experience"
                   className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   Experience
@@ -40,7 +46,7 @@ export default function LandingFooter() {
               </li>
               <li>
                 <a
-                  href="#workflow"
+                  href="/#workflow"
                   className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   Workflow
@@ -48,7 +54,7 @@ export default function LandingFooter() {
               </li>
               <li>
                 <a
-                  href="#exercises"
+                  href="/#exercises"
                   className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   Exercises
@@ -73,7 +79,7 @@ export default function LandingFooter() {
             <ul className="space-y-2.5 text-xs font-mono text-text-muted list-none m-0 p-0">
               <li>
                 <a
-                  href="#architecture"
+                  href="/#architecture"
                   className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   Architecture
@@ -81,7 +87,7 @@ export default function LandingFooter() {
               </li>
               <li>
                 <a
-                  href="#privacy"
+                  href="/#privacy"
                   className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   Privacy Architecture
@@ -98,20 +104,19 @@ export default function LandingFooter() {
             </ul>
           </div>
 
-          {/* Right: Signature Primary CTA + Underlined "My account" link (Phase 3 slot) */}
+          {/* Right: Signature Primary CTA + Underlined "My account" link */}
           <div className="md:col-span-4 flex flex-col items-start md:items-end justify-between gap-5">
             <Button variant="primary" size="md" href="/workout?exercise=squat">
               START TRAINING
             </Button>
 
-            <a
-              href="#top"
+            <Link
+              href={accountHref}
               data-testid="footer-account-slot"
-              title="Account screens arrive in Phase 3"
               className="text-xs font-mono uppercase tracking-wider text-text-muted hover:text-white underline underline-offset-4 decoration-brand hover:decoration-accent transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               My account
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -121,13 +126,13 @@ export default function LandingFooter() {
 
           <div className="flex flex-wrap items-center gap-6">
             <a
-              href="#privacy"
+              href="/#privacy"
               className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Privacy Policy
             </a>
             <a
-              href="#architecture"
+              href="/#architecture"
               className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               On-Device Guarantee

@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Inter, Montserrat, Lora, Unbounded } from "next/font/google";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { PageTransition } from "@/components/layout/PageTransition";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -53,7 +54,10 @@ export default function RootLayout({
       className={`${inter.variable} ${montserrat.variable} ${lora.variable} ${unbounded.variable} dark`}
     >
       <body className="antialiased bg-bg-base text-white min-h-screen selection:bg-brand selection:text-white">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <PageTransition />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

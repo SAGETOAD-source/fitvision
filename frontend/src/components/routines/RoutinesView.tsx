@@ -58,21 +58,24 @@ function getExerciseCue(entry: SnapshotExerciseEntry): string {
   return `Min range >= ${entry.min_valid_range}°`;
 }
 
+/**
+ * Public Recommendation Hub (/routines):
+ * - Open to guests and signed-in users (GET /v1/routines is public).
+ * - Guests browse all goal x focus recommendations and start immediately.
+ * - Signed-in users get their saved profile pre-loaded and can save updates.
+ */
 export function RoutinesView() {
   const router = useRouter();
   const {
     user,
     profile,
     isLoading: authLoading,
-    error: authError,
-    sessionExpired,
     updateProfile,
-    refresh,
   } = useAuth();
 
   const [selectedGoal, setSelectedGoal] = useState<BodyGoal>("muscular");
   const [selectedFocus, setSelectedFocus] = useState<FocusOptionValue>(null);
-  const [initializedFromProfile, setInitializedFromProfile] = useState(false);
+  const [initializedSelection, setInitializedSelection] = useState(false);
 
   const [routine, setRoutine] = useState<RoutineResponse | null>(null);
   const [routineLoading, setRoutineLoading] = useState(true);
@@ -81,23 +84,13 @@ export function RoutinesView() {
   const [savingDefault, setSavingDefault] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
-  // Sync initial selection from the user's saved profile once auth finishes loading
+  // Sync initial selection once auth settles (pre-fill from profile if logged in; default for guests)
   useEffect(() => {
-    if (authLoading) return;
-    if (authError && !user) return;
-    if (!initializedFromProfile) {
-      setSelectedGoal(profile?.body_goal ?? "muscular");
-      setSelectedFocus(profile?.focus_area ?? null);
-      setInitializedFromProfile(true);
-    }
-  }, [authLoading, authError, user, profile, initializedFromProfile]);
-
-  // Redirect ONLY on confirmed 401 session expiry
-  useEffect(() => {
-    if (sessionExpired) {
-      router.replace("/login?next=%2Froutines");
-    }
-  }, [sessionExpired, router]);
+    if (authLoading || initializedSelection) return;
+    setSelectedGoal(profile?.body_goal ?? "muscular");
+    setSelectedFocus(profile?.focus_area ?? null);
+    setInitializedSelection(true);
+  }, [authLoading, profile, initializedSelection]);
 
   const fetchRoutine = useCallback(
     async (goal: BodyGoal, focus: FocusOptionValue) => {
@@ -133,11 +126,14 @@ export function RoutinesView() {
   );
 
   useEffect(() => {
-    if (!initializedFromProfile || (authError && !user)) return;
+    if (!initializedSelection) return;
     fetchRoutine(selectedGoal, selectedFocus);
-  }, [initializedFromProfile, authError, user, selectedGoal, selectedFocus, fetchRoutine]);
+  }, [initializedSelection, selectedGoal, selectedFocus, fetchRoutine]);
+
+  const isAuthenticated = Boolean(user);
 
   const hasUnsavedPreferenceChange =
+    isAuthenticated &&
     profile !== null &&
     (profile.body_goal !== selectedGoal ||
       profile.focus_area !== selectedFocus);
@@ -165,28 +161,7 @@ export function RoutinesView() {
   if (authLoading) {
     return (
       <section className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-24 flex justify-center">
-        <LoadingSpinner label="Loading your recommended routine..." showLabel />
-      </section>
-    );
-  }
-
-  if (authError && !user) {
-    return (
-      <section className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-16">
-        <div className="max-w-xl mx-auto">
-          <Card variant="default" padding="lg" className="space-y-5">
-            <SectionLabel>Connection Error</SectionLabel>
-            <h1 className="font-display text-2xl sm:text-3xl font-black uppercase tracking-tight text-white">
-              Server Unavailable
-            </h1>
-            <p role="alert" className="text-sm text-text-muted font-sans">
-              {authError}
-            </p>
-            <Button variant="primary" size="md" onClick={() => refresh()}>
-              Retry
-            </Button>
-          </Card>
-        </div>
+        <LoadingSpinner label="Loading workout recommendations..." showLabel />
       </section>
     );
   }
@@ -199,7 +174,9 @@ export function RoutinesView() {
       {/* Top Heading */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-3">
-          <SectionLabel>Personalized Plan</SectionLabel>
+          <SectionLabel>
+            {isAuthenticated ? "Personalized Plan" : "Workout Recommendations"}
+          </SectionLabel>
           <div>
             <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight text-white">
               Recommended Routine
@@ -207,19 +184,51 @@ export function RoutinesView() {
             <div aria-hidden="true" className="w-14 h-1 bg-brand mt-4" />
           </div>
           <p className="text-sm sm:text-base text-text-muted font-sans max-w-2xl leading-relaxed">
-            Rules-based sets and repetitions generated from your training goal and focus area using FitVision&apos;s 6 tracked exercises.
+            Pick your training goal and focus area to view recommended sets and repetitions across FitVision&apos;s 6 tracked exercises, then start right away.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Button variant="ghost" size="sm" href="/onboarding">
-            Edit in Wizard
-          </Button>
-        </div>
+        {isAuthenticated && (
+          <div className="flex flex-wrap items-center gap-4">
+            <Button variant="ghost" size="sm" href="/dashboard">
+              Dashboard
+            </Button>
+            <Button variant="ghost" size="sm" href="/onboarding">
+              Edit in Wizard
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Prompt if onboarding not completed yet */}
-      {profile && !profile.onboarding_completed && (
+      {/* Guest Banner (non-blocking — full routine browsing & live workout available immediately) */}
+      {!isAuthenticated && (
+        <Card
+          variant="elevated"
+          padding="md"
+          data-testid="routines-guest-banner"
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-border-subtle"
+        >
+          <div className="space-y-1">
+            <div className="font-mono text-[11px] font-bold uppercase tracking-widest text-accent">
+              Open Preview Mode
+            </div>
+            <p className="text-xs sm:text-sm text-text-muted font-sans leading-relaxed">
+              Start any exercise or full routine right now without an account. Sign in to save your default goal and log completed reps.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <Button variant="secondary" size="sm" href="/login?next=%2Froutines">
+              Log In
+            </Button>
+            <Button variant="ghost" size="sm" href="/signup">
+              Sign Up
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {/* Signed-in prompt if onboarding not completed yet */}
+      {isAuthenticated && profile && !profile.onboarding_completed && (
         <Card
           variant="elevated"
           padding="md"

@@ -45,10 +45,10 @@ describe('Landing Page: HeroSection', () => {
     expect(html).toContain('animate-pulse');
   });
 
-  it('contains primary workout CTA linking to /workout?exercise=squat', () => {
+  it('contains primary training CTA linking to /routines recommendation hub', () => {
     const html = renderToString(React.createElement(HeroSection));
 
-    expect(html).toContain('/workout?exercise=squat');
+    expect(html).toContain('/routines');
     expect(html).toContain('START TRAINING');
   });
 
@@ -231,11 +231,11 @@ describe('Landing Page: MotionLabSection & StaticFallback', () => {
 });
 
 describe('Landing Page: CtaSection & LandingFooter', () => {
-  it('renders high-contrast bottom conversion CTA linking to /workout?exercise=squat', () => {
+  it('renders high-contrast bottom conversion CTA linking to /routines recommendation hub', () => {
     const html = renderToString(React.createElement(CtaSection));
 
     expect(html).toContain('Ready to Train in Private?');
-    expect(html).toContain('/workout?exercise=squat');
+    expect(html).toContain('/routines');
     expect(html).toContain('START TRAINING');
   });
 
@@ -254,7 +254,7 @@ describe('Landing Page: CtaSection & LandingFooter', () => {
 });
 
 describe('Landing Page: LandingNavbar', () => {
-  it('renders brand mark, navigation links, and start workout button', () => {
+  it('renders brand mark, navigation links, and start training button', () => {
     const html = renderToString(React.createElement(LandingNavbar));
 
     expect(html).toContain('FITVISION');
@@ -265,7 +265,7 @@ describe('Landing Page: LandingNavbar', () => {
     expect(html).toContain('#motion-lab');
     expect(html).toContain('#architecture');
     expect(html).toContain('#privacy');
-    expect(html).toContain('/workout?exercise=squat');
+    expect(html).toContain('/routines');
   });
 });
 

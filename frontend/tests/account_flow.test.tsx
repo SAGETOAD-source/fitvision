@@ -417,8 +417,8 @@ describe("Account Flow: RoutinesView", () => {
   });
 });
 
-describe("Account Flow: Shell Auth Links (no broken /dashboard, /history, /profile links)", () => {
-  it("shows Login/Sign up when logged out and account email/Routines/Log out when logged in, with no unbuilt route links", async () => {
+describe("Account Flow: Shell Auth Links (Dashboard, History, Profile, Routines)", () => {
+  it("shows Dashboard, History, Profile, and Log out when logged in and points My account to /dashboard", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockImplementation((url: string) => {
@@ -453,16 +453,16 @@ describe("Account Flow: Shell Auth Links (no broken /dashboard, /history, /profi
     expect(screen.getByTestId("navbar-logout-button")).toBeInTheDocument();
     expect(screen.getByTestId("footer-account-slot")).toHaveAttribute(
       "href",
-      "/routines"
+      "/dashboard"
     );
 
-    // Open MenuOverlay and check no links to unbuilt pages
+    // Open MenuOverlay and confirm real links exist for all Phase 5 routes
     fireEvent.click(screen.getByTestId("navbar-menu-button-desktop"));
     const allHrefs = Array.from(container.querySelectorAll("a")).map((a) =>
       a.getAttribute("href")
     );
-    for (const forbidden of ["/dashboard", "/history", "/profile"]) {
-      expect(allHrefs).not.toContain(forbidden);
+    for (const expected of ["/dashboard", "/history", "/profile", "/routines"]) {
+      expect(allHrefs).toContain(expected);
     }
   });
 });

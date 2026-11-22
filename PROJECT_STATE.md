@@ -3,7 +3,7 @@
 > Every AI agent: read this first. Update it at the end of every session (see AGENTS.md section 9).
 > Progress percentages are rough estimates, not measurements. Update honestly.
 
-**Last updated:** 2026-11-22 | **Session #:** 28
+**Last updated:** 2026-11-22 | **Session #:** 29
 **Updated by:** Antigravity (Gemini 4 Argon) — feat/site-complete branch
 **Repo:** https://github.com/SAGETOAD-source/fitvision (branch `main`)
 **Owner:** Krishnendu | **Dev environment:** Windows, Antigravity IDE
@@ -85,9 +85,9 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 | Backend production hardening | ~70% | Uniform RequestValidationError handling without NaN/inf crash; email normalization; DB secrets masked; single worker Dockerfile; production startup guard (default JWT secret / CORS `*`); handler-level request_id log filter. |
 | Database | ~80% | Dual SQLite & Neon PostgreSQL supported; psycopg[binary]==3.3.7, Alembic migrations (0001 initial, 0002 TIMESTAMPTZ), connection pooling with pre-ping/recycle. |
 | Auth | ~85% | Core works; email normalization, duplicate-signup race -> 409, 72-byte password limit, 5/min rate limit on signup/login done; token strategy, login timing leak, proxy-aware rate-limit key pending. |
-| Frontend | ~35% | Production Landing Page at `/` (athletic hero, privacy guarantee, 3-step workflow, 6 verified exercise links, lazy-loaded Motion Lab integration with athletic female procedural mannequin & 2D fallback, 5-stage architecture pipeline, CTAs to `/workout?exercise=squat`), M0 Parity Prototype, live workout screen (/workout); 79 Vitest tests passing. |
+| Frontend | ~90% | Complete Next.js 14 site on `feat/site-complete`: Landing `/`, public `/routines` recommendation hub, HttpOnly-cookie BFF auth (`/login`, `/signup`, `/onboarding`), live `/workout` runner (6 exercises, Routine Mode, `/api/workouts` saving), `/dashboard`, `/history`, `/profile`, `/motion-lab`, non-blocking `PageTransition`; 184 Vitest tests passing. |
 | Deployment / CI | ~20% | Dockerfile packages app, alembic.ini, and migrations; Neon Postgres connected. |
-| **Overall** | **~65%** | Rough guess. |
+| **Overall** | **~82%** | Rough guess. |
 
 ---
 
@@ -183,10 +183,16 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
   - Added BFF workout handlers `frontend/src/app/api/workouts/route.ts` (`POST` and `GET` proxying `/v1/workouts` with HttpOnly cookie, 415 non-JSON, 403 Origin check, 401 cookie clear, schema validation).
   - Refactored `WorkoutScreen.tsx` into a session wrapper mounting inner `WorkoutExerciseRunner.tsx` with `key={activeExercise}` (zero edits to protected `useWorkoutEngine.ts`), adding `ExercisePicker.tsx` (desktop tabs + slide-over / mobile bottom sheet), Routine Mode progress header & Next/Previous/Skip/Finish controls, 10s slow-camera hint + `retry()`, `window.history.replaceState` URL sync (`?exercise=` & `?routine=1&goal=&focus=`), and `WorkoutSummary.tsx` (per-exercise reps, duration, save status + Retry for logged-in users; honest not-saved notice + Log In/Sign Up `?next=` for guests).
   - Updated `frontend/src/app/workout/page.tsx` and upgraded `RoutinesView.tsx` with `START FULL ROUTINE` linking to `/workout?routine=1&goal=...&focus=...`; updated the single Phase 3 placeholder test assertion in `frontend/tests/account_flow.test.tsx` and added 10 new tests in `frontend/tests/workout_session.test.ts` (6) and `frontend/tests/workout_runner.test.tsx` (4) (176 Vitest tests across 15 files passing; `tsc` & `next build` exit 0).
+- [x] Public Recommendation Hub + Account Pages & Page Transition Step 5 (session 29):
+  - Opened `/routines` as a public recommendation hub (removed `/routines` from `middleware.ts`, added non-blocking guest preview banner in `RoutinesView.tsx`, pointed landing/header/CTA/menu/footer `START TRAINING` CTAs to `/routines` while preserving all 6 direct `/workout?exercise=<key>` cards and `Live Workout` link).
+  - Added BFF `GET /api/stats` (`frontend/src/app/api/stats/route.ts`) and stats/workout types in `frontend/src/lib/auth_contracts.ts`.
+  - Built `/dashboard` (`DashboardView.tsx`: 4 KPI cards, pure CSS 7-day UTC bar chart, 6-exercise rep breakdown via `exercises_snapshot.json`, prescribed circuit preview, recent workouts), `/history` (`HistoryView.tsx`: paginated `/api/workouts`, exercise filters, empty state), and `/profile` (`ProfileView.tsx`: account identity, live `PUT /api/profile` goal/focus editor, log out), wired into logged-in `LandingNavbar`, `MenuOverlay`, and `LandingFooter` ("My account" -> `/dashboard`).
+  - Added non-blocking rounded burgundy+black `PageTransition.tsx` (`globals.css` `@keyframes fv-page-sweep`, mounted in `layout.tsx`), strictly skipped under `prefers-reduced-motion` and bypassed on entering or leaving `/workout`.
+  - Added 8 new tests in `frontend/tests/phase5_pages.test.tsx` and updated CTA/middleware/nav assertions in `landing_page.test.ts`, `api_bff_routes.test.ts`, and `account_flow.test.tsx` (184 Vitest tests across 16 files passing; `tsc` & `next build` exit 0).
 
 ## 5. In progress
 
-- [ ] Awaiting user review of Step 4 (Workout Runner) before planning Step 5 (dashboard, history, profile, page transition).
+- [ ] Site core flows (Landing, Public `/routines`, Auth, Onboarding, Live Workout Runner + Routine Mode, Dashboard, History, Profile, Page Transition) complete locally on `feat/site-complete`; ready for review, optional real photo swap, or PR/deployment planning.
 
 ## 6. Next (recommended order)
 
@@ -201,10 +207,10 @@ Camera -> MediaPipe Pose -> joint angles -> Random Forest (state) -> debounced R
 8. [x] ~~M0 Parity Prototype: TS classifier, RepCounter port, golden test, /m0 squat page, squat.mp4 parity verification~~ — DONE (session 10)
 
 ### Frontend Milestones Roadmap
-1. [ ] **M1 - Auth + onboarding:** Signup, login, route guard, profile screen (goal & focus selection).
-2. [ ] **M2 - Workout:** All 6 exercises, camera permission handling, setup guide, summary screen, save to `/v1/workouts`.
-3. [ ] **M3 - Routine, history, stats:** Home screen with routine, history list, stats page.
-4. [ ] **M4 - Polish + deploy:** Mobile layout, error and empty states, deploy frontend and backend.
+1. [x] **M1 - Auth + onboarding:** Signup, login, route guard, profile screen (goal & focus selection) — DONE (sessions 27 & 29).
+2. [x] **M2 - Workout:** All 6 exercises, camera permission handling, exercise switcher, Routine Mode, summary screen, save to `/v1/workouts` — DONE (sessions 11 & 28).
+3. [x] **M3 - Routine, history, stats:** Public `/routines` recommendation hub, `/dashboard` stats, `/history` list, `/profile` editor — DONE (sessions 27 & 29).
+4. [ ] **M4 - Polish + deploy:** Replace remaining `TODO: PHOTO` placeholders with approved women-only imagery, PR/merge review, deploy frontend and backend.
 
 ### Before launch
 - [ ] Rotate the Neon `neondb_owner` password and create a limited app DB role.
@@ -350,6 +356,7 @@ Models are expected at `../models/` relative to the working directory (`MODELS_D
 | 26 | 2026-11-22 | Antigravity (Gemini 4 Argon) | Step 2 Site Shell & Landing Restyle on `feat/site-complete`: Created `SectionLabel`, `Marquee`, `ProgressAccordion` (with pure `accordionReducer` & angled visual placeholder), `BigScrollText`, and `MenuOverlay`; restyled all 9 landing components and `src/app/page.tsx` using named palette tokens, shared `Button`/`Card`, two-tier sticky header + circular `MENU` button, asymmetric 6-exercise bento grid, full-width burgundy CTA band, and spec footer (zero hex, zero emerald, zero `®`, women-only `TODO` photo placeholders, protected files untouched); added 10 tests in `tests/site_shell.test.tsx`. Verified `tsc --noEmit` (0 errors), `vitest run` (11 files, 142 tests pass), `npm run build` (8/8 pages), 390px/1440px zero-overflow visual captures, reduced-motion static behavior, and `/workout?exercise=squat` camera sanity check. | frontend/src/components/ui/{SectionLabel,Marquee,ProgressAccordion,BigScrollText}.tsx, frontend/src/components/ui/index.ts, frontend/src/components/layout/MenuOverlay.tsx, frontend/src/components/landing/*.tsx, frontend/src/app/{page.tsx,globals.css}, frontend/tests/{site_shell.test.tsx,landing_page.test.ts}, PROJECT_STATE.md |
 | 27 | 2026-11-22 | Antigravity (Gemini 4 Argon) | Step 3 Account Flow on `feat/site-complete`: Added HttpOnly-cookie BFF handlers (`/api/auth/{signup,login,logout,me}`, `/api/profile`, `/api/routines`), `lib/auth_contracts.ts` (email, 8-72 UTF-8 byte password, hardened `safeReturnPath`), `lib/server/backend_api.ts` (415 non-JSON & 403 cross-origin checks, JWT-exp cookie flags), `middleware.ts` guarding `/onboarding`, `/routines`, `/dashboard`, `/history`, `/profile` (leaving `/` and `/workout` public; non-destructive on 5xx/unreachable), `AuthProvider`, restyled `/login`, `/signup`, `/onboarding` (2-step wizard), `/routines` (reusing `exercises_snapshot.json` & `VALID_EXERCISE_KEYS`, inline switcher, Phase 4 Routine Mode note), and auth-aware `LandingNavbar`/`MenuOverlay`/`LandingFooter` (existing links only). Added 24 tests in `tests/api_bff_routes.test.ts` and `tests/account_flow.test.tsx` (13 files, 166 tests pass; `tsc --noEmit` & `npm run build` exit 0; backend pytest 120 passed, 1 skipped). Verified live E2E signup -> onboarding -> routines -> reload persistence -> logout -> `/dashboard` guard redirect against uvicorn backend + 390px/1440px screenshots. | frontend/src/lib/auth_contracts.ts, frontend/src/lib/server/backend_api.ts, frontend/src/middleware.ts, frontend/src/app/api/**, frontend/src/app/{layout,login/page,signup/page,onboarding/page,routines/page}.tsx, frontend/src/components/auth/*, frontend/src/components/routines/RoutinesView.tsx, frontend/src/components/landing/{LandingNavbar,LandingFooter}.tsx, frontend/src/components/layout/MenuOverlay.tsx, frontend/tests/{api_bff_routes.test.ts,account_flow.test.tsx}, PROJECT_STATE.md |
 | 28 | 2026-11-22 | Antigravity (Gemini 4 Argon) | Step 4 Workout Runner on `feat/site-complete`: Built pure `lib/workout_session.ts` reducer, BFF `/api/workouts` (POST/GET), remount-on-switch `WorkoutScreen` wrapper + `WorkoutExerciseRunner` (`key={activeExercise}`, zero edits to `useWorkoutEngine.ts`), responsive `ExercisePicker` (tabs + sheet/drawer), Routine Mode controls & URL `replaceState`, 10s slow-camera hint with `retry()`, `WorkoutSummary` (logged-in save/retry + guest notice), `START FULL ROUTINE` on `/routines`, and 10 new tests across `tests/workout_session.test.ts` & `tests/workout_runner.test.tsx` (15 files, 176 tests pass; `tsc` & `next build` exit 0). Verified 390px/1440px screenshots across loading/running/picker/routine/summary, 3-switch camera leak check (1 live stream, all tracks ended on stop), and live `POST /v1/workouts` backend logs. | frontend/src/lib/workout_session.ts, frontend/src/app/api/workouts/route.ts, frontend/src/app/workout/page.tsx, frontend/src/components/WorkoutScreen.tsx, frontend/src/components/workout/{WorkoutExerciseRunner,ExercisePicker,WorkoutSummary}.tsx, frontend/src/components/routines/RoutinesView.tsx, frontend/tests/{workout_session.test.ts,workout_runner.test.tsx,account_flow.test.tsx}, PROJECT_STATE.md |
+| 29 | 2026-11-22 | Antigravity (Gemini 4 Argon) | Step 5 Public Recommendation Hub + Dashboard/History/Profile + Page Transition on `feat/site-complete`: Opened `/routines` publicly and pointed landing/shell `START TRAINING` CTAs to `/routines`; added `/api/stats`, `/dashboard` (`DashboardView`: KPIs, 7-day UTC bar chart, 6-exercise breakdown, recent sessions), `/history` (`HistoryView`: paginated `/api/workouts` + exercise filter), `/profile` (`ProfileView`: email, goal/focus editor, logout), full logged-in nav links, and non-blocking `PageTransition` sweep (skipped on `/workout` and under `prefers-reduced-motion`). Added 8 tests in `tests/phase5_pages.test.tsx` (16 files, 184 tests pass; `tsc` & `next build` exit 0; `useWorkoutEngine.ts` untouched). Verified 390px/1440px screenshots and live backend E2E logs for `/v1/stats`, `/v1/workouts`, and `/v1/profile`. | frontend/src/lib/auth_contracts.ts, frontend/src/middleware.ts, frontend/src/app/api/stats/route.ts, frontend/src/app/{layout.tsx,globals.css,dashboard/page.tsx,history/page.tsx,profile/page.tsx}, frontend/src/components/account/{DashboardView,HistoryView,ProfileView}.tsx, frontend/src/components/layout/{PageTransition,MenuOverlay}.tsx, frontend/src/components/routines/RoutinesView.tsx, frontend/src/components/landing/{LandingNavbar,HeroSection,CtaSection,LandingFooter}.tsx, frontend/tests/{phase5_pages.test.tsx,landing_page.test.ts,api_bff_routes.test.ts,account_flow.test.tsx}, PROJECT_STATE.md |
 
 ---
 
@@ -360,8 +367,8 @@ You are continuing work on FitVision (repo: SAGETOAD-source/fitvision, worktree 
 1. Read AGENTS.md, PROJECT_STATE.md, and FITVISION_DESIGN_SPEC.md in the repo root before anything else.
 2. Follow AGENTS.md strictly: send a Change Plan (files to modify/create, nothing else touched) and wait for approval before editing.
 3. Current state:
-   - Steps 1 (Foundation), 2 (Site Shell & Landing Restyle), 3 (Account Flow), and 4 (Workout Runner: pure workout_session reducer, key={activeExercise} remount switching without touching useWorkoutEngine.ts, ExercisePicker, Routine Mode, /api/workouts POST/GET, WorkoutSummary, START FULL ROUTINE) are complete locally on branch `feat/site-complete` (not pushed).
-   - All 176 frontend Vitest tests pass across 15 files; `npx tsc --noEmit` and `npm run build` exit 0; `useWorkoutEngine.ts` matches `origin/main` (`4dd68d3`) with zero diff.
-4. Next task: Wait for user review of Step 4, then plan Step 5 (/dashboard, /history, /profile, and non-blocking page transition) only after approval.
+   - Steps 1–5 are complete locally on branch `feat/site-complete` (not pushed): Foundation tokens/primitives, Site Shell & Landing Restyle, HttpOnly-cookie BFF auth & onboarding, Public `/routines` Recommendation Hub (linked from landing CTAs), Workout Runner with key={activeExercise} switching & Routine Mode + `/api/workouts` saving, `/dashboard`, `/history`, `/profile`, `/api/stats`, and non-blocking `PageTransition` sweep (skipped on `/workout` and reduced-motion).
+   - All 184 frontend Vitest tests pass across 16 files; `npx tsc --noEmit` and `npm run build` exit 0; `useWorkoutEngine.ts` matches `origin/main` (`4dd68d3`) with zero diff.
+4. Next task: User review of Step 5; optional next work includes replacing `TODO: PHOTO` placeholders with approved women-only imagery, PR/merge review, or production deployment prep.
 5. At the end, update PROJECT_STATE.md fully.
 ```

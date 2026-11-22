@@ -45,7 +45,7 @@ export default function HeroSection() {
 
           {/* Dual CTAs using shared signature Button */}
           <div className="flex flex-wrap items-center gap-4 pt-1">
-            <Button variant="primary" size="md" href="/workout?exercise=squat">
+            <Button variant="primary" size="md" href="/routines">
               START TRAINING
             </Button>
             <Button variant="secondary" size="md" href="#workflow">

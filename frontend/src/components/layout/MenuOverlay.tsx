@@ -12,6 +12,7 @@ export interface MenuOverlayProps {
 }
 
 const OVERLAY_LINKS = [
+  { label: "Routines", href: "/routines" },
   { label: "Experience", href: "/#experience" },
   { label: "Workflow", href: "/#workflow" },
   { label: "Exercises", href: "/#exercises" },
@@ -162,7 +163,7 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
           <Button
             variant="primary"
             size="lg"
-            href="/workout?exercise=squat"
+            href="/routines"
             onClick={onClose}
           >
             Start Training
@@ -171,10 +172,10 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
             <Button
               variant="secondary"
               size="lg"
-              href="/routines"
+              href="/dashboard"
               onClick={onClose}
             >
-              My Routine
+              Dashboard
             </Button>
           )}
         </div>
@@ -187,7 +188,11 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
       >
         {user ? (
           <div className="flex flex-wrap items-center gap-4 text-xs font-mono uppercase tracking-wider">
-            <span className="inline-flex items-center gap-2 text-white normal-case tracking-normal">
+            <Link
+              href="/profile"
+              onClick={onClose}
+              className="inline-flex items-center gap-2 text-white hover:text-accent normal-case tracking-normal transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
               <svg
                 className="w-4 h-4 text-accent shrink-0"
                 viewBox="0 0 24 24"
@@ -203,20 +208,27 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
                 />
               </svg>
               <span>{user.email}</span>
-            </span>
+            </Link>
             <Link
-              href="/routines"
+              href="/dashboard"
               onClick={onClose}
               className="text-accent hover:text-white underline underline-offset-4 decoration-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
-              My Routine
+              Dashboard
             </Link>
             <Link
-              href="/onboarding"
+              href="/history"
               onClick={onClose}
               className="text-text-muted hover:text-white underline underline-offset-4 decoration-border-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
-              Training Setup
+              History
+            </Link>
+            <Link
+              href="/profile"
+              onClick={onClose}
+              className="text-text-muted hover:text-white underline underline-offset-4 decoration-border-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              Profile
             </Link>
             <button
               type="button"

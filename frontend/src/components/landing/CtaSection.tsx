@@ -42,7 +42,7 @@ export default function CtaSection() {
             Launch your camera-guided session with complete on-device privacy. Real-time form cues, instant rep counting, and zero video transmission.
           </p>
 
-          <Button variant="secondary" size="lg" href="/workout?exercise=squat">
+          <Button variant="secondary" size="lg" href="/routines">
             START TRAINING
           </Button>
         </div>

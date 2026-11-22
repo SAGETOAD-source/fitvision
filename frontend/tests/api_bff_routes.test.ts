@@ -352,12 +352,13 @@ describe("BFF Auth & Proxy Route Handlers", () => {
 });
 
 describe("Middleware Route Guard", () => {
-  it("guards /onboarding, /routines, /dashboard, /history, /profile and leaves / and /workout public", () => {
+  it("guards /onboarding, /dashboard, /history, /profile and leaves /, /routines, and /workout public", () => {
     expect(middlewareConfig.matcher).toContain("/onboarding");
-    expect(middlewareConfig.matcher).toContain("/routines");
     expect(middlewareConfig.matcher).toContain("/dashboard");
     expect(middlewareConfig.matcher).toContain("/history");
     expect(middlewareConfig.matcher).toContain("/profile");
+    expect(middlewareConfig.matcher).not.toContain("/routines");
+    expect(middlewareConfig.matcher).not.toContain("/routines/:path*");
     expect(middlewareConfig.matcher).not.toContain("/");
     expect(middlewareConfig.matcher).not.toContain("/workout");
     expect(middlewareConfig.matcher).not.toContain("/workout/:path*");
@@ -378,13 +379,13 @@ describe("Middleware Route Guard", () => {
       vi.fn().mockResolvedValueOnce(new Response(null, { status: 401 }))
     );
 
-    const req = new NextRequest("http://localhost:3000/routines", {
+    const req = new NextRequest("http://localhost:3000/dashboard", {
       headers: { Cookie: `${SESSION_COOKIE}=expired` },
     });
     const res = await middleware(req);
     expect(res.status).toBe(307);
     expect(res.headers.get("location")).toBe(
-      "http://localhost:3000/login?next=%2Froutines"
+      "http://localhost:3000/login?next=%2Fdashboard"
     );
     expect(res.cookies.get(SESSION_COOKIE)?.maxAge).toBe(0);
   });
@@ -395,7 +396,7 @@ describe("Middleware Route Guard", () => {
       vi.fn().mockResolvedValueOnce(new Response("Server error", { status: 503 }))
     );
 
-    const req = new NextRequest("http://localhost:3000/routines", {
+    const req = new NextRequest("http://localhost:3000/history", {
       headers: { Cookie: `${SESSION_COOKIE}=valid-token` },
     });
     const res = await middleware(req);

@@ -40,6 +40,12 @@ export default function LandingNavbar() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 h-9 flex items-center justify-between text-[11px] font-mono uppercase tracking-[0.14em] text-text-muted">
             <span className="text-white/60">On-Device Pose Tracking</span>
             <div className="flex items-center gap-6">
+              <Link
+                href="/routines"
+                className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                Routines
+              </Link>
               <a
                 href="/#motion-lab"
                 className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
@@ -66,8 +72,20 @@ export default function LandingNavbar() {
                   className="flex items-center gap-4"
                 >
                   <Link
-                    href="/routines"
-                    className="inline-flex items-center gap-1.5 text-white hover:text-accent transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent max-w-[200px] truncate"
+                    href="/dashboard"
+                    className="text-accent hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/history"
+                    className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    History
+                  </Link>
+                  <Link
+                    href="/profile"
+                    className="inline-flex items-center gap-1.5 text-white hover:text-accent transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent max-w-[180px] truncate"
                     title={user.email}
                   >
                     <svg
@@ -87,12 +105,6 @@ export default function LandingNavbar() {
                     <span className="truncate normal-case tracking-normal">
                       {user.email}
                     </span>
-                  </Link>
-                  <Link
-                    href="/routines"
-                    className="text-accent hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                  >
-                    Routines
                   </Link>
                   <button
                     type="button"
@@ -181,7 +193,7 @@ export default function LandingNavbar() {
 
           {/* Right (Desktop): Signature CTA + Circular Menu Trigger */}
           <div className="hidden md:flex items-center gap-3 shrink-0">
-            <Button variant="primary" size="sm" href="/workout?exercise=squat">
+            <Button variant="primary" size="sm" href="/routines">
               START TRAINING
             </Button>
             <button
@@ -212,7 +224,7 @@ export default function LandingNavbar() {
 
           {/* Right (Mobile): Compact Signature CTA + Circular Menu Trigger */}
           <div className="flex md:hidden items-center gap-2 shrink-0">
-            <Button variant="primary" size="sm" href="/workout?exercise=squat">
+            <Button variant="primary" size="sm" href="/routines">
               TRAIN
             </Button>
             <button

@@ -7,7 +7,7 @@ import { useOptionalAuth } from "@/components/auth/AuthProvider";
 
 export default function LandingFooter() {
   const { user } = useOptionalAuth();
-  const accountHref = user ? "/routines" : "/login";
+  const accountHref = user ? "/dashboard" : "/login";
 
   return (
     <footer className="bg-surface border-t border-border-subtle pt-14 pb-10">
@@ -62,6 +62,14 @@ export default function LandingFooter() {
               </li>
               <li>
                 <Link
+                  href="/routines"
+                  className="hover:text-accent transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  Recommended Routines
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/motion-lab"
                   className="hover:text-accent transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
@@ -106,7 +114,7 @@ export default function LandingFooter() {
 
           {/* Right: Signature Primary CTA + Underlined "My account" link */}
           <div className="md:col-span-4 flex flex-col items-start md:items-end justify-between gap-5">
-            <Button variant="primary" size="md" href="/workout?exercise=squat">
+            <Button variant="primary" size="md" href="/routines">
               START TRAINING
             </Button>
 

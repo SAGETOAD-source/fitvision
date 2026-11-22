@@ -8,14 +8,13 @@ import {
 
 /**
  * Guard ONLY account-protected routes.
- * Landing page (/), /workout, /motion-lab, /m0, /login, and /signup stay public.
+ * Landing page (/), /routines (public recommendation hub), /workout,
+ * /motion-lab, /m0, /login, and /signup stay public.
  */
 export const config = {
   matcher: [
     "/onboarding",
     "/onboarding/:path*",
-    "/routines",
-    "/routines/:path*",
     "/dashboard",
     "/dashboard/:path*",
     "/history",

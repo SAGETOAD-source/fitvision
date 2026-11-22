@@ -35,6 +35,35 @@ export interface RoutineResponse {
   exercises: RoutineExercise[];
 }
 
+export interface DailyReps {
+  date: string; // YYYY-MM-DD (UTC)
+  reps: number;
+}
+
+export interface StatsResponse {
+  total_workouts: number;
+  total_reps: number;
+  reps_per_exercise: Record<string, number>;
+  current_streak_days: number;
+  reps_last_7_days: DailyReps[];
+}
+
+export interface WorkoutRecord {
+  id: number;
+  session_id: string;
+  exercise: string;
+  rep_count: number;
+  started_at: string;
+  ended_at: string;
+}
+
+export interface WorkoutListResponse {
+  workouts: WorkoutRecord[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export const MIN_PASSWORD_LENGTH = 8;
 export const MAX_PASSWORD_UTF8_BYTES = 72;
 export const MAX_EMAIL_LENGTH = 254;
@@ -166,6 +195,35 @@ export function isRoutineResponse(value: unknown): value is RoutineResponse {
       );
     })
   );
+}
+
+export function isStatsResponse(value: unknown): value is StatsResponse {
+  if (!value || typeof value !== "object") return false;
+  const s = value as Record<string, unknown>;
+  if (
+    typeof s.total_workouts !== "number" ||
+    !Number.isFinite(s.total_workouts) ||
+    typeof s.total_reps !== "number" ||
+    !Number.isFinite(s.total_reps) ||
+    typeof s.current_streak_days !== "number" ||
+    !Number.isFinite(s.current_streak_days) ||
+    !s.reps_per_exercise ||
+    typeof s.reps_per_exercise !== "object" ||
+    Array.isArray(s.reps_per_exercise) ||
+    !Array.isArray(s.reps_last_7_days)
+  ) {
+    return false;
+  }
+
+  return s.reps_last_7_days.every((entry) => {
+    if (!entry || typeof entry !== "object") return false;
+    const d = entry as Record<string, unknown>;
+    return (
+      typeof d.date === "string" &&
+      typeof d.reps === "number" &&
+      Number.isFinite(d.reps)
+    );
+  });
 }
 
 function isDangerousPathCandidate(candidate: string): boolean {

@@ -1,178 +1,183 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
+import React, { useRef, useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { MenuOverlay } from "@/components/layout/MenuOverlay";
 
 export default function LandingNavbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const desktopMenuBtnRef = useRef<HTMLButtonElement | null>(null);
+  const mobileMenuBtnRef = useRef<HTMLButtonElement | null>(null);
+  const activeTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  const openMenu = (source: "desktop" | "mobile") => {
+    activeTriggerRef.current =
+      source === "desktop" ? desktopMenuBtnRef.current : mobileMenuBtnRef.current;
+    setMenuOpen(true);
+  };
 
   return (
-    <header className="sticky top-0 z-50 bg-black/90 backdrop-blur-md border-b border-[#1A1A1E]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
-        {/* Brand Mark */}
-        <Link
-          href="/"
-          className="flex items-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D] rounded-lg p-1"
-          aria-label="FitVision Home"
-        >
-          <span className="font-headline text-xl sm:text-2xl font-black text-white tracking-wider uppercase">
-            FITVISION
-            <span className="text-[#FF4D6D] text-xs align-super ml-0.5 font-mono">®</span>
-          </span>
-        </Link>
-
-        {/* Desktop Nav Items */}
-        <nav
-          className="hidden md:flex items-center gap-8 text-xs font-semibold uppercase tracking-wider text-neutral-300"
-          aria-label="Main Navigation"
-        >
-          <a
-            href="#experience"
-            className="hover:text-white transition-colors duration-150 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FF4D6D] rounded"
-          >
-            Experience
-          </a>
-          <a
-            href="#workflow"
-            className="hover:text-white transition-colors duration-150 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FF4D6D] rounded"
-          >
-            Workflow
-          </a>
-          <a
-            href="#exercises"
-            className="hover:text-white transition-colors duration-150 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FF4D6D] rounded"
-          >
-            Exercises
-          </a>
-          <a
-            href="#motion-lab"
-            className="hover:text-white transition-colors duration-150 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FF4D6D] rounded"
-          >
-            Motion Lab
-          </a>
-          <a
-            href="#architecture"
-            className="hover:text-white transition-colors duration-150 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FF4D6D] rounded"
-          >
-            Architecture
-          </a>
-          <a
-            href="#privacy"
-            className="hover:text-white transition-colors duration-150 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FF4D6D] rounded"
-          >
-            Privacy
-          </a>
-        </nav>
-
-        {/* Trailing CTAs */}
-        <div className="hidden md:flex items-center gap-4">
-          <Link
-            href="/workout?exercise=squat"
-            className="h-10 px-6 rounded-full bg-[#6D001A] hover:bg-[#851630] text-white text-xs font-bold tracking-wider uppercase transition-all duration-150 active:scale-95 shadow-md shadow-[#6D001A]/30 border border-[#FF4D6D]/30 inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-          >
-            START TRAINING ↗
-          </Link>
-        </div>
-
-        {/* Mobile Menu Button */}
-        <div className="flex md:hidden items-center gap-2">
-          <Link
-            href="/workout?exercise=squat"
-            className="h-9 px-4 rounded-full bg-[#6D001A] hover:bg-[#851630] text-white text-[11px] font-bold tracking-wider uppercase inline-flex items-center justify-center border border-[#FF4D6D]/30"
-          >
-            TRAIN ↗
-          </Link>
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen((prev) => !prev)}
-            className="p-2 rounded-lg text-neutral-300 hover:text-white hover:bg-neutral-900 border border-transparent hover:border-[#1A1A1E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D]"
-            aria-expanded={mobileMenuOpen}
-            aria-label="Toggle Navigation Menu"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              {mobileMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+    <>
+      <header className="sticky top-0 z-40 bg-gradient-to-b from-bg-base via-bg-base/95 to-bg-base/80 backdrop-blur-md border-b border-border-subtle">
+        {/* Tier 1 (Desktop Utility Bar) */}
+        <div className="hidden md:block border-b border-border-subtle bg-bg-base/90">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-9 flex items-center justify-between text-[11px] font-mono uppercase tracking-[0.14em] text-text-muted">
+            <span className="text-white/60">On-Device Pose Tracking</span>
+            <div className="flex items-center gap-6">
+              <a
+                href="#motion-lab"
+                className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                Motion Lab
+              </a>
+              <a
+                href="#architecture"
+                className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                Architecture
+              </a>
+              <a
+                href="#privacy"
+                className="hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                Privacy
+              </a>
+              <span aria-hidden="true" className="h-3 w-px bg-border-subtle" />
+              <button
+                type="button"
+                onClick={() => openMenu("desktop")}
+                data-testid="navbar-account-slot"
+                className="inline-flex items-center gap-1.5 text-white/80 hover:text-accent transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+                aria-label="Account options in menu"
+              >
+                <svg
+                  className="w-3.5 h-3.5 text-accent"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
                   strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              )}
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Dropdown Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-[#0B0B0C] border-b border-[#1A1A1E] px-4 py-5 flex flex-col gap-4 text-sm font-semibold uppercase tracking-wider text-neutral-300">
-          <a
-            href="#experience"
-            onClick={() => setMobileMenuOpen(false)}
-            className="hover:text-white py-1 transition-colors"
-          >
-            Experience
-          </a>
-          <a
-            href="#workflow"
-            onClick={() => setMobileMenuOpen(false)}
-            className="hover:text-white py-1 transition-colors"
-          >
-            Workflow
-          </a>
-          <a
-            href="#exercises"
-            onClick={() => setMobileMenuOpen(false)}
-            className="hover:text-white py-1 transition-colors"
-          >
-            Exercises
-          </a>
-          <a
-            href="#motion-lab"
-            onClick={() => setMobileMenuOpen(false)}
-            className="hover:text-white py-1 transition-colors"
-          >
-            Motion Lab
-          </a>
-          <a
-            href="#architecture"
-            onClick={() => setMobileMenuOpen(false)}
-            className="hover:text-white py-1 transition-colors"
-          >
-            Architecture
-          </a>
-          <a
-            href="#privacy"
-            onClick={() => setMobileMenuOpen(false)}
-            className="hover:text-white py-1 transition-colors"
-          >
-            Privacy
-          </a>
-          <div className="pt-2 border-t border-[#1A1A1E]">
-            <Link
-              href="/workout?exercise=squat"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full h-11 rounded-full bg-[#6D001A] text-white text-xs font-bold tracking-wider uppercase inline-flex items-center justify-center border border-[#FF4D6D]/30"
-            >
-              START TRAINING ↗
-            </Link>
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+                <span>Account</span>
+              </button>
+            </div>
           </div>
         </div>
-      )}
-    </header>
+
+        {/* Tier 2 (Main Navigation Bar) */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-3">
+          {/* Left: Brand Wordmark */}
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent shrink-0"
+            aria-label="FitVision Home"
+          >
+            <span className="font-display text-base sm:text-xl lg:text-2xl font-black text-white tracking-wider uppercase">
+              FITVISION
+            </span>
+          </Link>
+
+          {/* Center: 3 Desktop Links */}
+          <nav
+            className="hidden md:flex items-center gap-8 text-xs font-display font-bold uppercase tracking-[0.14em] text-text-muted"
+            aria-label="Main Navigation"
+          >
+            <a
+              href="#experience"
+              className="hover:text-white transition-colors duration-150 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              Experience
+            </a>
+            <a
+              href="#workflow"
+              className="hover:text-white transition-colors duration-150 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              Workflow
+            </a>
+            <a
+              href="#exercises"
+              className="hover:text-white transition-colors duration-150 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              Exercises
+            </a>
+          </nav>
+
+          {/* Right (Desktop): Signature CTA + Circular Menu Trigger */}
+          <div className="hidden md:flex items-center gap-3 shrink-0">
+            <Button variant="primary" size="sm" href="/workout?exercise=squat">
+              START TRAINING
+            </Button>
+            <button
+              ref={desktopMenuBtnRef}
+              type="button"
+              onClick={() => openMenu("desktop")}
+              aria-expanded={menuOpen}
+              aria-controls="site-menu-overlay"
+              aria-label="Open navigation menu"
+              data-testid="navbar-menu-button-desktop"
+              className="w-11 h-11 rounded-full bg-surface border border-white/30 hover:border-accent hover:bg-brand text-white inline-flex flex-col items-center justify-center gap-0.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base cursor-pointer shrink-0"
+            >
+              <svg
+                className="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.2}
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" d="M4 8h16M4 16h16" />
+              </svg>
+              <span className="font-display text-[7px] font-bold uppercase tracking-widest leading-none">
+                MENU
+              </span>
+            </button>
+          </div>
+
+          {/* Right (Mobile): Compact Signature CTA + Circular Menu Trigger */}
+          <div className="flex md:hidden items-center gap-2 shrink-0">
+            <Button variant="primary" size="sm" href="/workout?exercise=squat">
+              TRAIN
+            </Button>
+            <button
+              ref={mobileMenuBtnRef}
+              type="button"
+              onClick={() => openMenu("mobile")}
+              aria-expanded={menuOpen}
+              aria-controls="site-menu-overlay"
+              aria-label="Open navigation menu"
+              data-testid="navbar-menu-button-mobile"
+              className="w-10 h-10 rounded-full bg-surface border border-white/30 hover:border-accent hover:bg-brand text-white inline-flex flex-col items-center justify-center gap-0.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base cursor-pointer shrink-0"
+            >
+              <svg
+                className="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.2}
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" d="M4 8h16M4 16h16" />
+              </svg>
+              <span className="font-display text-[7px] font-bold uppercase tracking-widest leading-none">
+                MENU
+              </span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <MenuOverlay
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        triggerRef={activeTriggerRef}
+      />
+    </>
   );
 }
-

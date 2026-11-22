@@ -236,13 +236,14 @@ describe('Landing Page: CtaSection & LandingFooter', () => {
 
     expect(html).toContain('Ready to Train in Private?');
     expect(html).toContain('/workout?exercise=squat');
-    expect(html).toContain('START TRAINING ↗');
+    expect(html).toContain('START TRAINING');
   });
 
   it('renders footer with brand mark, navigation anchors, and copyright 2026', () => {
     const html = renderToString(React.createElement(LandingFooter));
 
     expect(html).toContain('FITVISION');
+    expect(html).not.toContain('®');
     expect(html).toContain('© 2026 FitVision');
     expect(html).toContain('No video frames transmitted');
     expect(html).toContain('/motion-lab');
@@ -257,6 +258,7 @@ describe('Landing Page: LandingNavbar', () => {
     const html = renderToString(React.createElement(LandingNavbar));
 
     expect(html).toContain('FITVISION');
+    expect(html).not.toContain('®');
     expect(html).toContain('#experience');
     expect(html).toContain('#workflow');
     expect(html).toContain('#exercises');

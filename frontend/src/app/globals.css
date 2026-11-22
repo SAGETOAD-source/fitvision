@@ -38,11 +38,49 @@ body {
   }
 }
 
+@keyframes fv-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.fv-marquee-track {
+  animation: fv-marquee 28s linear infinite;
+}
+
+.fv-marquee-container[data-pause-on-hover="true"]:hover .fv-marquee-track,
+.fv-marquee-container[data-pause-on-hover="true"]:focus-within .fv-marquee-track {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-pulse,
   .animate-ping,
   .animate-spin {
     animation: none !important;
+  }
+
+  .fv-marquee-track {
+    animation: none !important;
+    width: 100% !important;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 0;
+  }
+
+  .fv-marquee-content {
+    width: 100% !important;
+    flex-shrink: 1 !important;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 0.5rem;
+  }
+
+  .fv-marquee-duplicate {
+    display: none !important;
   }
 
   *,

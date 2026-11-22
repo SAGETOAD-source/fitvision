@@ -1,13 +1,16 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export interface PageTransitionRuleInput {
   currentPath: string;
   targetPath: string;
   prefersReducedMotion: boolean;
 }
+
+export const TRANSITION_NAV_DELAY_MS = 290;
+export const TRANSITION_TOTAL_MS = 860;
 
 /**
  * Pure transition eligibility check (FITVISION_DESIGN_SPEC.md section 11):
@@ -30,27 +33,43 @@ export function shouldPlayPageTransition({
 }
 
 /**
- * Non-blocking layered burgundy + black rounded-shape sweep transition (~0.7s).
- * Always pointer-events-none so clicks and route transitions are never blocked.
+ * FitLab-style layered burgundy + crimson + charcoal rounded-shape sweep transition (~0.85s):
+ * - Sweeps rounded shapes across the screen, swaps the route underneath at peak coverage (~290ms),
+ *   then sweeps away to reveal the destination page.
+ * - Always pointer-events-none so interactions are never blocked.
+ * - Skipped completely on /workout routes and under prefers-reduced-motion.
  */
 export function PageTransition() {
   const pathname = usePathname() || "/";
-  const [sweeping, setSweeping] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const router = useRouter();
+  const [sweepKey, setSweepKey] = useState(0);
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const endTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentPathRef = useRef(pathname);
+  const routerRef = useRef(router);
+
+  routerRef.current = router;
 
   useEffect(() => {
     currentPathRef.current = pathname;
   }, [pathname]);
 
   useEffect(() => {
-    const triggerSweep = () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      setSweeping(true);
-      timerRef.current = setTimeout(() => {
-        setSweeping(false);
-        timerRef.current = null;
-      }, 720);
+    const triggerSweep = (destinationUrl: string) => {
+      if (navTimerRef.current) clearTimeout(navTimerRef.current);
+      if (endTimerRef.current) clearTimeout(endTimerRef.current);
+
+      setSweepKey((k) => k + 1);
+
+      navTimerRef.current = setTimeout(() => {
+        navTimerRef.current = null;
+        routerRef.current.push(destinationUrl);
+      }, TRANSITION_NAV_DELAY_MS);
+
+      endTimerRef.current = setTimeout(() => {
+        endTimerRef.current = null;
+        setSweepKey(0);
+      }, TRANSITION_TOTAL_MS);
     };
 
     const handleClick = (e: MouseEvent) => {
@@ -70,6 +89,10 @@ export function PageTransition() {
       if (!anchor) return;
       if (anchor.target && anchor.target !== "_self") return;
       if (anchor.hasAttribute("download")) return;
+      if (anchor.getAttribute("aria-disabled") === "true") return;
+
+      const rawHref = anchor.getAttribute("href") || "";
+      if (!rawHref || rawHref.startsWith("#")) return;
 
       let parsed: URL;
       try {
@@ -79,9 +102,10 @@ export function PageTransition() {
       }
       if (parsed.origin !== window.location.origin) return;
 
-      const prefersReducedMotion =
+      const prefersReducedMotion = Boolean(
         typeof window.matchMedia === "function" &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          window.matchMedia("(prefers-reduced-motion: reduce)")?.matches
+      );
 
       if (
         shouldPlayPageTransition({
@@ -90,29 +114,45 @@ export function PageTransition() {
           prefersReducedMotion,
         })
       ) {
-        triggerSweep();
+        // Defer route change until rounded burgundy curtain reaches full coverage (~290ms)
+        e.preventDefault();
+        const destination = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+        triggerSweep(destination);
       }
     };
 
     document.addEventListener("click", handleClick, true);
     return () => {
       document.removeEventListener("click", handleClick, true);
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (navTimerRef.current) clearTimeout(navTimerRef.current);
+      if (endTimerRef.current) clearTimeout(endTimerRef.current);
     };
   }, []);
 
-  if (!sweeping) return null;
+  if (sweepKey === 0) return null;
 
   return (
     <div
+      key={sweepKey}
       aria-hidden="true"
       data-testid="page-transition-overlay"
-      className="fixed inset-0 z-[60] pointer-events-none overflow-hidden motion-reduce:hidden"
+      className="fixed inset-0 z-[80] pointer-events-none overflow-hidden motion-reduce:hidden"
     >
-      {/* Leading burgundy rounded shape */}
-      <div className="fv-page-sweep-primary absolute inset-y-[-10%] -left-[15%] w-[130%] rounded-[48px] bg-brand shadow-2xl" />
-      {/* Trailing black rounded shape */}
-      <div className="fv-page-sweep-secondary absolute inset-y-[-10%] -left-[15%] w-[130%] rounded-[48px] bg-bg-base border-r border-accent/40" />
+      {/* Layer 1: Leading dark rounded wipe */}
+      <div className="fv-page-sweep-primary absolute inset-y-[-12%] -left-[12%] w-[124%] rounded-[72px] bg-surface border-r-2 border-accent/60 shadow-2xl" />
+
+      {/* Layer 2: Soft crimson contour wave */}
+      <div className="fv-page-sweep-accent absolute inset-y-[-12%] -left-[12%] w-[124%] rounded-[72px] bg-accent" />
+
+      {/* Layer 3 (Top): Signature deep burgundy rounded curtain holding full peak coverage */}
+      <div className="fv-page-sweep-secondary absolute inset-y-[-12%] -left-[12%] w-[124%] rounded-[72px] bg-brand shadow-2xl" />
+
+      {/* Mid-sweep brand flash over peak burgundy coverage */}
+      <div className="fv-page-sweep-brand absolute inset-0 flex items-center justify-center">
+        <span className="font-display text-2xl sm:text-4xl font-black uppercase tracking-[0.22em] text-white">
+          FITVISION
+        </span>
+      </div>
     </div>
   );
 }

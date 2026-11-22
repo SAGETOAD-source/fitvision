@@ -1,11 +1,14 @@
 import React from "react";
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
+
+const mockPush = vi.fn();
+const mockRouter = { push: mockPush, replace: vi.fn(), refresh: vi.fn() };
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/",
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => mockRouter,
 }));
 
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
@@ -14,9 +17,17 @@ import ReturnLoopSection from "@/components/landing/ReturnLoopSection";
 import WorkflowSection from "@/components/landing/WorkflowSection";
 import ExercisesSection from "@/components/landing/ExercisesSection";
 import CtaSection from "@/components/landing/CtaSection";
+import {
+  PageTransition,
+  TRANSITION_NAV_DELAY_MS,
+  TRANSITION_TOTAL_MS,
+} from "@/components/layout/PageTransition";
 import NotFound from "@/app/not-found";
 
 afterEach(() => {
+  vi.useRealTimers();
+  mockPush.mockReset();
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
@@ -96,5 +107,38 @@ describe("Storytelling UX & Visual Polish", () => {
     expect(page).toHaveTextContent("404");
     expect(page.querySelector('a[href="/routines"]')).toBeInTheDocument();
     expect(page.querySelector('a[href="/"]')).toBeInTheDocument();
+  });
+
+  it("PageTransition intercepts non-/workout links, plays sweep, calls router.push at midpoint, and skips /workout", () => {
+    vi.useFakeTimers();
+
+    render(
+      <div>
+        <PageTransition />
+        <a href="/routines">Start Training</a>
+        <a href="/workout?exercise=squat">Direct Squat</a>
+      </div>
+    );
+
+    // /workout link is NOT intercepted
+    fireEvent.click(screen.getByText("Direct Squat"));
+    expect(screen.queryByTestId("page-transition-overlay")).not.toBeInTheDocument();
+    expect(mockPush).not.toHaveBeenCalled();
+
+    // Non-/workout link triggers layered sweep and defers navigation to peak curtain coverage
+    fireEvent.click(screen.getByText("Start Training"));
+    expect(screen.getByTestId("page-transition-overlay")).toBeInTheDocument();
+    expect(mockPush).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(TRANSITION_NAV_DELAY_MS);
+    });
+    expect(mockPush).toHaveBeenCalledWith("/routines");
+
+    // Overlay cleans itself up after sweep completes
+    act(() => {
+      vi.advanceTimersByTime(TRANSITION_TOTAL_MS);
+    });
+    expect(screen.queryByTestId("page-transition-overlay")).not.toBeInTheDocument();
   });
 });

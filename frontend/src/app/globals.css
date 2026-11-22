@@ -80,16 +80,34 @@ body {
 
 @keyframes fv-page-sweep {
   0% {
-    transform: translateX(-115%);
+    transform: translate3d(-112%, 0, 0);
   }
-  42% {
-    transform: translateX(0%);
+  36% {
+    transform: translate3d(0%, 0, 0);
   }
-  58% {
-    transform: translateX(0%);
+  56% {
+    transform: translate3d(0%, 0, 0);
   }
   100% {
-    transform: translateX(115%);
+    transform: translate3d(112%, 0, 0);
+  }
+}
+
+@keyframes fv-page-sweep-brand {
+  0%,
+  16% {
+    opacity: 0;
+    transform: translate3d(-18px, 0, 0);
+  }
+  36%,
+  54% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  72%,
+  100% {
+    opacity: 0;
+    transform: translate3d(18px, 0, 0);
   }
 }
 
@@ -115,11 +133,23 @@ body {
 }
 
 .fv-page-sweep-primary {
-  animation: fv-page-sweep 680ms cubic-bezier(0.76, 0, 0.24, 1) forwards;
+  animation: fv-page-sweep 760ms cubic-bezier(0.76, 0, 0.24, 1) both;
+  will-change: transform;
+}
+
+.fv-page-sweep-accent {
+  animation: fv-page-sweep 740ms cubic-bezier(0.76, 0, 0.24, 1) 70ms both;
+  will-change: transform;
 }
 
 .fv-page-sweep-secondary {
-  animation: fv-page-sweep 680ms cubic-bezier(0.76, 0, 0.24, 1) 60ms forwards;
+  animation: fv-page-sweep 700ms cubic-bezier(0.76, 0, 0.24, 1) 155ms both;
+  will-change: transform;
+}
+
+.fv-page-sweep-brand {
+  animation: fv-page-sweep-brand 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: opacity, transform;
 }
 
 .fv-menu-item {
@@ -144,7 +174,9 @@ body {
   .animate-ping,
   .animate-spin,
   .fv-page-sweep-primary,
+  .fv-page-sweep-accent,
   .fv-page-sweep-secondary,
+  .fv-page-sweep-brand,
   .fv-menu-item,
   .fv-scroll-cue {
     animation: none !important;

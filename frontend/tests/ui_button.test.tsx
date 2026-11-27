@@ -83,15 +83,40 @@ describe("UI Primitives: Button", () => {
     expect(screen.getByTestId("button-double-chevron")).toBeInTheDocument();
   });
 
-  it("includes prefers-reduced-motion fallback classes", () => {
+  it("includes shared interactive press scale/fill, touch tap sweep, and prefers-reduced-motion fallback classes", () => {
     render(<Button variant="primary">Motion Check</Button>);
 
     const btn = screen.getByRole("button", { name: /motion check/i });
+    expect(btn.className).toContain("fv-btn-interactive");
+    expect(btn.className).toContain("active:scale-[0.95]");
+    expect(btn.className).toContain("motion-reduce:active:scale-100");
     expect(btn.className).toContain("motion-reduce:active:translate-y-0");
-    expect(screen.getByTestId("button-fill-sweep").className).toContain("motion-reduce:hidden");
-    expect(screen.getByTestId("button-text-cell").className).toContain(
-      "motion-reduce:group-hover:bg-brand-hover"
+
+    const sweep = screen.getByTestId("button-fill-sweep");
+    expect(sweep.className).toContain("motion-reduce:hidden");
+    expect(sweep.className).toContain("group-data-[tap-active=true]:translate-x-0");
+    expect(sweep.className).toContain("group-active:translate-x-0");
+
+    const textCell = screen.getByTestId("button-text-cell");
+    expect(textCell.className).toContain("motion-reduce:group-hover:bg-brand-hover");
+
+    const chevronPaths = screen
+      .getByTestId("button-double-chevron")
+      .querySelectorAll("svg");
+    expect(chevronPaths[0].getAttribute("class")).toContain(
+      "group-data-[tap-active=true]:translate-x-1"
     );
+  });
+
+  it("activates visible tap feedback on mobile touch tap for href links prior to transition", () => {
+    render(<Button href="/routines">Start Training</Button>);
+
+    const link = screen.getByRole("link", { name: /start training/i });
+    expect(link).not.toHaveAttribute("data-tap-active", "true");
+
+    fireEvent.touchStart(link);
+    expect(link).toHaveAttribute("data-tap-active", "true");
+    expect((link as HTMLAnchorElement).dataset.fvTouchTap).toBe("true");
   });
 });
 

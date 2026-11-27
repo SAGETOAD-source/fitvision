@@ -1,8 +1,9 @@
 "use client";
 
 import React, { Suspense, useCallback, useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import WorkoutScreen from "@/components/WorkoutScreen";
+import { usePageTransition } from "@/components/layout/PageTransition";
 import { Button, Card, LoadingSpinner, SectionLabel } from "@/components/ui";
 import {
   isBodyGoal,
@@ -15,7 +16,7 @@ import { type RoutineQueueItem } from "@/lib/workout_session";
 
 function WorkoutContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const { transitionPush } = usePageTransition();
 
   const exerciseParam = searchParams.get("exercise") || "squat";
   const isRoutineMode = searchParams.get("routine") === "1";
@@ -125,7 +126,9 @@ function WorkoutContent() {
         routineQueue={routineQueue}
         routineGoal={validGoal}
         routineFocus={validFocus}
-        onBack={() => router.push("/routines")}
+        onBack={() => {
+          void transitionPush("/routines");
+        }}
       />
     );
   }
@@ -134,7 +137,9 @@ function WorkoutContent() {
     <WorkoutScreen
       mode="free"
       exerciseKey={exerciseParam}
-      onBack={() => router.push("/")}
+      onBack={() => {
+        void transitionPush("/");
+      }}
     />
   );
 }

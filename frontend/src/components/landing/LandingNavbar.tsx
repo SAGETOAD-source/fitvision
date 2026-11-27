@@ -4,11 +4,13 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { MenuOverlay } from "@/components/layout/MenuOverlay";
+import { usePageTransition } from "@/components/layout/PageTransition";
 import { useOptionalAuth } from "@/components/auth/AuthProvider";
 
 export default function LandingNavbar() {
   const [pathname, setPathname] = useState("/");
   const { user, logout } = useOptionalAuth();
+  const { transitionPush, cancelTransition } = usePageTransition();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const desktopMenuBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -67,10 +69,14 @@ export default function LandingNavbar() {
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
-      await logout();
-      if (typeof window !== "undefined") {
-        window.location.assign("/");
-      }
+      await transitionPush("/", {
+        hardReload: true,
+        onBeforeSwap: async () => {
+          await logout();
+        },
+      });
+    } catch {
+      cancelTransition();
     } finally {
       setLoggingOut(false);
     }
@@ -173,7 +179,7 @@ export default function LandingNavbar() {
                     onClick={handleLogout}
                     disabled={loggingOut}
                     data-testid="navbar-logout-button"
-                    className="text-text-muted hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer disabled:opacity-50"
+                    className="fv-btn-interactive px-2 py-1 text-text-muted hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer disabled:opacity-50"
                   >
                     Log out
                   </button>
@@ -266,7 +272,7 @@ export default function LandingNavbar() {
               aria-controls="site-menu-overlay"
               aria-label="Open navigation menu"
               data-testid="navbar-menu-button-desktop"
-              className="w-11 h-11 rounded-full bg-surface border border-white/30 hover:border-accent hover:bg-brand text-white inline-flex flex-col items-center justify-center gap-0.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base cursor-pointer shrink-0"
+              className="fv-btn-interactive w-11 h-11 rounded-full bg-surface border border-white/30 hover:border-accent hover:bg-brand text-white inline-flex flex-col items-center justify-center gap-0.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base cursor-pointer shrink-0"
             >
               <svg
                 className="w-4 h-4"
@@ -297,7 +303,7 @@ export default function LandingNavbar() {
               aria-controls="site-menu-overlay"
               aria-label="Open navigation menu"
               data-testid="navbar-menu-button-mobile"
-              className="w-10 h-10 rounded-full bg-surface border border-white/30 hover:border-accent hover:bg-brand text-white inline-flex flex-col items-center justify-center gap-0.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base cursor-pointer shrink-0"
+              className="fv-btn-interactive w-10 h-10 rounded-full bg-surface border border-white/30 hover:border-accent hover:bg-brand text-white inline-flex flex-col items-center justify-center gap-0.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base cursor-pointer shrink-0"
             >
               <svg
                 className="w-4 h-4"

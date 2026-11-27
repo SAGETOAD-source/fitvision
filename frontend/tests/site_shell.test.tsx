@@ -217,4 +217,15 @@ describe("Site Shell: LandingNavbar & MenuOverlay", () => {
     expect(screen.getByRole("link", { name: /back to top/i })).toHaveAttribute("href", "#top");
     expect(document.body.textContent).not.toContain("®");
   });
+
+  it("applies shared fv-btn-interactive class to circular Menu trigger and close button", () => {
+    render(<LandingNavbar />);
+
+    const desktopMenuBtn = screen.getByTestId("navbar-menu-button-desktop");
+    expect(desktopMenuBtn.className).toContain("fv-btn-interactive");
+
+    fireEvent.click(desktopMenuBtn);
+    const closeBtn = screen.getByRole("button", { name: /close navigation menu/i });
+    expect(closeBtn.className).toContain("fv-btn-interactive");
+  });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost";
@@ -44,7 +44,7 @@ function DoubleChevron({ className = "" }: { className?: string }) {
     >
       {/* First chevron (leads) */}
       <svg
-        className="w-3.5 h-3.5 -mr-1.5 transition-transform duration-200 ease-out group-hover:translate-x-1 group-focus-visible:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-focus-visible:translate-x-0"
+        className="w-3.5 h-3.5 -mr-1.5 transition-transform duration-200 ease-out group-hover:translate-x-1 group-focus-visible:translate-x-1 group-active:translate-x-1 group-data-[tap-active=true]:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-focus-visible:translate-x-0 motion-reduce:group-data-[tap-active=true]:translate-x-0"
         viewBox="0 0 16 16"
         fill="none"
         stroke="currentColor"
@@ -56,7 +56,7 @@ function DoubleChevron({ className = "" }: { className?: string }) {
       </svg>
       {/* Second chevron (follows the first with a slight delay) */}
       <svg
-        className="w-3.5 h-3.5 transition-transform duration-200 delay-75 ease-out group-hover:translate-x-1 group-focus-visible:translate-x-1 motion-reduce:transition-none motion-reduce:delay-0 motion-reduce:group-hover:translate-x-0 motion-reduce:group-focus-visible:translate-x-0"
+        className="w-3.5 h-3.5 transition-transform duration-200 delay-75 ease-out group-hover:translate-x-1 group-focus-visible:translate-x-1 group-active:translate-x-1 group-data-[tap-active=true]:translate-x-1 motion-reduce:transition-none motion-reduce:delay-0 motion-reduce:group-hover:translate-x-0 motion-reduce:group-focus-visible:translate-x-0 motion-reduce:group-data-[tap-active=true]:translate-x-0"
         viewBox="0 0 16 16"
         fill="none"
         stroke="currentColor"
@@ -71,13 +71,13 @@ function DoubleChevron({ className = "" }: { className?: string }) {
 }
 
 /**
- * FitVision shared Button primitive (FITVISION_DESIGN_SPEC.md section 4):
- * - Primary & Secondary: Two cells in one outlined shape (a text cell and a black
- *   square cell with a double chevron »).
- * - Hover: burgundy fill sweeps across + chevrons slide forward (second follows first).
- * - Press: 1 to 2px down (`active:translate-y-[2px]`).
- * - Reduced motion: disables sweep/slide transforms and falls back to simple color change.
- * - Ghost: inline label + double chevron with bottom burgundy/accent underline sweep.
+ * FitVision shared Button primitive:
+ * - Uses shared .fv-btn-interactive press/hover/focus/disabled state contract.
+ * - Primary & Secondary: Two cells in one outlined shape (text cell + black square chevron cell).
+ * - Desktop hover / focus-visible / active press / mobile touch tap all trigger the burgundy fill
+ *   sweep and staggered double-chevron slide cleanly.
+ * - On touch taps with href, marks data-fv-touch-tap so tap sweep overlaps with page transition.
+ * - Ghost: inline label + double chevron with underline sweep.
  */
 export function Button({
   variant = "primary",
@@ -90,16 +90,40 @@ export function Button({
   className = "",
   children,
   onClick,
+  onPointerDown,
+  onTouchStart,
   type = "button",
   ...rest
 }: ButtonProps) {
   const isDisabled = disabled || loading;
+  const [tapActive, setTapActive] = useState(false);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const linkRef = useRef<HTMLAnchorElement | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    };
+  }, []);
+
+  const flashTapFeedback = (targetAnchor: HTMLAnchorElement | null) => {
+    if (isDisabled) return;
+    if (targetAnchor) {
+      targetAnchor.dataset.fvTouchTap = "true";
+    }
+    setTapActive(true);
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      tapTimerRef.current = null;
+      setTapActive(false);
+    }, 420);
+  };
 
   const sharedInteractiveClasses = [
-    "group relative inline-flex items-stretch select-none touch-manipulation",
+    "fv-btn-interactive",
+    "group relative inline-flex items-stretch select-none",
     "font-display font-bold uppercase tracking-wider text-white",
-    "transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]",
-    "active:translate-y-[2px] motion-reduce:transition-none motion-reduce:active:translate-y-0",
+    "active:scale-[0.95] motion-reduce:transition-none motion-reduce:active:scale-100 motion-reduce:active:translate-y-0",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base",
     isDisabled ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer",
   ].join(" ");
@@ -118,7 +142,7 @@ export function Button({
   let innerMarkup: React.ReactNode = null;
 
   if (variant === "ghost") {
-    variantContainerClasses = `items-center ${GHOST_SIZE_CLASSES[size]} bg-transparent text-white motion-reduce:hover:text-accent`;
+    variantContainerClasses = `items-center ${GHOST_SIZE_CLASSES[size]} bg-transparent text-white hover:text-accent active:text-accent data-[tap-active=true]:text-accent motion-reduce:hover:text-accent`;
     innerMarkup = (
       <>
         <span className="relative z-10 inline-flex items-center gap-2">
@@ -130,23 +154,21 @@ export function Button({
         <span
           aria-hidden="true"
           data-testid="button-underline-sweep"
-          className="pointer-events-none absolute bottom-0 left-0 right-0 h-[2px] bg-brand origin-left scale-x-0 transition-transform duration-300 ease-out group-hover:scale-x-100 group-focus-visible:scale-x-100 motion-reduce:hidden"
+          className="pointer-events-none absolute bottom-0 left-0 right-0 h-[2px] bg-brand origin-left scale-x-0 transition-transform duration-300 ease-out group-hover:scale-x-100 group-focus-visible:scale-x-100 group-active:scale-x-100 group-data-[tap-active=true]:scale-x-100 motion-reduce:hidden"
         />
       </>
     );
   } else {
     const isPrimary = variant === "primary";
     variantContainerClasses = isPrimary
-      ? "overflow-hidden border border-brand hover:border-accent bg-bg-base"
-      : "overflow-hidden border border-white hover:border-accent bg-bg-base";
+      ? "overflow-hidden border border-brand hover:border-accent active:border-accent data-[tap-active=true]:border-accent bg-bg-base"
+      : "overflow-hidden border border-white hover:border-accent active:border-accent data-[tap-active=true]:border-accent bg-bg-base";
 
     const textCellBaseClasses = isPrimary
-      ? "bg-brand text-white motion-reduce:group-hover:bg-brand-hover motion-reduce:group-focus-visible:bg-brand-hover"
-      : "bg-bg-base text-white motion-reduce:group-hover:bg-brand motion-reduce:group-focus-visible:bg-brand";
+      ? "bg-brand text-white motion-reduce:group-hover:bg-brand-hover motion-reduce:group-focus-visible:bg-brand-hover motion-reduce:group-active:bg-brand-hover motion-reduce:group-data-[tap-active=true]:bg-brand-hover"
+      : "bg-bg-base text-white motion-reduce:group-hover:bg-brand motion-reduce:group-focus-visible:bg-brand motion-reduce:group-active:bg-brand motion-reduce:group-data-[tap-active=true]:bg-brand";
 
-    const textCellSweepClasses = isPrimary
-      ? "bg-brand-hover"
-      : "bg-brand";
+    const textCellSweepClasses = isPrimary ? "bg-brand-hover" : "bg-brand";
 
     const squareDividerClasses = isPrimary
       ? "border-l border-border-subtle"
@@ -162,7 +184,7 @@ export function Button({
           <span
             aria-hidden="true"
             data-testid="button-fill-sweep"
-            className={`pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-300 ease-out group-hover:translate-x-0 group-focus-visible:translate-x-0 motion-reduce:hidden ${textCellSweepClasses}`}
+            className={`pointer-events-none absolute inset-0 -translate-x-full transition-transform duration-200 ease-out group-hover:translate-x-0 group-focus-visible:translate-x-0 group-active:translate-x-0 group-data-[tap-active=true]:translate-x-0 motion-reduce:hidden ${textCellSweepClasses}`}
           />
           <span className="relative z-10 inline-flex items-center gap-2">
             {spinnerNode}
@@ -173,11 +195,11 @@ export function Button({
         {/* Cell 2: Black Square Cell with Double Chevron » */}
         <span
           data-testid="button-chevron-cell"
-          className={`relative overflow-hidden inline-flex items-center justify-center shrink-0 bg-bg-base text-white transition-colors duration-200 motion-reduce:group-hover:bg-brand motion-reduce:group-focus-visible:bg-brand ${ICON_CELL_SIZE_CLASSES[size]} ${squareDividerClasses}`}
+          className={`relative overflow-hidden inline-flex items-center justify-center shrink-0 bg-bg-base text-white transition-colors duration-200 motion-reduce:group-hover:bg-brand motion-reduce:group-focus-visible:bg-brand motion-reduce:group-active:bg-brand motion-reduce:group-data-[tap-active=true]:bg-brand ${ICON_CELL_SIZE_CLASSES[size]} ${squareDividerClasses}`}
         >
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 -translate-x-full bg-brand transition-transform duration-300 ease-out group-hover:translate-x-0 group-focus-visible:translate-x-0 motion-reduce:hidden"
+            className="pointer-events-none absolute inset-0 -translate-x-full bg-brand transition-transform duration-200 ease-out group-hover:translate-x-0 group-focus-visible:translate-x-0 group-active:translate-x-0 group-data-[tap-active=true]:translate-x-0 motion-reduce:hidden"
           />
           <DoubleChevron className="relative z-10" />
         </span>
@@ -199,15 +221,35 @@ export function Button({
   if (href) {
     return (
       <Link
+        ref={linkRef}
         href={isDisabled ? "#" : href}
+        data-fv-button="true"
+        data-tap-active={tapActive ? "true" : undefined}
         className={combinedClassName}
         aria-disabled={isDisabled || undefined}
         aria-busy={loading || undefined}
         tabIndex={isDisabled ? -1 : undefined}
+        onPointerDown={(e) => {
+          if (e.pointerType === "touch" || e.pointerType === "pen") {
+            flashTapFeedback(linkRef.current);
+          }
+        }}
+        onTouchStart={() => {
+          flashTapFeedback(linkRef.current);
+        }}
         onClick={(e) => {
           if (isDisabled) {
             e.preventDefault();
             return;
+          }
+          const isTouchEnvironment =
+            Boolean(
+              typeof window !== "undefined" &&
+                typeof window.matchMedia === "function" &&
+                window.matchMedia("(hover: none)")?.matches
+            ) || Boolean(linkRef.current?.dataset.fvTouchTap);
+          if (isTouchEnvironment) {
+            flashTapFeedback(linkRef.current);
           }
           if (onClick) {
             (onClick as unknown as React.MouseEventHandler<HTMLAnchorElement>)(e);
@@ -225,11 +267,30 @@ export function Button({
       disabled={isDisabled}
       aria-disabled={isDisabled || undefined}
       aria-busy={loading || undefined}
+      data-fv-button="true"
+      data-tap-active={tapActive ? "true" : undefined}
       className={combinedClassName}
+      onPointerDown={(e) => {
+        if (e.pointerType === "touch" || e.pointerType === "pen") {
+          flashTapFeedback(null);
+        }
+        onPointerDown?.(e);
+      }}
+      onTouchStart={(e) => {
+        flashTapFeedback(null);
+        onTouchStart?.(e);
+      }}
       onClick={(e) => {
         if (isDisabled) {
           e.preventDefault();
           return;
+        }
+        if (
+          typeof window !== "undefined" &&
+          typeof window.matchMedia === "function" &&
+          window.matchMedia("(hover: none)")?.matches
+        ) {
+          flashTapFeedback(null);
         }
         onClick?.(e);
       }}

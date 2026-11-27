@@ -248,7 +248,7 @@ export function WorkoutSummary({
                 type="button"
                 data-testid={`summary-start-${key}`}
                 onClick={() => onStartExercise(key)}
-                className="px-3.5 py-2 rounded-xl bg-surface-elevated border border-border-subtle hover:border-accent hover:bg-brand/20 font-display text-xs font-bold uppercase tracking-wider text-white transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+                className="fv-btn-interactive px-3.5 py-2 rounded-xl bg-surface-elevated border border-border-subtle hover:border-accent hover:bg-brand/20 font-display text-xs font-bold uppercase tracking-wider text-white transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
               >
                 {getExerciseDisplayName(key)}
               </button>

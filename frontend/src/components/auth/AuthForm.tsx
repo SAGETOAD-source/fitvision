@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { usePageTransition } from "@/components/layout/PageTransition";
 import { Button, Card, SectionLabel } from "@/components/ui";
 import {
   MAX_PASSWORD_UTF8_BYTES,
@@ -23,6 +24,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, signup } = useAuth();
+  const { transitionPush } = usePageTransition();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -77,7 +79,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           setServerError(result.error || "Sign up failed. Please try again.");
           return;
         }
-        router.push("/onboarding");
+        await transitionPush("/onboarding", { fallbackPush: router.push });
         router.refresh();
         return;
       }
@@ -89,11 +91,11 @@ export function AuthForm({ mode }: AuthFormProps) {
       }
 
       if (validatedNext) {
-        router.push(validatedNext);
+        await transitionPush(validatedNext, { fallbackPush: router.push });
       } else if (result.profile?.body_goal) {
-        router.push("/routines");
+        await transitionPush("/routines", { fallbackPush: router.push });
       } else {
-        router.push("/onboarding");
+        await transitionPush("/onboarding", { fallbackPush: router.push });
       }
       router.refresh();
     } finally {

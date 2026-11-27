@@ -57,7 +57,7 @@ export function DesktopExerciseTabs({
             aria-selected={isActive}
             data-testid={`exercise-tab-${key}`}
             onClick={() => onSelect(key)}
-            className={`px-3 py-1.5 rounded-xl font-display text-[10px] font-bold uppercase tracking-wider transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer whitespace-nowrap ${
+            className={`fv-btn-interactive px-3 py-1.5 rounded-xl font-display text-[10px] font-bold uppercase tracking-wider transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer whitespace-nowrap ${
               isActive
                 ? "bg-brand text-white border border-accent"
                 : "text-text-muted hover:text-white hover:bg-surface-elevated border border-transparent"
@@ -123,7 +123,7 @@ export function ExercisePickerSheet({
             type="button"
             onClick={onClose}
             aria-label="Close exercise picker"
-            className="w-9 h-9 rounded-full bg-surface-elevated border border-border-subtle hover:border-accent text-white inline-flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+            className="fv-btn-interactive w-9 h-9 rounded-full bg-surface-elevated border border-border-subtle hover:border-accent text-white inline-flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
           >
             <svg
               className="w-4 h-4"
@@ -156,7 +156,7 @@ export function ExercisePickerSheet({
                   onSelect(key);
                   onClose();
                 }}
-                className={`w-full text-left px-4 py-3.5 rounded-2xl border transition-colors duration-150 motion-reduce:transition-none flex items-center justify-between gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer ${
+                className={`fv-btn-interactive w-full text-left px-4 py-3.5 rounded-2xl border transition-colors duration-150 motion-reduce:transition-none flex items-center justify-between gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer ${
                   isActive
                     ? "bg-brand/30 border-accent text-white"
                     : "bg-surface-elevated border-border-subtle text-white hover:border-white/40"

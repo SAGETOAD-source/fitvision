@@ -174,7 +174,7 @@ export default function StaticFallback({
           <button
             type="button"
             onClick={onActivate}
-            className="my-1 px-5 py-2 rounded-full bg-[#1A1A1E] hover:bg-[#6D001A] text-white text-xs font-mono font-bold tracking-wider uppercase border border-[#FF4D6D]/40 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0B0C] shadow-sm cursor-pointer"
+            className="fv-btn-interactive my-1 px-5 py-2 rounded-full bg-[#1A1A1E] hover:bg-[#6D001A] text-white text-xs font-mono font-bold tracking-wider uppercase border border-[#FF4D6D]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0B0C] shadow-sm cursor-pointer"
             aria-label="Activate interactive 3D simulation"
           >
             Activate 3D Simulation

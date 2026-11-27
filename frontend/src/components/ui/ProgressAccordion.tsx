@@ -327,7 +327,7 @@ export function ProgressAccordion({
                 aria-controls={panelId}
                 tabIndex={isOpen ? 0 : -1}
                 onClick={() => dispatch({ type: "SELECT", index: idx })}
-                className="w-full py-5 sm:py-6 px-2 flex items-center justify-between gap-4 text-left group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset cursor-pointer"
+                className="fv-btn-interactive w-full py-5 sm:py-6 px-2 flex items-center justify-between gap-4 text-left group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset cursor-pointer"
               >
                 <div className="flex items-baseline gap-4 min-w-0">
                   <span

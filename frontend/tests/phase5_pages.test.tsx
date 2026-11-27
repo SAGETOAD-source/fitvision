@@ -27,6 +27,7 @@ import { HistoryView } from "@/components/account/HistoryView";
 import { ProfileView } from "@/components/account/ProfileView";
 import {
   PageTransition,
+  getTransitionMode,
   shouldPlayPageTransition,
 } from "@/components/layout/PageTransition";
 
@@ -316,8 +317,8 @@ describe("Phase 5 Pages: Dashboard, History & Profile", () => {
   });
 });
 
-describe("PageTransition safety rules (Spec Section 11)", () => {
-  it("skips under prefers-reduced-motion, skips when leaving or entering /workout, and plays on normal route changes", () => {
+describe("PageTransition safety & mode rules (UI Requirements Section 2)", () => {
+  it("plays sweep across normal and /workout routes, uses 150ms fade under reduced motion, and skips same route", () => {
     expect(
       shouldPlayPageTransition({
         currentPath: "/",
@@ -325,31 +326,45 @@ describe("PageTransition safety rules (Spec Section 11)", () => {
         prefersReducedMotion: false,
       })
     ).toBe(true);
+    expect(
+      getTransitionMode({
+        currentPath: "/",
+        targetPath: "/routines",
+        prefersReducedMotion: false,
+      })
+    ).toBe("sweep");
 
-    // Reduced motion -> skipped
+    // Reduced motion -> 150ms fade (no longer skipped completely)
     expect(
       shouldPlayPageTransition({
         currentPath: "/",
         targetPath: "/routines",
         prefersReducedMotion: true,
       })
-    ).toBe(false);
+    ).toBe(true);
+    expect(
+      getTransitionMode({
+        currentPath: "/",
+        targetPath: "/routines",
+        prefersReducedMotion: true,
+      })
+    ).toBe("fade");
 
-    // Entering or leaving /workout -> skipped so camera cleanup is never delayed
+    // Entering or leaving /workout -> plays transition cleanly while camera hook handles lifecycle
     expect(
       shouldPlayPageTransition({
         currentPath: "/workout",
         targetPath: "/routines",
         prefersReducedMotion: false,
       })
-    ).toBe(false);
+    ).toBe(true);
     expect(
       shouldPlayPageTransition({
         currentPath: "/routines",
         targetPath: "/workout",
         prefersReducedMotion: false,
       })
-    ).toBe(false);
+    ).toBe(true);
 
     // Same route -> skipped
     expect(
@@ -359,34 +374,51 @@ describe("PageTransition safety rules (Spec Section 11)", () => {
         prefersReducedMotion: false,
       })
     ).toBe(false);
+    expect(
+      getTransitionMode({
+        currentPath: "/",
+        targetPath: "/",
+        prefersReducedMotion: false,
+      })
+    ).toBe("none");
   });
 
-  it("mounts non-blocking sweep overlay on click between non-workout pages and stays inert under reduced motion", () => {
+  it("mounts non-blocking overlay with dot-matrix headline on /workout and normal routes, and uses fade under reduced motion", () => {
     mockPathname = "/";
     const { container } = render(
       <div>
         <PageTransition />
-        <a href="/routines" onClick={(e) => e.preventDefault()}>
-          Go Routines
-        </a>
-        <a href="/workout?exercise=squat" onClick={(e) => e.preventDefault()}>
-          Go Workout
-        </a>
+        <a href="/workout?exercise=squat">Go Workout</a>
       </div>
     );
 
-    // Clicking /workout link does NOT mount overlay
     fireEvent.click(screen.getByText("Go Workout"));
+    const overlay = screen.getByTestId("page-transition-overlay");
+    expect(overlay).toHaveClass("pointer-events-none");
+    expect(overlay).toHaveAttribute("data-transition-mode", "sweep");
+    expect(screen.getByTestId("page-transition-headline")).toHaveTextContent("WORKOUT");
+
+    // Browser back/forward resets active overlay immediately
+    fireEvent(window, new PopStateEvent("popstate"));
     expect(screen.queryByTestId("page-transition-overlay")).not.toBeInTheDocument();
 
-    // Even a plain navigation anchor without defaultPrevented triggers overlay
+    // Reduced motion uses short opacity fade mode
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn().mockImplementation((q: string) => ({
+        matches: q === "(prefers-reduced-motion: reduce)",
+        media: q,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }))
+    );
     const link = document.createElement("a");
     link.href = "http://localhost:3000/routines";
     link.textContent = "Nav";
     container.appendChild(link);
     fireEvent.click(link);
-    expect(screen.getByTestId("page-transition-overlay")).toHaveClass(
-      "pointer-events-none"
-    );
+    const fadeOverlay = screen.getByTestId("page-transition-overlay");
+    expect(fadeOverlay).toHaveAttribute("data-transition-mode", "fade");
+    expect(screen.getByTestId("page-transition-headline")).toHaveTextContent("ROUTINES");
   });
 });

@@ -268,7 +268,7 @@ export function RoutinesView() {
                       setSelectedGoal(goal);
                       setSaveMessage(null);
                     }}
-                    className={`px-4 py-2.5 text-xs font-display font-bold uppercase tracking-wider border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer ${
+                    className={`fv-btn-interactive px-4 py-2.5 text-xs font-display font-bold uppercase tracking-wider border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer ${
                       active
                         ? "bg-brand border-accent text-white"
                         : "bg-surface-elevated border-border-subtle text-text-muted hover:text-white hover:border-white/40"
@@ -304,7 +304,7 @@ export function RoutinesView() {
                       setSelectedFocus(tab.value);
                       setSaveMessage(null);
                     }}
-                    className={`px-4 py-2.5 text-xs font-display font-bold uppercase tracking-wider border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer ${
+                    className={`fv-btn-interactive px-4 py-2.5 text-xs font-display font-bold uppercase tracking-wider border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer ${
                       active
                         ? "bg-brand border-accent text-white"
                         : "bg-surface-elevated border-border-subtle text-text-muted hover:text-white hover:border-white/40"

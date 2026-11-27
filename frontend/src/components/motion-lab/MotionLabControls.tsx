@@ -32,7 +32,7 @@ export default function MotionLabControls({
             type="button"
             onClick={() => onViewChange('profile')}
             aria-pressed={currentView === 'profile'}
-            className={`px-3.5 py-1.5 rounded-full font-mono text-xs font-semibold uppercase tracking-wider transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D] ${
+            className={`fv-btn-interactive px-3.5 py-1.5 rounded-full font-mono text-xs font-semibold uppercase tracking-wider focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D] ${
               currentView === 'profile'
                 ? 'bg-[#6D001A] text-white border border-[#FF4D6D]/40 shadow-sm'
                 : 'bg-[#161618] text-white/70 hover:text-white border border-[#1A1A1E]'
@@ -44,7 +44,7 @@ export default function MotionLabControls({
             type="button"
             onClick={() => onViewChange('isometric')}
             aria-pressed={currentView === 'isometric'}
-            className={`px-3.5 py-1.5 rounded-full font-mono text-xs font-semibold uppercase tracking-wider transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D] ${
+            className={`fv-btn-interactive px-3.5 py-1.5 rounded-full font-mono text-xs font-semibold uppercase tracking-wider focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D] ${
               currentView === 'isometric'
                 ? 'bg-[#6D001A] text-white border border-[#FF4D6D]/40 shadow-sm'
                 : 'bg-[#161618] text-white/70 hover:text-white border border-[#1A1A1E]'
@@ -56,7 +56,7 @@ export default function MotionLabControls({
             type="button"
             onClick={() => onViewChange('front')}
             aria-pressed={currentView === 'front'}
-            className={`px-3.5 py-1.5 rounded-full font-mono text-xs font-semibold uppercase tracking-wider transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D] ${
+            className={`fv-btn-interactive px-3.5 py-1.5 rounded-full font-mono text-xs font-semibold uppercase tracking-wider focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D] ${
               currentView === 'front'
                 ? 'bg-[#6D001A] text-white border border-[#FF4D6D]/40 shadow-sm'
                 : 'bg-[#161618] text-white/70 hover:text-white border border-[#1A1A1E]'
@@ -72,7 +72,7 @@ export default function MotionLabControls({
           onClick={onTogglePlay}
           aria-pressed={!isPlaying}
           aria-label={isPlaying ? 'Pause 3D movement cycle' : 'Resume 3D movement cycle'}
-          className="px-4 py-1.5 rounded-full bg-[#161618] hover:bg-[#202024] text-white border border-[#1A1A1E] font-mono text-xs font-semibold uppercase tracking-wider transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D] flex items-center gap-2"
+          className="fv-btn-interactive px-4 py-1.5 rounded-full bg-[#161618] hover:bg-[#202024] text-white border border-[#1A1A1E] font-mono text-xs font-semibold uppercase tracking-wider focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D6D] flex items-center gap-2"
         >
           <span
             className={`w-2 h-2 rounded-full ${

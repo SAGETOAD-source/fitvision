@@ -2,7 +2,10 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Inter, Montserrat, Lora, Unbounded } from "next/font/google";
 import { AuthProvider } from "@/components/auth/AuthProvider";
-import { PageTransition } from "@/components/layout/PageTransition";
+import {
+  PageTransition,
+  PageTransitionProvider,
+} from "@/components/layout/PageTransition";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -61,8 +64,10 @@ export default function RootLayout({
           Skip to main content
         </a>
         <AuthProvider>
-          <PageTransition />
-          {children}
+          <PageTransitionProvider>
+            <PageTransition />
+            {children}
+          </PageTransitionProvider>
         </AuthProvider>
       </body>
     </html>

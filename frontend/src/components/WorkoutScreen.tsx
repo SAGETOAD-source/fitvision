@@ -273,7 +273,7 @@ export default function WorkoutScreen({
           type="button"
           onClick={() => handleFinishSession()}
           aria-label="Exit workout to summary"
-          className="px-3 py-2 rounded-xl bg-surface/90 backdrop-blur-md border border-border-subtle hover:border-accent text-xs font-display font-bold uppercase tracking-wider text-white inline-flex items-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer shrink-0"
+          className="fv-btn-interactive px-3 py-2 rounded-xl bg-surface/90 backdrop-blur-md border border-border-subtle hover:border-accent text-xs font-display font-bold uppercase tracking-wider text-white inline-flex items-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer shrink-0"
         >
           <svg
             className="w-3.5 h-3.5 text-accent"
@@ -304,7 +304,7 @@ export default function WorkoutScreen({
           onClick={() => setPickerOpen(true)}
           aria-expanded={pickerOpen}
           data-testid="open-exercise-picker"
-          className="px-3.5 py-2 rounded-xl bg-surface/90 backdrop-blur-md border border-border-subtle hover:border-accent text-xs font-display font-bold uppercase tracking-wider text-white inline-flex items-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer shrink-0"
+          className="fv-btn-interactive px-3.5 py-2 rounded-xl bg-surface/90 backdrop-blur-md border border-border-subtle hover:border-accent text-xs font-display font-bold uppercase tracking-wider text-white inline-flex items-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer shrink-0"
         >
           <span>Exercises</span>
           <svg

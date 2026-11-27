@@ -19,9 +19,15 @@ import ExercisesSection from "@/components/landing/ExercisesSection";
 import CtaSection from "@/components/landing/CtaSection";
 import {
   PageTransition,
-  TRANSITION_NAV_DELAY_MS,
-  TRANSITION_TOTAL_MS,
+  PageTransitionProvider,
+  usePageTransition,
+  TRANSITION_COVER_IN_MS,
+  TRANSITION_REVEAL_OUT_MS,
+  TRANSITION_REDUCED_FADE_MS,
+  TRANSITION_MOBILE_TAP_LEAD_MS,
+  TRANSITION_SAFETY_TIMEOUT_MS,
 } from "@/components/layout/PageTransition";
+import LandingNavbar from "@/components/landing/LandingNavbar";
 import NotFound from "@/app/not-found";
 
 afterEach(() => {
@@ -109,35 +115,175 @@ describe("Storytelling UX & Visual Polish", () => {
     expect(page.querySelector('a[href="/"]')).toBeInTheDocument();
   });
 
-  it("PageTransition intercepts non-/workout links, plays sweep, calls router.push at midpoint, and skips /workout", () => {
+  it("PageTransition intercepts /routines and /workout links, shows 3 rounded layers + dot-matrix title until reveal, guards double clicks, popstate, #, external, Ctrl+click, mobile tap lead, reduced fade, and failure recovery", async () => {
     vi.useFakeTimers();
 
+    function LogoutFailHarness() {
+      const { transitionPush } = usePageTransition();
+      return (
+        <button
+          type="button"
+          onClick={() =>
+            void transitionPush("/", {
+              hardReload: true,
+              onBeforeSwap: async () => {
+                throw new Error("Logout failed");
+              },
+            })
+          }
+        >
+          Trigger Failing Logout
+        </button>
+      );
+    }
+
     render(
-      <div>
+      <PageTransitionProvider>
         <PageTransition />
         <a href="/routines">Start Training</a>
         <a href="/workout?exercise=squat">Direct Squat</a>
-      </div>
+        <a href="#workflow">Same Page Anchor</a>
+        <a href="https://example.com" target="_blank" rel="noreferrer">
+          External
+        </a>
+        <a href="/dashboard" data-fv-touch-tap="true" data-fv-button="true">
+          Touch Dashboard
+        </a>
+        <LogoutFailHarness />
+      </PageTransitionProvider>
     );
 
-    // /workout link is NOT intercepted
+    // 1. Same-page # anchor, external link, and Ctrl+click are NOT intercepted
+    fireEvent.click(screen.getByText("Same Page Anchor"));
+    expect(screen.queryByTestId("page-transition-overlay")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("External"));
+    expect(screen.queryByTestId("page-transition-overlay")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Start Training"), { ctrlKey: true });
+    expect(screen.queryByTestId("page-transition-overlay")).not.toBeInTheDocument();
+
+    // 2. Non-/workout click sweeps 3 layers (dark, white, burgundy) + dot-matrix destination headline
+    fireEvent.click(screen.getByText("Start Training"));
+    expect(screen.getByTestId("page-transition-overlay")).toBeInTheDocument();
+    expect(screen.getByTestId("page-transition-layer-dark")).toBeInTheDocument();
+    expect(screen.getByTestId("page-transition-layer-white")).toBeInTheDocument();
+    expect(screen.getByTestId("page-transition-layer-burgundy")).toBeInTheDocument();
+    expect(screen.getByTestId("page-transition-headline")).toHaveTextContent("ROUTINES");
+    expect(mockPush).not.toHaveBeenCalled();
+
+    // Double-clicking another route mid-transition is locked out cleanly
     fireEvent.click(screen.getByText("Direct Squat"));
+    expect(screen.getByTestId("page-transition-headline")).toHaveTextContent("ROUTINES");
+
+    // Advance 450ms -> cover reaches full coverage, router.push runs, enters reveal-out while headline stays readable
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(TRANSITION_COVER_IN_MS);
+    });
+    expect(screen.getByTestId("page-transition-overlay")).toHaveAttribute(
+      "data-transition-phase",
+      "reveal-out"
+    );
+    expect(screen.getByTestId("page-transition-headline")).toHaveTextContent("ROUTINES");
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith("/routines");
+
+    // Advance 450ms -> sweep-out finishes and overlay clears
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(TRANSITION_REVEAL_OUT_MS);
+    });
+    expect(screen.queryByTestId("page-transition-overlay")).not.toBeInTheDocument();
+
+    // 3. Entering /workout plays transition with WORKOUT headline
+    mockPush.mockClear();
+    fireEvent.click(screen.getByText("Direct Squat"));
+    expect(screen.getByTestId("page-transition-headline")).toHaveTextContent("WORKOUT");
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(TRANSITION_COVER_IN_MS);
+    });
+    expect(mockPush).toHaveBeenCalledWith("/workout?exercise=squat");
+
+    // Browser Back/Forward (popstate) immediately clears active cover so screen is never stuck
+    fireEvent(window, new PopStateEvent("popstate"));
+    expect(screen.queryByTestId("page-transition-overlay")).not.toBeInTheDocument();
+
+    // 4. Touch tap overlap waits <= 150ms (95ms) before mounting cover
+    mockPush.mockClear();
+    fireEvent.click(screen.getByText("Touch Dashboard"));
+    expect(screen.queryByTestId("page-transition-overlay")).not.toBeInTheDocument();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(TRANSITION_MOBILE_TAP_LEAD_MS);
+    });
+    expect(screen.getByTestId("page-transition-overlay")).toBeInTheDocument();
+    expect(screen.getByTestId("page-transition-headline")).toHaveTextContent("DASHBOARD");
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(TRANSITION_SAFETY_TIMEOUT_MS);
+    });
+    expect(screen.queryByTestId("page-transition-overlay")).not.toBeInTheDocument();
+
+    // 5. Rejected onBeforeSwap (logout failure) clears cover immediately and does not navigate
+    mockPush.mockClear();
+    fireEvent.click(screen.getByText("Trigger Failing Logout"));
+    expect(screen.getByTestId("page-transition-overlay")).toBeInTheDocument();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(TRANSITION_COVER_IN_MS);
+    });
     expect(screen.queryByTestId("page-transition-overlay")).not.toBeInTheDocument();
     expect(mockPush).not.toHaveBeenCalled();
 
-    // Non-/workout link triggers layered sweep and defers navigation to peak curtain coverage
+    // 6. Reduced motion plays short 150ms opacity fade in + 150ms fade out
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn().mockImplementation((q: string) => ({
+        matches: q === "(prefers-reduced-motion: reduce)",
+        media: q,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }))
+    );
+    mockPush.mockClear();
     fireEvent.click(screen.getByText("Start Training"));
-    expect(screen.getByTestId("page-transition-overlay")).toBeInTheDocument();
-    expect(mockPush).not.toHaveBeenCalled();
-
-    act(() => {
-      vi.advanceTimersByTime(TRANSITION_NAV_DELAY_MS);
+    expect(screen.getByTestId("page-transition-overlay")).toHaveAttribute(
+      "data-transition-mode",
+      "fade"
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(TRANSITION_REDUCED_FADE_MS);
     });
     expect(mockPush).toHaveBeenCalledWith("/routines");
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(TRANSITION_REDUCED_FADE_MS);
+    });
+    expect(screen.queryByTestId("page-transition-overlay")).not.toBeInTheDocument();
+  });
 
-    // Overlay cleans itself up after sweep completes
-    act(() => {
-      vi.advanceTimersByTime(TRANSITION_TOTAL_MS);
+  it("MenuOverlay remains visible underneath the incoming curtain and closes silently at full cover", async () => {
+    vi.useFakeTimers();
+
+    render(
+      <PageTransitionProvider>
+        <PageTransition />
+        <LandingNavbar />
+      </PageTransitionProvider>
+    );
+
+    fireEvent.click(screen.getByTestId("navbar-menu-button-desktop"));
+    const dialog = screen.getByRole("dialog", { name: /site navigation menu/i });
+    const routinesLink = dialog.querySelector('a[href="/routines"]') as HTMLAnchorElement;
+
+    fireEvent.click(routinesLink);
+    expect(screen.getByTestId("page-transition-overlay")).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: /site navigation menu/i })).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(TRANSITION_COVER_IN_MS);
+    });
+
+    expect(screen.queryByRole("dialog", { name: /site navigation menu/i })).not.toBeInTheDocument();
+    expect(mockPush).toHaveBeenCalledWith("/routines");
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(TRANSITION_REVEAL_OUT_MS);
     });
     expect(screen.queryByTestId("page-transition-overlay")).not.toBeInTheDocument();
   });

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { usePageTransition } from "@/components/layout/PageTransition";
 import { Button, Card, LoadingSpinner, SectionLabel } from "@/components/ui";
 import { type BodyGoal, type FocusArea } from "@/lib/auth_contracts";
 
@@ -47,6 +48,7 @@ const FOCUS_OPTIONS: ReadonlyArray<{
 
 export function ProfileView() {
   const router = useRouter();
+  const { transitionPush, cancelTransition } = usePageTransition();
   const {
     user,
     profile,
@@ -114,10 +116,14 @@ export function ProfileView() {
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
-      await logout();
-      if (typeof window !== "undefined") {
-        window.location.assign("/");
-      }
+      await transitionPush("/", {
+        hardReload: true,
+        onBeforeSwap: async () => {
+          await logout();
+        },
+      });
+    } catch {
+      cancelTransition();
     } finally {
       setLoggingOut(false);
     }
@@ -241,7 +247,7 @@ export function ProfileView() {
                         setBodyGoal(opt.value);
                         setSaveSuccess(false);
                       }}
-                      className={`text-left rounded-2xl p-4 border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer space-y-2 ${
+                      className={`fv-btn-interactive text-left rounded-2xl p-4 border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer space-y-2 ${
                         selected
                           ? "bg-brand/25 border-accent text-white"
                           : "bg-surface-elevated border-border-subtle text-white hover:border-white/40"
@@ -285,7 +291,7 @@ export function ProfileView() {
                         setFocusSelection(opt.value);
                         setSaveSuccess(false);
                       }}
-                      className={`text-left rounded-2xl p-4 border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer space-y-1 ${
+                      className={`fv-btn-interactive text-left rounded-2xl p-4 border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer space-y-1 ${
                         selected
                           ? "bg-brand/25 border-accent text-white"
                           : "bg-surface-elevated border-border-subtle text-white hover:border-white/40"

@@ -166,7 +166,7 @@ export function HistoryView() {
           type="button"
           aria-pressed={filterExercise === "all"}
           onClick={() => setFilterExercise("all")}
-          className={`px-3.5 py-2 text-xs font-display font-bold uppercase tracking-wider border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer ${
+          className={`fv-btn-interactive px-3.5 py-2 text-xs font-display font-bold uppercase tracking-wider border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer ${
             filterExercise === "all"
               ? "bg-brand border-accent text-white"
               : "bg-surface-elevated border-border-subtle text-text-muted hover:text-white"
@@ -182,7 +182,7 @@ export function HistoryView() {
               type="button"
               aria-pressed={active}
               onClick={() => setFilterExercise(key)}
-              className={`px-3.5 py-2 text-xs font-display font-bold uppercase tracking-wider border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer ${
+              className={`fv-btn-interactive px-3.5 py-2 text-xs font-display font-bold uppercase tracking-wider border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer ${
                 active
                   ? "bg-brand border-accent text-white"
                   : "bg-surface-elevated border-border-subtle text-text-muted hover:text-white"

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { usePageTransition } from "@/components/layout/PageTransition";
 import { useOptionalAuth } from "@/components/auth/AuthProvider";
 
 export interface MenuOverlayProps {
@@ -32,7 +33,15 @@ const FOCUSABLE_SELECTOR =
  */
 export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
   const { user, logout } = useOptionalAuth();
+  const { transitionPush, cancelTransition, deferUntilCovered } = usePageTransition();
   const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLinkNavigation = () => {
+    // Keep menu visible underneath the incoming curtain; close once cover hides the viewport.
+    if (!deferUntilCovered(onClose)) {
+      onClose();
+    }
+  };
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -82,11 +91,15 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
-      await logout();
-      onClose();
-      if (typeof window !== "undefined") {
-        window.location.assign("/");
-      }
+      await transitionPush("/", {
+        hardReload: true,
+        onBeforeSwap: async () => {
+          await logout();
+          onClose();
+        },
+      });
+    } catch {
+      cancelTransition();
     } finally {
       setLoggingOut(false);
     }
@@ -106,7 +119,7 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
       <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 h-20 flex items-center justify-between border-b border-border-subtle shrink-0">
         <Link
           href="/"
-          onClick={onClose}
+          onClick={handleLinkNavigation}
           className="font-display text-xl sm:text-2xl font-black uppercase tracking-wider text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           FITVISION
@@ -120,7 +133,7 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
             triggerRef?.current?.focus();
           }}
           aria-label="Close navigation menu"
-          className="w-11 h-11 rounded-full bg-surface border border-white/30 hover:border-accent hover:bg-brand text-white inline-flex items-center justify-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+          className="fv-btn-interactive w-11 h-11 rounded-full bg-surface border border-white/30 hover:border-accent hover:bg-brand text-white inline-flex items-center justify-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
         >
           <svg
             className="w-5 h-5"
@@ -149,7 +162,7 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
             >
               <Link
                 href={item.href}
-                onClick={onClose}
+                onClick={handleLinkNavigation}
                 className="group flex items-baseline gap-4 py-2 border-b border-border-subtle hover:border-brand transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <span className="font-mono text-xs text-accent font-bold fv-tabular">
@@ -168,7 +181,7 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
             variant="primary"
             size="lg"
             href="/routines"
-            onClick={onClose}
+            onClick={handleLinkNavigation}
           >
             Start Training
           </Button>
@@ -177,7 +190,7 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
               variant="secondary"
               size="lg"
               href="/dashboard"
-              onClick={onClose}
+              onClick={handleLinkNavigation}
             >
               Dashboard
             </Button>
@@ -194,7 +207,7 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
           <div className="flex flex-wrap items-center gap-4 text-xs font-mono uppercase tracking-wider">
             <Link
               href="/profile"
-              onClick={onClose}
+              onClick={handleLinkNavigation}
               className="inline-flex items-center gap-2 text-white hover:text-accent normal-case tracking-normal transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <svg
@@ -215,21 +228,21 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
             </Link>
             <Link
               href="/dashboard"
-              onClick={onClose}
+              onClick={handleLinkNavigation}
               className="text-accent hover:text-white underline underline-offset-4 decoration-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Dashboard
             </Link>
             <Link
               href="/history"
-              onClick={onClose}
+              onClick={handleLinkNavigation}
               className="text-text-muted hover:text-white underline underline-offset-4 decoration-border-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               History
             </Link>
             <Link
               href="/profile"
-              onClick={onClose}
+              onClick={handleLinkNavigation}
               className="text-text-muted hover:text-white underline underline-offset-4 decoration-border-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Profile
@@ -239,7 +252,7 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
               onClick={handleLogout}
               disabled={loggingOut}
               data-testid="menu-logout-button"
-              className="text-text-muted hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer disabled:opacity-50"
+              className="fv-btn-interactive px-2 py-1 text-text-muted hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer disabled:opacity-50"
             >
               Log out
             </button>
@@ -248,7 +261,7 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
           <div className="flex flex-wrap items-center gap-5 text-xs font-mono uppercase tracking-wider">
             <Link
               href="/login"
-              onClick={onClose}
+              onClick={handleLinkNavigation}
               className="inline-flex items-center gap-2 text-white hover:text-accent underline underline-offset-4 decoration-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <svg
@@ -269,7 +282,7 @@ export function MenuOverlay({ isOpen, onClose, triggerRef }: MenuOverlayProps) {
             </Link>
             <Link
               href="/signup"
-              onClick={onClose}
+              onClick={handleLinkNavigation}
               className="text-accent hover:text-white underline underline-offset-4 decoration-brand transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Sign up

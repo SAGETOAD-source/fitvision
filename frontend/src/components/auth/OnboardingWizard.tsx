@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { usePageTransition } from "@/components/layout/PageTransition";
 import { Button, Card, LoadingSpinner, SectionLabel } from "@/components/ui";
 import { type BodyGoal, type FocusArea } from "@/lib/auth_contracts";
 
@@ -80,6 +81,7 @@ export function OnboardingWizard() {
     updateProfile,
     refresh,
   } = useAuth();
+  const { transitionPush } = usePageTransition();
 
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedGoal, setSelectedGoal] = useState<BodyGoal | null>(null);
@@ -129,7 +131,7 @@ export function OnboardingWizard() {
         return;
       }
 
-      router.push("/routines");
+      await transitionPush("/routines", { fallbackPush: router.push });
       router.refresh();
     } finally {
       setSaving(false);
@@ -237,7 +239,7 @@ export function OnboardingWizard() {
                     aria-checked={isSelected}
                     data-testid={`goal-option-${option.value}`}
                     onClick={() => setSelectedGoal(option.value)}
-                    className={`text-left rounded-3xl p-6 border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer flex flex-col justify-between gap-4 ${
+                    className={`fv-btn-interactive text-left rounded-3xl p-6 border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer flex flex-col justify-between gap-4 ${
                       isSelected
                         ? "bg-brand/25 border-accent text-white"
                         : "bg-surface-elevated border-border-subtle text-white hover:border-white/40"
@@ -301,7 +303,7 @@ export function OnboardingWizard() {
                     aria-checked={isSelected}
                     data-testid={`focus-option-${option.value}`}
                     onClick={() => setSelectedFocus(option.value)}
-                    className={`text-left rounded-3xl p-6 border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer flex flex-col justify-between gap-3 ${
+                    className={`fv-btn-interactive text-left rounded-3xl p-6 border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer flex flex-col justify-between gap-3 ${
                       isSelected
                         ? "bg-brand/25 border-accent text-white"
                         : "bg-surface-elevated border-border-subtle text-white hover:border-white/40"

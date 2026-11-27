@@ -56,8 +56,12 @@ async def lifespan(app: FastAPI):
     if settings.environment == "production":
         if settings.jwt_secret_key == DEFAULT_JWT_SECRET:
             raise RuntimeError("Refusing to start in production with the default JWT_SECRET_KEY")
-        if settings.cors_origins.strip() == "*":
-            raise RuntimeError("Refusing to start in production with CORS_ORIGINS='*'")
+        if not settings.cors_origin_list or "*" in settings.cors_origin_list:
+            raise RuntimeError("Refusing to start in production with CORS_ORIGINS='*' or empty")
+        if not settings.bff_proxy_secret:
+            logger.warning(
+                "BFF_PROXY_SECRET is not configured in production; auth rate limiting behind a frontend BFF will share proxy egress IPs"
+            )
 
     logger.info(f"Starting {settings.app_name} in '{settings.environment}' mode")
 

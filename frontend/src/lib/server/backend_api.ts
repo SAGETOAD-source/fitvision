@@ -14,10 +14,34 @@ export const DEFAULT_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 const NO_STORE_HEADERS = { "Cache-Control": "no-store" };
 
 export function backendBaseUrl(): string {
-  return (process.env.BACKEND_URL || "http://localhost:8000").replace(
-    /\/$/,
-    ""
-  );
+  const configured = process.env.BACKEND_URL?.trim();
+  const isVercelProd = process.env.VERCEL_ENV === "production";
+
+  if (isVercelProd) {
+    if (!configured) {
+      throw new Error("BACKEND_URL must be set in Vercel production.");
+    }
+    let parsed: URL;
+    try {
+      parsed = new URL(configured);
+    } catch {
+      throw new Error("BACKEND_URL must be a valid https:// URL in production.");
+    }
+    const host = parsed.hostname.toLowerCase();
+    if (
+      parsed.protocol !== "https:" ||
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "::1" ||
+      host === "0.0.0.0"
+    ) {
+      throw new Error(
+        "BACKEND_URL must use a public https:// origin in Vercel production."
+      );
+    }
+  }
+
+  return (configured || "http://localhost:8000").replace(/\/$/, "");
 }
 
 export function noStoreJson(
@@ -35,9 +59,24 @@ export function tokenFromRequest(request: NextRequest): string | null {
   return request.cookies.get(SESSION_COOKIE)?.value ?? null;
 }
 
+function parseConfiguredOrigins(raw: string | undefined): string[] {
+  if (!raw) return [];
+  const origins: string[] = [];
+  for (const part of raw.split(",")) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    try {
+      origins.push(new URL(trimmed).origin.toLowerCase());
+    } catch {
+      // Ignore malformed origin entry
+    }
+  }
+  return origins;
+}
+
 /**
  * Rejects a mutating request whose Origin header is present and does not match
- * the site's host (403 Forbidden).
+ * configured APP_ORIGIN(s) or the request's scheme + host (403 Forbidden).
  */
 export function verifySameOrigin(request: NextRequest): NextResponse | null {
   const origin = request.headers.get("origin");
@@ -53,23 +92,37 @@ export function verifySameOrigin(request: NextRequest): NextResponse | null {
     );
   }
 
-  const expectedHost = (
-    request.headers.get("host") || request.nextUrl.host
-  ).toLowerCase();
-
-  const configuredOrigin = process.env.APP_ORIGIN;
-  if (configuredOrigin) {
-    try {
-      const configuredHost = new URL(configuredOrigin).host.toLowerCase();
-      if (originUrl.host.toLowerCase() === configuredHost) {
-        return null;
-      }
-    } catch {
-      // fall through to host match
-    }
+  const normalizedOrigin = originUrl.origin.toLowerCase();
+  const configuredOrigins = parseConfiguredOrigins(process.env.APP_ORIGIN);
+  if (configuredOrigins.includes(normalizedOrigin)) {
+    return null;
   }
 
-  if (!expectedHost || originUrl.host.toLowerCase() !== expectedHost) {
+  const forwardedHost = request.headers
+    .get("x-forwarded-host")
+    ?.split(",")[0]
+    ?.trim();
+  const expectedHost = (
+    forwardedHost ||
+    request.headers.get("host") ||
+    request.nextUrl.host
+  ).toLowerCase();
+
+  const forwardedProto = request.headers
+    .get("x-forwarded-proto")
+    ?.split(",")[0]
+    ?.trim()
+    .toLowerCase();
+  const expectedProto =
+    forwardedProto === "http" || forwardedProto === "https"
+      ? `${forwardedProto}:`
+      : request.nextUrl.protocol.toLowerCase();
+
+  if (
+    !expectedHost ||
+    originUrl.host.toLowerCase() !== expectedHost ||
+    originUrl.protocol.toLowerCase() !== expectedProto
+  ) {
     return noStoreJson(
       { error: "OriginForbidden", detail: "Request origin is not allowed." },
       403
@@ -185,6 +238,53 @@ export async function backendFetch(
   init: RequestInit = {}
 ): Promise<Response> {
   return fetch(`${backendBaseUrl()}${path}`, { ...init, cache: "no-store" });
+}
+
+const IPV4_PART = "(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)";
+const IPV4_REGEX = new RegExp(`^${IPV4_PART}(?:\\.${IPV4_PART}){3}$`);
+const IPV6_REGEX = /^[0-9a-fA-F:]+$/;
+
+export function isValidIpLiteral(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > 45) return false;
+  if (IPV4_REGEX.test(trimmed)) return true;
+  if (trimmed.includes(":") && !trimmed.includes(":::") && IPV6_REGEX.test(trimmed)) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Extracts visitor IP strictly from `x-vercel-forwarded-for`, which Vercel's
+ * edge network sets and overwrites itself (`vercel.com/docs/headers/request-headers`).
+ * Ignored outside Vercel and never falls back to client-spoofable headers.
+ */
+export function extractVercelClientIp(request: NextRequest): string | null {
+  if (process.env.VERCEL !== "1") return null;
+  const headerVal = request.headers.get("x-vercel-forwarded-for");
+  if (!headerVal) return null;
+  const candidate = headerVal.split(",")[0]?.trim() || "";
+  return isValidIpLiteral(candidate) ? candidate : null;
+}
+
+/**
+ * Builds server-to-server headers for auth calls. Never copies client-submitted
+ * proxy headers and never logs BFF_PROXY_SECRET.
+ */
+export function bffAuthHeaders(
+  request: NextRequest,
+  headers: HeadersInit = {}
+): Headers {
+  const result = new Headers(headers);
+  const proxySecret = process.env.BFF_PROXY_SECRET?.trim();
+  if (proxySecret) {
+    const clientIp = extractVercelClientIp(request);
+    if (clientIp) {
+      result.set("X-FitVision-Client-IP", clientIp);
+      result.set("X-FitVision-Proxy-Secret", proxySecret);
+    }
+  }
+  return result;
 }
 
 export function bearerHeaders(

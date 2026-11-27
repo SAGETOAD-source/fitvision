@@ -6,7 +6,11 @@ import {
   validateEmail,
   validatePassword,
 } from "@/lib/auth_contracts";
-import { SESSION_COOKIE } from "@/lib/server/backend_api";
+import {
+  backendBaseUrl,
+  SESSION_COOKIE,
+  verifySameOrigin,
+} from "@/lib/server/backend_api";
 import { POST as signupPOST } from "@/app/api/auth/signup/route";
 import { POST as loginPOST } from "@/app/api/auth/login/route";
 import { POST as logoutPOST } from "@/app/api/auth/logout/route";
@@ -418,5 +422,113 @@ describe("Middleware Route Guard", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("location")).toBeNull();
     expect(res.cookies.get(SESSION_COOKIE)).toBeUndefined();
+  });
+
+  it("enforces HTTPS BACKEND_URL in Vercel production and blocks scheme-downgraded APP_ORIGIN", () => {
+    vi.stubEnv("VERCEL_ENV", "production");
+    expect(() => backendBaseUrl()).toThrow(/BACKEND_URL/);
+
+    vi.stubEnv("BACKEND_URL", "http://fitvision-api.onrender.com");
+    expect(() => backendBaseUrl()).toThrow(/https/i);
+
+    vi.stubEnv("BACKEND_URL", "https://localhost:8000");
+    expect(() => backendBaseUrl()).toThrow(/https/i);
+
+    vi.stubEnv("BACKEND_URL", "https://fitvision-api.onrender.com/");
+    expect(backendBaseUrl()).toBe("https://fitvision-api.onrender.com");
+
+    vi.stubEnv("APP_ORIGIN", "https://fitvision.vercel.app");
+    const httpDowngrade = new NextRequest("https://fitvision.vercel.app/api/auth/login", {
+      method: "POST",
+      headers: {
+        Origin: "http://fitvision.vercel.app",
+        "x-forwarded-proto": "https",
+        "x-forwarded-host": "fitvision.vercel.app",
+      },
+    });
+    expect(verifySameOrigin(httpDowngrade)?.status).toBe(403);
+
+    const validOrigin = new NextRequest("https://fitvision.vercel.app/api/auth/login", {
+      method: "POST",
+      headers: {
+        Origin: "https://fitvision.vercel.app",
+        "x-forwarded-proto": "https",
+        "x-forwarded-host": "fitvision.vercel.app",
+      },
+    });
+    expect(verifySameOrigin(validOrigin)).toBeNull();
+  });
+
+  it("forwards visitor IP strictly from Vercel header without letting callers spoof XFF or BFF headers", async () => {
+    const token = makeFakeJwt(3600);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ access_token: token }), { status: 200 })
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify(SAMPLE_USER), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    vi.stubEnv("VERCEL", "1");
+    vi.stubEnv("BFF_PROXY_SECRET", "server-only-bff-secret");
+
+    // Attacker tries sending spoofed X-Forwarded-For and forged BFF headers alongside Vercel's x-vercel-forwarded-for
+    const req = new NextRequest("https://fitvision.vercel.app/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: "https://fitvision.vercel.app",
+        Host: "fitvision.vercel.app",
+        "x-vercel-forwarded-for": "198.51.100.42",
+        "x-forwarded-for": "1.1.1.1, 2.2.2.2",
+        "x-fitvision-client-ip": "9.9.9.9",
+        "x-fitvision-proxy-secret": "attacker-forged",
+      },
+      body: JSON.stringify({
+        email: "athlete@fitvision.test",
+        password: "strongPassword123",
+      }),
+    });
+
+    const res = await loginPOST(req);
+    expect(res.status).toBe(200);
+
+    const forwardHeaders = new Headers(
+      (fetchMock.mock.calls[0]?.[1] as RequestInit | undefined)?.headers
+    );
+    expect(forwardHeaders.get("x-fitvision-client-ip")).toBe("198.51.100.42");
+    expect(forwardHeaders.get("x-fitvision-proxy-secret")).toBe("server-only-bff-secret");
+    expect(forwardHeaders.get("x-forwarded-for")).toBeNull();
+
+    // Outside Vercel runtime (VERCEL != "1"), visitor-supplied x-vercel-forwarded-for must be ignored
+    vi.stubEnv("VERCEL", "");
+    const fetchNonVercel = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ access_token: token }), { status: 200 })
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify(SAMPLE_USER), { status: 200 }));
+    vi.stubGlobal("fetch", fetchNonVercel);
+
+    const signupReq = new NextRequest("https://fitvision.example/api/auth/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: "https://fitvision.example",
+        Host: "fitvision.example",
+        "x-vercel-forwarded-for": "203.0.113.88",
+      },
+      body: JSON.stringify({
+        email: "athlete@fitvision.test",
+        password: "strongPassword123",
+      }),
+    });
+    expect((await signupPOST(signupReq)).status).toBe(201);
+
+    const nonVercelHeaders = new Headers(
+      (fetchNonVercel.mock.calls[0]?.[1] as RequestInit | undefined)?.headers
+    );
+    expect(nonVercelHeaders.get("x-fitvision-client-ip")).toBeNull();
+    expect(nonVercelHeaders.get("x-fitvision-proxy-secret")).toBeNull();
   });
 });

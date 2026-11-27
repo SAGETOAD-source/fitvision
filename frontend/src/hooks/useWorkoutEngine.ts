@@ -245,19 +245,10 @@ export function useWorkoutEngine({
     try {
       let cfg: ExerciseConfig;
       const configResult = await runGuardedStep(token, async () => {
-        try {
-          const resp = await fetch("http://localhost:8000/v1/exercises");
-          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          const data = await resp.json();
-          if (data?.exercises?.[safeExercise]) {
-            return data.exercises[safeExercise];
-          }
-          throw new Error("Exercise not found in API response");
-        } catch {
-          const snapResp = await fetch("/exercises_snapshot.json");
-          const data = await snapResp.json();
-          return data.exercises[safeExercise];
-        }
+        const snapResp = await fetch("/exercises_snapshot.json");
+        if (!snapResp.ok) throw new Error(`HTTP ${snapResp.status}`);
+        const data = await snapResp.json();
+        return data?.exercises?.[safeExercise];
       });
 
       if (configResult.cancelled) return;

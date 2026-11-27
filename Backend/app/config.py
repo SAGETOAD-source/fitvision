@@ -35,9 +35,15 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> List[str]:
-        if self.cors_origins == "*":
+        if self.cors_origins.strip() == "*":
             return ["*"]
-        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        origins: List[str] = []
+        for raw in self.cors_origins.split(","):
+            entry = raw.strip()
+            if not entry:
+                continue
+            origins.append(entry if entry == "*" else entry.rstrip("/"))
+        return origins
 
     # --- Models ---
     # Directory containing the trained .pkl files. exercises_config.py's
@@ -56,6 +62,7 @@ class Settings(BaseSettings):
     rate_limit_default: str = Field(default="60/minute")
     rate_limit_auth: str = Field(default="5/minute")  # /signup and /login, per client IP
     trusted_proxy_count: int = Field(default=0)  # 0 = ignore X-Forwarded-For; 1 = behind single proxy (Render/Railway)
+    bff_proxy_secret: str = Field(default="")  # shared server-to-server secret from Vercel BFF; empty disables BFF client IP header
 
     # --- Logging ---
     log_level: str = Field(default="INFO")

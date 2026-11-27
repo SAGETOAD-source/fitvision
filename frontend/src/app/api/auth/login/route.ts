@@ -4,6 +4,7 @@ import {
   backendFailure,
   backendFetch,
   bearerHeaders,
+  bffAuthHeaders,
   extractToken,
   jsonBody,
   networkFailure,
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
   try {
     const backendRes = await backendFetch("/v1/auth/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: bffAuthHeaders(request, { "Content-Type": "application/json" }),
       body: JSON.stringify(parsed.credentials),
     });
     const backendData = await jsonBody(backendRes);

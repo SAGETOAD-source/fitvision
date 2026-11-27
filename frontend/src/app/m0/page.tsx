@@ -58,21 +58,11 @@ export default function M0Page() {
   useEffect(() => {
     async function loadAssets() {
       try {
-        setInitStatus("Fetching exercise configuration from /v1/exercises...");
-        let squatConfig: ExerciseConfig;
-
-        try {
-          const resp = await fetch("http://localhost:8000/v1/exercises");
-          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          const data = await resp.json();
-          squatConfig = data.exercises.squat;
-        } catch {
-          // Fallback to static snapshot if local backend isn't up
-          setInitStatus("Backend offline: loading bundled exercise snapshot...");
-          const snapResp = await fetch("/exercises_snapshot.json");
-          const data = await snapResp.json();
-          squatConfig = data.exercises.squat;
-        }
+        setInitStatus("Loading bundled exercise configuration...");
+        const snapResp = await fetch("/exercises_snapshot.json");
+        if (!snapResp.ok) throw new Error(`HTTP ${snapResp.status}`);
+        const data = await snapResp.json();
+        const squatConfig: ExerciseConfig = data.exercises.squat;
         setConfig(squatConfig);
         repCounterRef.current = new RepCounter("squat", squatConfig);
 
